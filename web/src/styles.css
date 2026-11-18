@@ -1,0 +1,465 @@
+@import "tailwindcss";
+@source "../../internal/site";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-accent: var(--gc-accent, #ea580c);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+@layer base {
+  html {
+    @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
+    -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: 4rem;
+  }
+  body {
+    @apply min-h-dvh font-sans;
+  }
+  a {
+    @apply underline-offset-2;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  .icon {
+    @apply inline-block size-[1.15em] shrink-0 fill-none stroke-current align-[-0.2em];
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+@layer components {
+  .skip {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-white;
+  }
+  .topbar {
+    @apply sticky top-0 z-30 mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-2.5;
+    @apply bg-stone-50/85 backdrop-blur-md dark:bg-stone-950/85;
+  }
+  .brand {
+    @apply font-serif text-lg font-semibold tracking-tight no-underline;
+  }
+  .icon-btn {
+    @apply inline-flex size-10 items-center justify-center rounded-full text-stone-600 transition hover:bg-stone-200/70 active:scale-95 dark:text-stone-300 dark:hover:bg-stone-800;
+  }
+  #theme-toggle .icon {
+    @apply hidden;
+  }
+  #theme-toggle[data-theme="system"] .theme-system,
+  #theme-toggle[data-theme="light"] .theme-light,
+  #theme-toggle[data-theme="dark"] .theme-dark {
+    @apply inline-block;
+  }
+  #theme-toggle:not([data-theme]) .theme-system {
+    @apply inline-block;
+  }
+  main {
+    @apply mx-auto max-w-5xl px-4 pb-28;
+  }
+  .site-footer {
+    @apply mx-auto max-w-5xl px-4 pb-28 text-center text-xs text-stone-500 lg:pb-10;
+  }
+  .site-footer a {
+    @apply underline;
+  }
+
+  /* ── Index ─────────────────────────────────────────────── */
+  .index-head {
+    @apply pt-6 pb-5;
+  }
+  .index-title {
+    @apply font-serif text-3xl font-semibold tracking-tight sm:text-4xl;
+  }
+  .index-desc {
+    @apply mt-2 max-w-prose text-stone-600 dark:text-stone-400;
+  }
+  .index-desc a {
+    @apply text-accent underline;
+  }
+  .search {
+    @apply relative;
+  }
+  .search .icon {
+    @apply pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-stone-400;
+  }
+  .search input {
+    @apply h-12 w-full rounded-full border border-stone-200 bg-white pr-4 pl-11 text-base shadow-xs outline-none placeholder:text-stone-400 focus:border-accent dark:border-stone-800 dark:bg-stone-900;
+  }
+  .chips {
+    @apply -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none];
+  }
+  .chip {
+    @apply shrink-0 rounded-full border border-stone-200 px-3.5 py-1.5 text-sm text-stone-700 transition dark:border-stone-800 dark:text-stone-300;
+  }
+  .chip[aria-pressed="true"] {
+    @apply border-transparent bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900;
+  }
+  .cards {
+    @apply mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  .card-link {
+    @apply block no-underline;
+  }
+  .card-img {
+    @apply aspect-[4/3] w-full rounded-2xl bg-stone-200 object-cover transition dark:bg-stone-800;
+  }
+  .card-link:hover .card-img {
+    @apply brightness-95;
+  }
+  .card-ph {
+    @apply flex items-center justify-center font-serif text-5xl text-stone-400;
+  }
+  .card-body {
+    @apply px-1 pt-3;
+  }
+  .card-title {
+    @apply font-serif text-lg leading-snug font-semibold;
+  }
+  .card-meta {
+    @apply mt-1 flex gap-3 text-sm text-stone-500 dark:text-stone-400;
+  }
+  .card-meta span {
+    @apply inline-flex items-center gap-1;
+  }
+  .empty {
+    @apply py-16 text-center text-stone-500;
+  }
+  .notfound {
+    @apply py-20 text-center;
+  }
+
+  /* ── Recipe ────────────────────────────────────────────── */
+  .hero {
+    @apply mt-2 aspect-[4/3] w-full rounded-3xl bg-stone-200 object-cover sm:aspect-[16/9] dark:bg-stone-800;
+  }
+  .recipe-head {
+    @apply pt-6;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold tracking-wider text-accent uppercase;
+  }
+  .eyebrow a {
+    @apply no-underline;
+  }
+  .recipe-title {
+    @apply mt-1 font-serif text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl;
+  }
+  .recipe-desc {
+    @apply mt-2 max-w-prose text-stone-600 dark:text-stone-400;
+  }
+  .times {
+    @apply mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm;
+  }
+  .time {
+    @apply flex gap-1.5;
+  }
+  .time dt {
+    @apply text-stone-500 dark:text-stone-400;
+  }
+  .time dd {
+    @apply font-medium;
+  }
+  .time-total dd {
+    @apply text-accent;
+  }
+
+  .controls {
+    @apply fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-2 border-t border-stone-200 bg-stone-50/95 px-3 py-2 backdrop-blur-md;
+    @apply dark:border-stone-800 dark:bg-stone-950/95;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  @media (min-width: 1024px) {
+    .controls {
+      @apply static mt-6 justify-start gap-3 rounded-2xl border bg-white px-2 py-2 dark:bg-stone-900;
+    }
+  }
+  .stepper {
+    @apply flex items-center rounded-full bg-stone-200/60 dark:bg-stone-800/70;
+  }
+  .yield {
+    @apply min-w-24 px-1 text-center text-sm font-semibold tabular-nums;
+  }
+  .pill {
+    @apply relative inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-200/70 active:scale-95 dark:text-stone-200 dark:hover:bg-stone-800;
+  }
+  .pill[aria-pressed="true"] {
+    @apply bg-accent text-white hover:bg-accent;
+  }
+  .badge {
+    @apply absolute top-1 right-2 size-2 rounded-full bg-accent;
+  }
+
+  .notes {
+    @apply mt-5 space-y-2 empty:hidden;
+  }
+  .note {
+    @apply flex gap-2.5 rounded-xl px-4 py-3 text-sm leading-relaxed;
+  }
+  .note .icon {
+    @apply mt-0.5;
+  }
+  .note-warning {
+    @apply bg-amber-100/70 text-amber-950 dark:bg-amber-400/10 dark:text-amber-100;
+  }
+  .note-tip {
+    @apply bg-emerald-100/60 text-emerald-950 dark:bg-emerald-400/10 dark:text-emerald-100;
+  }
+  .note-info {
+    @apply bg-sky-100/60 text-sky-950 dark:bg-sky-400/10 dark:text-sky-100;
+  }
+
+  .recipe-grid {
+    @apply mt-8 grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14;
+  }
+  .col-ingredients {
+    @apply lg:sticky lg:top-16 lg:self-start;
+  }
+  .h2 {
+    @apply mb-3 font-serif text-xl font-semibold;
+  }
+  .h2-sm {
+    @apply mt-8 text-base;
+  }
+  .ing-section + .ing-section {
+    @apply mt-5;
+  }
+  .ing-title,
+  .step-title {
+    @apply mb-1 text-xs font-semibold tracking-wider text-stone-500 uppercase dark:text-stone-400;
+  }
+  .ing-list {
+    @apply divide-y divide-stone-200/70 dark:divide-stone-800;
+  }
+  .ing-label {
+    @apply flex cursor-pointer items-start gap-3 py-2.5;
+  }
+  .ing-check {
+    @apply mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-stone-300 transition checked:border-accent checked:bg-accent dark:border-stone-600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");
+    background-size: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .ing-check:checked {
+    background-size: 70%;
+  }
+  .ing-check:checked + .ing-text {
+    @apply text-stone-400 line-through decoration-stone-300 dark:text-stone-600 dark:decoration-stone-700;
+  }
+  .ing-check:checked + .ing-text .qty {
+    @apply text-stone-400 dark:text-stone-600;
+  }
+  .qty {
+    @apply font-semibold tabular-nums;
+  }
+  .ing-note {
+    @apply text-stone-500 dark:text-stone-400;
+  }
+  .ing-link,
+  .ref-link {
+    @apply text-accent underline decoration-accent/40 decoration-2;
+  }
+  .equip-list {
+    @apply space-y-1.5 text-sm;
+  }
+  .equip::first-letter {
+    @apply uppercase;
+  }
+  .equip-note {
+    @apply text-stone-500 dark:text-stone-400;
+  }
+  .tools {
+    @apply mt-8 flex flex-wrap gap-x-4 gap-y-2;
+  }
+  .link-btn {
+    @apply inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-accent dark:text-stone-400;
+  }
+
+  .step-section + .step-section {
+    @apply mt-6;
+  }
+  .step-list {
+    @apply space-y-1;
+  }
+  .step {
+    @apply -mx-3 flex gap-3 rounded-2xl px-3 py-3 transition;
+  }
+  .step-num {
+    @apply flex size-7 shrink-0 items-center justify-center rounded-full bg-stone-200 text-sm font-semibold tabular-nums transition dark:bg-stone-800;
+  }
+  .step-body {
+    @apply min-w-0 flex-1;
+  }
+  .step-text {
+    @apply leading-relaxed;
+  }
+  .step-note {
+    @apply mt-1.5 text-sm text-stone-500 dark:text-stone-400;
+  }
+  .step-img {
+    @apply mt-3 rounded-xl;
+  }
+  .step.done {
+    @apply opacity-45;
+  }
+  .step.done .step-num {
+    @apply bg-accent text-white;
+  }
+  .step.current {
+    @apply bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800;
+  }
+  .ref {
+    @apply font-medium;
+  }
+  .ref-q {
+    @apply rounded bg-accent/10 px-1 font-semibold text-accent tabular-nums;
+  }
+  .timer-chip {
+    @apply mx-0.5 inline-flex items-center gap-1 rounded-full bg-stone-900 px-2.5 py-0.5 align-baseline text-[0.9em] font-medium text-white transition active:scale-95 dark:bg-stone-100 dark:text-stone-900;
+  }
+  .timer-chip .icon {
+    @apply size-[1em];
+  }
+  .recipe-foot {
+    @apply mt-12 space-y-3 border-t border-stone-200 pt-6 text-sm text-stone-500 dark:border-stone-800 dark:text-stone-400;
+  }
+  .recipe-foot a {
+    @apply underline;
+  }
+  .tags {
+    @apply flex flex-wrap gap-3;
+  }
+
+  /* Cook mode: bigger type, focus on the current step. */
+  .cooking .step-text {
+    @apply text-lg sm:text-xl;
+  }
+  .cooking .recipe-desc,
+  .cooking .hero {
+    @apply hidden;
+  }
+
+  /* ── Customize sheet ───────────────────────────────────── */
+  .sheet {
+    @apply m-0 mt-auto max-h-[85dvh] w-full max-w-none rounded-t-3xl bg-white p-0 text-stone-900 shadow-2xl sm:m-auto sm:max-w-md sm:rounded-3xl dark:bg-stone-900 dark:text-stone-100;
+  }
+  .sheet::backdrop {
+    @apply bg-stone-950/40 backdrop-blur-[2px];
+  }
+  .sheet-inner {
+    @apply space-y-5 overflow-y-auto p-5;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+  .sheet-head {
+    @apply flex items-center justify-between;
+  }
+  .sheet-head h2 {
+    @apply font-serif text-xl font-semibold;
+  }
+  .opt[hidden] {
+    @apply hidden;
+  }
+  .opt-label {
+    @apply font-medium;
+  }
+  .opt-help {
+    @apply mt-0.5 block text-sm text-stone-500 dark:text-stone-400;
+  }
+  .opt-toggle {
+    @apply flex cursor-pointer items-center justify-between gap-4;
+  }
+  .opt-number {
+    @apply block;
+  }
+  .opt-number input {
+    @apply mt-3 w-full accent-accent;
+  }
+  .switch {
+    @apply relative h-7 w-12 shrink-0 cursor-pointer appearance-none rounded-full bg-stone-300 transition checked:bg-accent dark:bg-stone-700;
+  }
+  .switch::after {
+    @apply absolute top-1 left-1 size-5 rounded-full bg-white shadow transition content-[''];
+  }
+  .switch:checked::after {
+    @apply translate-x-5;
+  }
+  .seg {
+    @apply mt-2 flex rounded-xl bg-stone-100 p-1 dark:bg-stone-800;
+  }
+  .seg label {
+    @apply flex-1;
+  }
+  .seg input {
+    @apply peer sr-only;
+  }
+  .seg span {
+    @apply block cursor-pointer rounded-lg px-2 py-2 text-center text-sm text-stone-600 transition peer-checked:bg-white peer-checked:font-medium peer-checked:text-stone-900 peer-checked:shadow-sm peer-focus-visible:outline-2 peer-focus-visible:outline-accent dark:text-stone-300 dark:peer-checked:bg-stone-700 dark:peer-checked:text-white;
+  }
+
+  /* ── Timers ────────────────────────────────────────────── */
+  .timers {
+    @apply fixed inset-x-0 bottom-16 z-40 mx-auto flex max-w-md flex-col gap-2 px-3 lg:right-4 lg:bottom-4 lg:left-auto lg:mx-0 lg:w-80;
+  }
+  .timer {
+    @apply flex items-center gap-3 rounded-2xl bg-stone-900 py-2 pr-2 pl-4 text-white shadow-lg dark:bg-stone-100 dark:text-stone-900;
+  }
+  .timer-info {
+    @apply min-w-0 flex-1;
+  }
+  .timer-left {
+    @apply text-lg font-semibold tabular-nums;
+  }
+  .timer-label {
+    @apply truncate text-xs opacity-70;
+  }
+  .timer .icon-btn {
+    @apply size-9 text-current hover:bg-white/10 dark:hover:bg-stone-900/10;
+  }
+  .timer.done {
+    @apply animate-pulse bg-accent text-white;
+  }
+  .toast {
+    @apply fixed inset-x-0 bottom-20 z-50 mx-auto w-fit max-w-[90vw] rounded-full bg-stone-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-stone-100 dark:text-stone-900;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media print {
+  .topbar,
+  .controls,
+  .tools,
+  .timers,
+  .site-footer,
+  .hero,
+  .toast,
+  .ing-check {
+    display: none !important;
+  }
+  html {
+    background: white;
+    color: black;
+  }
+  main {
+    padding: 0;
+  }
+  .recipe-grid {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 2rem;
+  }
+  .step {
+    break-inside: avoid;
+  }
+}

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/RashKash103/get-cooked/internal/config"
@@ -18,24 +19,56 @@ var update = flag.Bool("update", false, "update golden files")
 
 const exampleSite = "../../examples/site"
 
+var (
+	exampleOnce sync.Once
+	examples    map[string]*recipe.Recipe
+	exampleErr  error
+)
+
+// compileExample compiles every example recipe (so recipe references link)
+// and returns the one at rel (relative to the recipes directory).
 func compileExample(t *testing.T, rel string) *recipe.Recipe {
 	t.Helper()
-	cfg, err := config.Load(exampleSite)
-	if err != nil {
-		t.Fatal(err)
+	exampleOnce.Do(func() {
+		cfg, err := config.Load(exampleSite)
+		if err != nil {
+			exampleErr = err
+			return
+		}
+		tb, err := cfg.UnitTable()
+		if err != nil {
+			exampleErr = err
+			return
+		}
+		db, ds := recipe.LoadDB([]string{cfg.Path("ingredients.yaml")}, tb)
+		if ds.HasErrors() {
+			exampleErr = ds
+			return
+		}
+		c := &recipe.Compiler{Units: tb, DB: db, System: cfg.Units.DefaultSystem}
+		files, _ := filepath.Glob(filepath.Join(exampleSite, "recipes", "*", "*.yaml"))
+		examples = map[string]*recipe.Recipe{}
+		var all []*recipe.Recipe
+		for _, f := range files {
+			r, ds := c.CompileFile(f)
+			if ds.HasErrors() {
+				exampleErr = ds
+				return
+			}
+			rel, _ := filepath.Rel(filepath.Join(exampleSite, "recipes"), f)
+			examples[filepath.ToSlash(rel)] = r
+			all = append(all, r)
+		}
+		if ds := recipe.Link(all); ds.HasErrors() {
+			exampleErr = ds
+		}
+	})
+	if exampleErr != nil {
+		t.Fatal(exampleErr)
 	}
-	tb, err := cfg.UnitTable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	db, ds := recipe.LoadDB([]string{cfg.Path("ingredients.yaml")}, tb)
-	if ds.HasErrors() {
-		t.Fatal(ds)
-	}
-	c := &recipe.Compiler{Units: tb, DB: db, System: cfg.Units.DefaultSystem}
-	r, ds := c.CompileFile(filepath.Join(exampleSite, "recipes", rel))
-	if ds.HasErrors() {
-		t.Fatal(ds)
+	r, ok := examples[rel]
+	if !ok {
+		t.Fatalf("no example %s", rel)
 	}
 	return r
 }

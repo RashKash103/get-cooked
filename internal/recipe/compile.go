@@ -338,7 +338,7 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 				d.plur = entry.Plural
 			}
 		}
-		if d.name == "" {
+		if d.name == "" && it.Recipe == "" {
 			d.name = strings.ReplaceAll(it.ID, "_", " ")
 		}
 		d.id = it.ID
@@ -348,7 +348,12 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 				d.id = identFrom(it.Name)
 			case entry != nil:
 				d.id = identFrom(entry.Key)
+			case it.Recipe != "":
+				d.id = identFrom(it.Recipe)
 			}
+		}
+		if it.Recipe != "" && (it.Ingredient != "" || it.Unit != "") {
+			cc.errAt(d.loc, "a recipe reference takes its unit from the linked recipe's servings; remove `ingredient:`/`unit:`")
 		}
 		if it.Unit != "" {
 			x, ok := cc.Units.Lookup(it.Unit)
@@ -671,6 +676,24 @@ func (cc *cctx) ingredients(f *File, comp *Compiled, sections []*sectionDraft, r
 					ic.When = &expr.Expr{Root: &expr.Node{Op: "&&", Args: []*expr.Node{opt, ic.When.Root}, Pos: -1}}
 				} else {
 					ic.When = &expr.Expr{Root: opt}
+				}
+			}
+			if it.Recipe != "" {
+				ref := &RecipeRef{Slug: it.Recipe}
+				for _, kv := range orderedPairs(&it.With) {
+					var src Src
+					if err := src.UnmarshalYAML(kv[1]); err != nil {
+						cc.errAt(cc.loc(kv[0].Line, kv[0].Column), "with.%s must be an expression", kv[0].Value)
+						continue
+					}
+					if e := cc.expr(src, "with."+kv[0].Value); e != nil {
+						ref.With = append(ref.With, WithC{ID: kv[0].Value, E: e})
+					}
+				}
+				ic.Recipe = ref
+				if !it.Amount.Set {
+					one := 1.0
+					ic.Amount = &AmountC{N: &one, S: it.Scale == nil || *it.Scale}
 				}
 			}
 			switch {

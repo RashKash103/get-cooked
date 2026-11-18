@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Custardy French Toast
+description: Thick slices of homemade bread soaked in a vanilla-cinnamon custard. Day-old bread works best.
+image: french-toast.svg
+category: Breakfast
+tags: [weekend, vegetarian]
+date: 2026-11-15
+
+servings: { default: 4, min: 1, max: 8 }
+
+options:
+  - id: wheat_bread
+    type: toggle
+    label: Use part whole-wheat bread
+
+vars:
+  slices: servings * 2
+
+ingredients:
+  # A recipe reference: the amount is in the bread recipe's own unit (loaves).
+  # Tapping it opens the bread recipe scaled to make enough, with whole wheat
+  # switched on when chosen here.
+  - id: bread
+    recipe: sandwich-bread
+    name: sandwich bread
+    amount: "slices / 14"
+    scale: false
+    note: "{slices} thick slices, a day old"
+    with:
+      wheat: "wheat_bread ? 25 : 0"
+  - { id: eggs, ingredient: egg, amount: 4 }
+  - { id: milk, ingredient: milk, amount: 1, unit: cup }
+  - { id: sugar, ingredient: granulated-sugar, amount: 2, unit: tbsp }
+  - { id: vanilla, ingredient: vanilla-extract, amount: 1, unit: tsp }
+  - { id: cinnamon, ingredient: cinnamon, amount: 0.5, unit: tsp }
+  - { id: salt, ingredient: kosher-salt, amount: 0.125, unit: tsp }
+  - { id: butter, ingredient: butter, amount: 2, unit: tbsp, note: for the pan }
+
+steps:
+  - Slice @bread{-} into {slices} slices about ¾ inch thick.
+  - Whisk @eggs, @milk, @sugar, @vanilla, @cinnamon and @salt in a shallow dish.
+  - Soak each slice ~{0.5} per side.
+  - Melt a little @butter{-} in a skillet over medium heat and cook the slices until deep golden, ~{3} per side.

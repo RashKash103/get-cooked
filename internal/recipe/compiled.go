@@ -103,7 +103,27 @@ type IngC struct {
 	When     *expr.Expr    `json:"when,omitempty"`
 	Note     tmpl.Template `json:"note,omitempty"`
 	Optional bool          `json:"optional,omitempty"`
+	Recipe   *RecipeRef    `json:"recipe,omitempty"`
 	L        Loc           `json:"-"`
+}
+
+// RecipeRef links an ingredient to another recipe (a prerequisite). The amount
+// is measured in the target recipe's servings unit.
+type RecipeRef struct {
+	Slug  string  `json:"slug"`
+	One   string  `json:"one"`
+	Other string  `json:"other"`
+	Min   float64 `json:"min"`
+	Max   float64 `json:"max"`
+	Step  float64 `json:"step"`
+	With  []WithC `json:"with,omitempty"`
+}
+
+// WithC passes a value to one of the target recipe's options.
+type WithC struct {
+	ID   string     `json:"id"`
+	Type string     `json:"type"`
+	E    *expr.Expr `json:"e"`
 }
 
 // AmountC is either a number (scaled when S) or an expression.

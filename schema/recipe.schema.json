@@ -401,6 +401,20 @@
             },
             "option_label": {
               "type": "string"
+            },
+            "recipe": {
+              "type": "string",
+              "description": "Slug of another recipe used as a prerequisite. amount is in that recipe's servings unit and the ingredient links to it."
+            },
+            "with": {
+              "type": "object",
+              "description": "Options to set on the linked recipe, e.g. {dairy_free: vegan}. Values are expressions.",
+              "propertyNames": {
+                "$ref": "#/$defs/identifier"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
             }
           },
           "anyOf": [
@@ -417,6 +431,11 @@
             {
               "required": [
                 "name"
+              ]
+            },
+            {
+              "required": [
+                "recipe"
               ]
             }
           ]

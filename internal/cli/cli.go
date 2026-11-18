@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -149,27 +150,28 @@ func renderCmd() *cobra.Command {
 			if dir == "" {
 				dir = findSiteRoot(args[0])
 			}
-			cfg, err := config.Load(dir)
+			s, err := site.Load(dir, site.LoadOptions{Drafts: true})
 			if err != nil {
-				return err
+				return printLoadError(cmd, err, "text")
 			}
-			tb, err := cfg.UnitTable()
-			if err != nil {
-				return err
+			abs, _ := filepath.Abs(args[0])
+			var r *recipe.Recipe
+			for _, x := range s.Recipes {
+				if p, _ := filepath.Abs(x.Path); p == abs {
+					r = x
+				}
 			}
-			paths := make([]string, len(cfg.Ingredients))
-			for i, p := range cfg.Ingredients {
-				paths[i] = cfg.Path(p)
-			}
-			db, ds := recipe.LoadDB(paths, tb)
-			if ds.HasErrors() {
-				printDiags(cmd.ErrOrStderr(), ds, "text")
-				return exitError{}
-			}
-			c := &recipe.Compiler{Units: tb, DB: db, System: cfg.Units.DefaultSystem}
-			r, ds := c.CompileFile(args[0])
-			if ds.HasErrors() {
-				printDiags(cmd.ErrOrStderr(), ds, "text")
+			if r == nil {
+				var mine recipe.Diags
+				for _, d := range s.Diags {
+					if p, _ := filepath.Abs(d.File); p == abs {
+						mine = append(mine, d)
+					}
+				}
+				if len(mine) == 0 {
+					return fmt.Errorf("%s is not a recipe under %s", args[0], s.Config.Dir)
+				}
+				printDiags(cmd.ErrOrStderr(), mine, "text")
 				return exitError{}
 			}
 			st := runtime.State{Servings: servings, System: system, Options: map[string]any{}}

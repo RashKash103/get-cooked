@@ -98,42 +98,20 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 		diags recipe.Diags
 	}
 	results := make([]result, len(files))
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 8)
-	for i, f := range files {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			r, ds := comp.CompileFile(f)
-			if r != nil && !ds.HasErrors() {
-				if r.Category == "" {
-					if rel, err := filepath.Rel(root, filepath.Dir(f)); err == nil && rel != "." {
-						r.Category = titleCase(strings.Split(rel, string(filepath.Separator))[0])
-					}
-				}
-				if opts.Sweep {
-					ds = append(ds, runtime.Sweep(r)...)
-				} else if _, err := runtime.Render(r.C, runtime.State{}); err != nil {
-					d := recipe.Diag{File: f, Msg: err.Error()}
-					if re, ok := err.(*runtime.Error); ok {
-						d.Line, d.Col = re.Loc.Line, re.Loc.Col
-					}
-					ds = append(ds, d)
-				}
+	parallel(len(files), func(i int) {
+		r, ds := comp.CompileFile(files[i])
+		if r != nil && !ds.HasErrors() && r.Category == "" {
+			if rel, err := filepath.Rel(root, filepath.Dir(files[i])); err == nil && rel != "." {
+				r.Category = titleCase(strings.Split(rel, string(filepath.Separator))[0])
 			}
-			results[i] = result{r, ds}
-		}()
-	}
-	wg.Wait()
+		}
+		results[i] = result{r, ds}
+	})
 	slugs := map[string]string{}
+	var all []*recipe.Recipe
 	for _, res := range results {
 		s.Diags = append(s.Diags, res.diags...)
 		if res.r == nil || res.diags.HasErrors() {
-			continue
-		}
-		if res.r.Draft && !opts.Drafts {
 			continue
 		}
 		if prev, ok := slugs[res.r.Slug]; ok {
@@ -141,7 +119,38 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 			continue
 		}
 		slugs[res.r.Slug] = res.r.Path
-		s.Recipes = append(s.Recipes, res.r)
+		all = append(all, res.r)
+	}
+	linkDiags := recipe.Link(all)
+	s.Diags = append(s.Diags, linkDiags...)
+	broken := map[string]bool{}
+	for _, d := range linkDiags {
+		broken[d.File] = true
+	}
+	checks := make([]recipe.Diags, len(all))
+	parallel(len(all), func(i int) {
+		r := all[i]
+		if broken[r.Path] {
+			return
+		}
+		if opts.Sweep {
+			checks[i] = runtime.Sweep(r)
+			return
+		}
+		if _, err := runtime.Render(r.C, runtime.State{}); err != nil {
+			d := recipe.Diag{File: r.Path, Msg: err.Error()}
+			if re, ok := err.(*runtime.Error); ok {
+				d.Line, d.Col = re.Loc.Line, re.Loc.Col
+			}
+			checks[i] = recipe.Diags{d}
+		}
+	})
+	for i, r := range all {
+		s.Diags = append(s.Diags, checks[i]...)
+		if checks[i].HasErrors() || broken[r.Path] || r.Draft && !opts.Drafts {
+			continue
+		}
+		s.Recipes = append(s.Recipes, r)
 	}
 	sort.SliceStable(s.Recipes, func(i, j int) bool {
 		a, b := s.Recipes[i], s.Recipes[j]
@@ -151,6 +160,21 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 		return strings.ToLower(a.Title) < strings.ToLower(b.Title)
 	})
 	return s, nil
+}
+
+func parallel(n int, fn func(i int)) {
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 8)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			fn(i)
+		}()
+	}
+	wg.Wait()
 }
 
 func titleCase(s string) string {

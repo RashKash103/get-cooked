@@ -1,0 +1,33 @@
+{{define "content"}}
+<div class="index">
+  <div class="index-head">
+    <h1 class="index-title">{{.Site.Title}}</h1>
+    {{with .Site.Description}}<p class="index-desc">{{.}}</p>{{end}}
+  </div>
+  <div class="search">
+    <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+    <input type="search" id="search" placeholder="Search recipes or ingredients" aria-label="Search recipes" autocomplete="off">
+  </div>
+  {{if gt (len .Index.Categories) 1}}
+  <nav class="chips" aria-label="Categories">
+    <button type="button" class="chip" data-cat="" aria-pressed="true">All</button>
+    {{range .Index.Categories}}<button type="button" class="chip" data-cat="{{.}}" aria-pressed="false">{{.}}</button>{{end}}
+  </nav>
+  {{end}}
+  <ul class="cards" id="cards">
+    {{range .Index.Cards}}
+    <li class="card" data-cat="{{.Category}}" data-search="{{.Search}}">
+      <a href="{{.URL}}" class="card-link">
+        {{if .Image}}<img class="card-img" src="{{.Image}}" {{with .SrcSet}}srcset="{{.}}" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"{{end}} alt="" loading="lazy" decoding="async">
+        {{else}}<div class="card-img card-ph" aria-hidden="true">{{.Initial}}</div>{{end}}
+        <div class="card-body">
+          <h2 class="card-title">{{.Title}}</h2>
+          <p class="card-meta">{{with .Category}}<span>{{.}}</span>{{end}}{{with .Time}}<span><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg>{{.}}</span>{{end}}</p>
+        </div>
+      </a>
+    </li>
+    {{end}}
+  </ul>
+  <p class="empty" id="empty" hidden>No recipes match.</p>
+</div>
+{{end}}

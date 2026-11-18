@@ -63,6 +63,14 @@ type IngM struct {
 	Name     string     `json:"name"`
 	Note     string     `json:"note"`
 	Optional bool       `json:"optional"`
+	Link     *LinkM     `json:"link"`
+}
+
+// LinkM points at another recipe with the servings and options to open it with.
+type LinkM struct {
+	Slug     string         `json:"slug"`
+	Servings float64        `json:"servings"`
+	Options  map[string]any `json:"options"`
 }
 
 // StepSectionM is a rendered step section.
@@ -84,8 +92,9 @@ type Seg struct {
 	T   string  `json:"t"` // text | ing | eq | timer
 	V   string  `json:"v"`
 	ID  string  `json:"id"`
-	Q   string  `json:"q"`
-	Min float64 `json:"min"`
+	Q    string  `json:"q"`
+	Min  float64 `json:"min"`
+	Link *LinkM  `json:"link"`
 }
 
 // NoteM is a rendered note.
@@ -317,6 +326,9 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 			if a.has {
 				q := r.qty(a.ic, a.value)
 				im.Q = &q
+				if im.Link, err = r.link(a.ic, a.value); err != nil {
+					return nil, err
+				}
 			}
 			im.Name = r.name(a.ic, im.Q)
 			note, err := r.flat(a.ic.Note, a.ic.L)
@@ -400,7 +412,48 @@ func (r *rctx) amount(ic *recipe.IngC) (float64, error) {
 	return v, nil
 }
 
+var recipeRule = units.Rule{Denoms: []int{2, 3, 4}}
+
+// link builds the link to a referenced recipe: servings are rounded up to
+// what the target can make, and `with:` options are evaluated here.
+func (r *rctx) link(ic *recipe.IngC, v float64) (*LinkM, error) {
+	ref := ic.Recipe
+	if ref == nil {
+		return nil, nil
+	}
+	step := ref.Step
+	if step <= 0 {
+		step = 1
+	}
+	s := math.Ceil(v/step-1e-9) * step
+	s = expr.RoundTo(math.Min(math.Max(s, ref.Min), ref.Max), 6)
+	l := &LinkM{Slug: ref.Slug, Servings: s, Options: map[string]any{}}
+	for _, w := range ref.With {
+		val, err := w.E.Eval(expr.MapEnv(r.env))
+		if err != nil {
+			return nil, fail(ic.L, "with.%s: %v", w.ID, err)
+		}
+		want := map[string]expr.Kind{"toggle": expr.KBool, "choice": expr.KStr, "number": expr.KNum}[w.Type]
+		if w.Type != "" && val.Kind != want {
+			return nil, fail(ic.L, "with.%s: option is a %s, but the value is %s %q", w.ID, w.Type, val.Kind, val.String())
+		}
+		l.Options[w.ID] = val.Interface()
+	}
+	return l, nil
+}
+
 func (r *rctx) qty(ic *recipe.IngC, v float64) units.Qty {
+	if ref := ic.Recipe; ref != nil {
+		q := recipeRule.Round(v)
+		if q == 0 {
+			q = 0.25
+		}
+		unit := ref.Other
+		if q <= 1 {
+			unit = ref.One
+		}
+		return units.Qty{Value: q, Text: r.c.Units.FormatFraction(q), Unit: unit, ID: "recipe"}
+	}
 	unit := ic.Unit
 	if unit == "" {
 		unit = "each"
@@ -493,6 +546,13 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 				qq := r.qty(a.ic, v)
 				q = &qq
 				seg.Q = qq.String()
+			}
+			if a.has {
+				link, err := r.link(a.ic, a.value)
+				if err != nil {
+					return nil, err
+				}
+				seg.Link = link
 			}
 			seg.V = r.name(a.ic, q)
 			out = append(out, seg)

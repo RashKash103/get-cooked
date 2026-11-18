@@ -1,0 +1,15 @@
+{
+  "name": "get-cooked-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "build": "pnpm --filter web build",
+    "test": "pnpm --filter web test",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "e2e": "pnpm --filter e2e test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8"
+  }
+}

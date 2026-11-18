@@ -1,0 +1,91 @@
+{{define "content"}}
+{{$r := .Recipe}}
+<article class="recipe" id="recipe" data-slug="{{$r.R.Slug}}">
+  {{if $r.Image}}
+  <img class="hero" src="{{$r.Image}}" {{with $r.SrcSet}}srcset="{{.}}" sizes="(min-width: 1024px) 64rem, 100vw"{{end}} alt="{{$r.ImageAlt}}" fetchpriority="high" decoding="async">
+  {{end}}
+  <header class="recipe-head">
+    {{with $r.R.Category}}<p class="eyebrow"><a href="{{$.Base}}?c={{.}}">{{.}}</a></p>{{end}}
+    <h1 class="recipe-title">{{$r.R.Title}}</h1>
+    {{with $r.R.Description}}<p class="recipe-desc">{{.}}</p>{{end}}
+    <dl class="times" id="times">{{$r.Times}}</dl>
+  </header>
+
+  <div class="controls" id="controls">
+    <div class="stepper" role="group" aria-label="Servings">
+      <button type="button" class="icon-btn" data-servings="-1" aria-label="Fewer"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button>
+      <output class="yield" id="yield" aria-live="polite">{{$r.M.Yield}}</output>
+      <button type="button" class="icon-btn" data-servings="1" aria-label="More"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>
+    </div>
+    <button type="button" class="pill" id="customize" aria-haspopup="dialog">
+      <svg class="icon" aria-hidden="true"><use href="#i-sliders"></use></svg><span>Customize</span><span class="badge" id="changes" hidden></span>
+    </button>
+    <button type="button" class="pill" id="cook-mode" aria-pressed="false" title="Keep the screen on and focus on steps">
+      <svg class="icon" aria-hidden="true"><use href="#i-flame"></use></svg><span>Cook</span>
+    </button>
+  </div>
+
+  <div id="warnings" class="notes">{{$r.Warnings}}</div>
+
+  <div class="recipe-grid">
+    <div class="col-ingredients">
+      <h2 class="h2">Ingredients</h2>
+      <div id="ingredients">{{$r.Ingredients}}</div>
+      <div id="equipment-wrap" {{if not $r.M.Equipment}}hidden{{end}}>
+        <h2 class="h2 h2-sm">Equipment</h2>
+        <ul class="equip-list" id="equipment">{{$r.Equipment}}</ul>
+      </div>
+      <div class="tools">
+        <button type="button" class="link-btn" id="copy-ingredients"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>Copy list</button>
+        <button type="button" class="link-btn" id="share"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg>Share</button>
+        <button type="button" class="link-btn" id="print"><svg class="icon" aria-hidden="true"><use href="#i-printer"></use></svg>Print</button>
+      </div>
+    </div>
+    <div class="col-steps">
+      <h2 class="h2">Steps</h2>
+      <div id="steps">{{$r.Steps}}</div>
+      <div id="tips" class="notes">{{$r.Tips}}</div>
+    </div>
+  </div>
+
+  <footer class="recipe-foot">
+    {{with $r.R.Source}}<p>Source: {{if .URL}}<a href="{{.URL}}" rel="noopener">{{if .Name}}{{.Name}}{{else}}{{.URL}}{{end}}</a>{{else}}{{.Name}}{{end}}</p>{{end}}
+    {{with $r.R.Tags}}<ul class="tags">{{range .}}<li><a href="{{$.Base}}?q={{.}}">#{{.}}</a></li>{{end}}</ul>{{end}}
+  </footer>
+</article>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+  <form method="dialog" class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="sheet-title">Customize</h2>
+      <button class="icon-btn" value="close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    </div>
+    {{range $r.R.C.Options}}
+    <div class="opt" data-opt="{{.ID}}">
+      {{if eq .Type "toggle"}}
+      <label class="opt-toggle"><span><span class="opt-label">{{.Label}}</span>{{with .Help}}<span class="opt-help">{{.}}</span>{{end}}</span>
+        <input type="checkbox" class="switch" name="{{.ID}}" data-type="toggle"></label>
+      {{else if eq .Type "choice"}}
+      <fieldset><legend class="opt-label">{{.Label}}</legend>{{with .Help}}<p class="opt-help">{{.}}</p>{{end}}
+        <div class="seg">{{$id := .ID}}{{range .Choices}}<label><input type="radio" name="{{$id}}" value="{{.ID}}" data-type="choice"><span>{{.Label}}</span></label>{{end}}</div>
+      </fieldset>
+      {{else}}
+      <label class="opt-number"><span class="opt-label">{{.Label}} <output data-for="{{.ID}}"></output>{{.Unit}}</span>{{with .Help}}<span class="opt-help">{{.}}</span>{{end}}
+        <input type="range" name="{{.ID}}" min="{{.Min}}" max="{{.Max}}" step="{{.Step}}" data-type="number"></label>
+      {{end}}
+    </div>
+    {{end}}
+    <fieldset class="opt"><legend class="opt-label">Units</legend>
+      <div class="seg">
+        <label><input type="radio" name="__units" value="original"><span>As written</span></label>
+        <label><input type="radio" name="__units" value="us"><span>US</span></label>
+        <label><input type="radio" name="__units" value="metric"><span>Metric</span></label>
+      </div>
+    </fieldset>
+    <button type="button" class="link-btn" id="reset"><svg class="icon" aria-hidden="true"><use href="#i-reset"></use></svg>Reset to original</button>
+  </form>
+</dialog>
+
+<div class="timers" id="timers" aria-live="polite"></div>
+<script type="application/json" id="recipe-data">{{$r.Data}}</script>
+{{end}}
