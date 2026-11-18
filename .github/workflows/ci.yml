@@ -47,7 +47,7 @@ jobs:
         with:
           name: web-dist
           path: internal/assets/dist
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15
       - uses: typst-community/setup-typst@v4
