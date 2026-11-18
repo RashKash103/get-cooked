@@ -56,6 +56,11 @@ func TestFormat(t *testing.T) {
 		{0.3, "cup", Original, nil, true, "⅓ cup"},
 		{3, "tsp", Original, nil, true, "3 tsp"},
 		{1, "tsp", Metric, nil, false, "5 ml"},
+		{0.875, "cup", Original, nil, false, "¾ cup + 2 tbsp"},
+		{10, "tbsp", Original, nil, false, "⅔ cup"},
+		{9, "tbsp", Original, nil, false, "½ cup + 1 tbsp"},
+		{1.125, "cup", Original, nil, false, "1 cup + 2 tbsp"},
+		{7, "tbsp", Original, nil, false, "7 tbsp"},
 	}
 	for _, c := range cases {
 		got := tb.Format(c.amount, c.unit, c.system, c.ing, c.fixed).String()
@@ -126,6 +131,9 @@ func TestTempLengthDuration(t *testing.T) {
 		{Duration(60), "1 hr"},
 		{Duration(75.4), "1 hr 15 min"},
 		{Duration(0.5), "30 sec"},
+		{Duration(2.5), "2 min 30 sec"},
+		{Duration(1.99), "2 min"},
+		{Duration(12.5), "13 min"},
 		{Duration(0), "0 min"},
 	}
 	for i, c := range cases {

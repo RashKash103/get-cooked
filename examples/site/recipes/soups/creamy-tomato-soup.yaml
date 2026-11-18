@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Creamy Tomato Basil Soup
+description: Velvety, bright tomato soup from pantry staples, with a dairy-free switch.
+image: creamy-tomato-soup.svg
+category: Soups
+tags: [vegetarian, pantry, one-pot]
+date: 2026-11-10
+
+servings: { default: 6, min: 2, max: 12, step: 2 }
+
+options:
+  - id: vegan
+    type: toggle
+    label: Dairy-free
+    help: Olive oil and coconut milk instead of butter and cream.
+  - id: blend
+    type: choice
+    label: Texture
+    default: smooth
+    choices: [smooth, chunky]
+
+vars:
+  cans: max(1, round(servings / 3))
+
+times:
+  prep: 10
+  cook: 30
+
+equipment:
+  - { id: pot, name: "{servings > 8 ? 'large Dutch oven' : 'heavy pot'}" }
+  - { id: blender, name: immersion blender, when: "blend == 'smooth'" }
+
+ingredients:
+  - { id: fat, ingredient: butter, amount: 3, unit: tbsp, when: "!vegan" }
+  - { id: fat, ingredient: olive-oil, amount: 3, unit: tbsp, when: vegan }
+  - { id: onion, ingredient: yellow-onion, amount: 1, note: chopped }
+  - { id: garlic, ingredient: garlic, amount: 4, unit: clove, note: smashed }
+  - { id: flakes, ingredient: red-pepper-flakes, amount: 0.25, unit: tsp }
+  - { id: tomatoes, ingredient: crushed-tomatoes, amount: cans, unit: can, note: 28 oz each }
+  - { id: broth, ingredient: vegetable-broth, amount: 2, unit: cup }
+  - { id: salt, ingredient: kosher-salt, amount: 1.5, unit: tsp }
+  - { id: sugar, ingredient: granulated-sugar, amount: 1, unit: tsp, note: if the tomatoes taste sharp }
+  - { id: cream, ingredient: heavy-cream, amount: 0.5, unit: cup, when: "!vegan" }
+  - { id: cream, ingredient: coconut-milk, amount: 0.5, unit: cup, when: vegan, note: full-fat }
+  - { id: basil, ingredient: fresh-basil, amount: 0.5, unit: cup, note: "torn, plus more to serve" }
+
+steps:
+  - Warm @fat in the &pot over medium heat. Add @onion and cook, stirring, until soft, ~{8}.
+  - Add @garlic and @flakes and cook until fragrant, ~{1}.
+  - Pour in @tomatoes and @broth, add @salt, and simmer ~{20}, stirring now and then.
+  - "{if blend == 'smooth'}Turn off the heat, add @basil{-} and blend with the &blender until silky.{else}Stir in @basil{-} and mash a little with a spoon for a rustic soup.{end}"
+  - Stir in @cream and warm through without boiling. Taste and add @sugar if needed.
+
+notes:
+  - kind: tip
+    text: The soup freezes beautifully for up to 3 months. Add the {if vegan}coconut milk{else}cream{end} after thawing.

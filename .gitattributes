@@ -1,0 +1,1 @@
+testdata/conformance/*.json linguist-generated=true -diff

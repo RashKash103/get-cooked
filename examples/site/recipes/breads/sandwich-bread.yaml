@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Soft Sandwich Bread
+description: A forgiving, fluffy loaf. Pick your pan and the dough scales to fit it exactly.
+image: sandwich-bread.svg
+category: Breads
+tags: [baking, yeast]
+date: 2026-08-30
+
+servings: { default: 1, min: 1, max: 3, unit: loaf, plural: loaves }
+
+options:
+  - id: pan
+    type: choice
+    label: Loaf pan
+    default: nine
+    choices:
+      - { id: eight, label: 8½ × 4½ inch }
+      - { id: nine, label: 9 × 5 inch }
+  - id: wheat
+    type: number
+    label: Whole wheat
+    unit: "%"
+    help: Share of the flour that is whole wheat.
+    min: 0
+    max: 50
+    step: 25
+    default: 0
+
+# The recipe is written for a 9×5 pan; a smaller pan needs about 20% less dough.
+scaling: "servings * (pan == 'eight' ? 0.8 : 1)"
+
+vars:
+  flour_total: 3.5
+  bake: "pan == 'eight' ? 32 : 35"
+
+times:
+  active: 20
+  rise: 120
+  bake: bake
+
+equipment:
+  - { id: loaf_pan, name: "{pan == 'eight' ? '8½×4½ inch' : '9×5 inch'} loaf {plural(servings, 'pan')}" }
+  - { id: mixer, name: stand mixer with dough hook, note: or knead by hand }
+
+ingredients:
+  - { id: water, ingredient: water, amount: 1, unit: cup, note: warm (about 110°F) }
+  - { id: milk, ingredient: milk, amount: 0.33, unit: cup, note: warm }
+  - { id: yeast, ingredient: instant-yeast, amount: 2.25, unit: tsp }
+  - { id: honey, ingredient: honey, amount: 2, unit: tbsp }
+  - { id: butter, ingredient: butter, amount: 3, unit: tbsp, note: soft }
+  - { id: salt, ingredient: kosher-salt, amount: 2, unit: tsp }
+  - id: bread_flour
+    ingredient: bread-flour
+    amount: "flour_total * (1 - wheat / 100) * scale"
+    unit: cup
+  - id: ww_flour
+    ingredient: whole-wheat-flour
+    amount: "flour_total * wheat / 100 * scale"
+    unit: cup
+
+steps:
+  - Stir @water, @milk, @yeast and @honey in the bowl of a &mixer. Let stand ~{5} until foamy.
+  - "Add @butter, @salt, @bread_flour{if wheat > 0} and @ww_flour{end}. Knead on medium-low ~{8} until smooth and tacky."
+  - Cover and let rise until doubled, ~{60}{if wheat >= 50} (whole wheat dough can take a little longer){end}.
+  - "{if servings > 1}Divide the dough into {servings} pieces. {end}Shape into {servings > 1 ? 'logs' : 'a log'} and place in the greased &loaf_pan. Rise until crowned an inch above the rim, ~{45}."
+  - Bake at {350 | temp} ~{bake} until deep golden and {195 | temp} inside. Cool completely before slicing.

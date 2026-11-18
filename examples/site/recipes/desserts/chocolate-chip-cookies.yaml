@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Brown Butter Chocolate Chip Cookies
+description: Crisp edges, gooey centers, and an optional brown-butter upgrade. Bake a few now and freeze the rest.
+image: chocolate-chip-cookies.svg
+category: Desserts
+tags: [baking, freezer-friendly]
+date: 2026-11-01
+
+servings: { default: 24, min: 6, max: 72, step: 6, unit: cookie }
+
+options:
+  - id: brown_butter
+    type: toggle
+    label: Brown the butter
+    help: Nutty and toffee-like. Adds about 10 minutes.
+    default: true
+  - id: rest
+    type: choice
+    label: Rest the dough
+    default: short
+    choices:
+      - { id: none, label: Bake right away }
+      - { id: short, label: 30 minutes }
+      - { id: overnight, label: Overnight (best flavor) }
+
+vars:
+  sheets: ceil(servings / 12)
+  rest_minutes: "rest == 'none' ? 0 : rest == 'short' ? 30 : 12 * 60"
+
+times:
+  prep: "brown_butter ? 25 : 15"
+  rest: rest_minutes
+  bake: "11 * sheets"
+
+equipment:
+  - { id: saucepan, name: light-colored saucepan, when: brown_butter }
+  - { id: sheet, name: "{sheets} {plural(sheets, 'baking sheet')}", note: lined with parchment }
+  - { id: scoop, name: 2-tablespoon cookie scoop, note: or a spoon }
+
+ingredients:
+  - id: butter
+    ingredient: butter
+    amount: 1
+    unit: stick
+    note: "{if brown_butter}to brown{else}softened{end}"
+  - id: water
+    ingredient: water
+    amount: 1
+    unit: tbsp
+    when: brown_butter
+    note: replaces the moisture lost while browning
+  - { id: brown_sugar, ingredient: brown-sugar, amount: 0.75, unit: cup, note: packed }
+  - { id: sugar, ingredient: granulated-sugar, amount: 0.5, unit: cup }
+  - { id: egg, ingredient: egg, amount: 1 }
+  - { id: yolk, ingredient: egg-yolk, amount: 1 }
+  - { id: vanilla, ingredient: vanilla-extract, amount: 2, unit: tsp }
+  - { id: flour, ingredient: all-purpose-flour, amount: 1.75, unit: cup }
+  - { id: soda, ingredient: baking-soda, amount: 0.75, unit: tsp }
+  - { id: salt, ingredient: kosher-salt, amount: 1, unit: tsp }
+  - { id: chips, ingredient: chocolate-chips, amount: 1.5, unit: cup }
+  - id: flaky_salt
+    ingredient: flaky-salt
+    name: flaky sea salt
+    note: for sprinkling
+    optional: true
+    default: true
+
+steps:
+  - when: brown_butter
+    text: >-
+      Melt @butter in the &saucepan over medium heat, swirling, until it foams, then turns
+      deep golden with brown bits on the bottom, ~{6}. Scrape into a large bowl, stir in @water
+      and let cool ~{10}.
+  - text: >-
+      {if brown_butter}Whisk @brown_sugar and @sugar into the browned butter{else}Beat softened @butter{-}
+      with @brown_sugar and @sugar until fluffy, ~{2}{end}. Add @egg, @yolk and @vanilla and whisk until glossy.
+  - Stir in @flour, @soda and @salt until just combined, then fold in @chips.
+  - when: rest != 'none'
+    text: "Cover and refrigerate the dough {if rest == 'overnight'}overnight (up to 72 hours){else}~{30}{end}."
+  - Heat the oven to {350 | temp}. Scoop dough onto the lined sheets, about 12 per sheet, 2 inches apart.
+  - Bake one sheet at a time ~{11}, until the edges are set and golden but the centers look underdone{if flaky_salt}. Sprinkle with a pinch of @flaky_salt{-} right away{end}.
+  - Cool on the sheet ~{5} before moving to a rack.
+
+notes:
+  - when: rest == 'none'
+    kind: tip
+    text: Unrested dough spreads more. For thicker cookies, chill the scooped dough for even 15 minutes.
+  - kind: tip
+    text: Freeze scooped dough balls on a tray, then bag them. Bake from frozen, adding 1–2 minutes.

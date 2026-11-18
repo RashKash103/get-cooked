@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Crispy Smoked-Paprika Chicken Thighs
+description: Shatter-crisp skin, juicy meat, and a spice rub you can dial up or down. Oven or air fryer.
+image: crispy-chicken-thighs.svg
+category: Mains
+tags: [weeknight, gluten-free, dairy-free]
+cuisine: American
+date: 2026-10-20
+
+servings: { default: 4, min: 1, max: 8 }
+
+options:
+  - id: method
+    type: choice
+    label: Cook in
+    default: oven
+    choices:
+      - { id: oven, label: Oven }
+      - { id: air_fryer, label: Air fryer }
+  - id: heat
+    type: number
+    label: Spice level
+    help: 0 is mild and smoky; 3 brings real heat.
+    min: 0
+    max: 3
+    step: 1
+    default: 1
+
+vars:
+  thighs: max(1, round(servings * 1.5))
+  # An air fryer basket holds about four thighs; more means cooking in batches.
+  batches: "method == 'air_fryer' ? ceil(thighs / 4) : 1"
+  cook: "method == 'air_fryer' ? 22 : 40"
+
+times:
+  prep: 10
+  cook: "cook * batches"
+  rest: 5
+
+equipment:
+  - id: cooker
+    name: rimmed sheet pan with a wire rack
+    when: method == 'oven'
+  - id: cooker
+    name: air fryer
+    when: method == 'air_fryer'
+  - { id: thermometer, name: instant-read thermometer, note: optional but helpful }
+
+ingredients:
+  - id: chicken
+    ingredient: chicken-thighs
+    amount: thighs
+    note: skin-on, patted very dry
+  - section: Rub
+    items:
+      - { id: salt, ingredient: kosher-salt, amount: 1.5, unit: tsp }
+      - { id: paprika, ingredient: smoked-paprika, amount: 2, unit: tsp }
+      - { id: garlic_powder, ingredient: garlic-powder, amount: 1, unit: tsp }
+      - { id: oregano, ingredient: dried-oregano, amount: 1, unit: tsp }
+      - { id: pepper, ingredient: black-pepper, amount: 0.5, unit: tsp }
+      - id: cayenne
+        ingredient: cayenne
+        # 0 at spice level 0 hides the ingredient entirely.
+        amount: "heat * 0.25 * scale"
+        unit: tsp
+      - { id: oil, ingredient: olive-oil, amount: 1, unit: tbsp }
+  - section: To serve
+    items:
+      - id: lemon
+        ingredient: lemon
+        amount: "max(0.5, ceil(servings / 4, 0.5))"
+        note: cut into wedges
+
+steps:
+  - section: Prep
+    steps:
+      - "{if method == 'oven'}Heat the oven to {425 | temp} and set a wire rack in a &cooker.{else}Preheat the &cooker to {400 | temp} for ~{3}.{end}"
+      - Stir together @salt, @paprika, @garlic_powder, @oregano, @pepper{if heat > 0} and @cayenne{end}.
+      - Rub @chicken{-} with @oil, then press the spice mix all over, getting some under the skin.
+  - section: Cook
+    steps:
+      - when: method == 'oven'
+        text: Arrange the thighs skin side up on the rack, leaving space between them. Roast ~{cook}, until the skin is deeply browned.
+      - when: method == 'air_fryer'
+        text: >-
+          Place up to 4 thighs skin side up in the basket{if batches > 1} (you'll cook {batches} batches){end}.
+          Air fry ~{cook}{if batches > 1} per batch{end}, until crisp.
+      - Check the thickest thigh with an &thermometer; it should read at least {175 | temp}.
+      - Rest the chicken ~{5}, then serve with @lemon{-} wedges for squeezing.
+
+notes:
+  - when: heat == 3
+    kind: warning
+    text: Spice level 3 is genuinely hot. Keep some yogurt or sour cream on the table.
+  - when: method == 'air_fryer' && batches > 1
+    kind: tip
+    text: "Keep finished batches warm on a rack in a {200 | temp} oven while the rest cook."

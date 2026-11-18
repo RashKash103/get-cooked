@@ -143,6 +143,13 @@ egg:
   grams_each: 50
   round: { step: 1, min: 1 }
   category: dairy
+egg-yolk:
+  name: egg yolk
+  plural: egg yolks
+  aliases: [yolk, yolks]
+  grams_each: 18
+  round: { step: 1, min: 1 }
+  category: dairy
 milk:
   name: milk
   aliases: [whole milk]

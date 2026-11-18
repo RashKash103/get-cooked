@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Fluffy Buttermilk Pancakes
+description: Tall, tender pancakes. No buttermilk? Flip one switch and the recipe uses milk and lemon instead.
+image: buttermilk-pancakes.svg
+category: Breakfast
+tags: [weekend, vegetarian]
+date: 2026-09-14
+
+servings: { default: 4, min: 1, max: 12, unit: serving }
+
+options:
+  - id: no_buttermilk
+    type: toggle
+    label: I don't have buttermilk
+    help: Uses milk soured with lemon juice instead.
+  - id: blueberries
+    type: toggle
+    label: Add blueberries
+
+vars:
+  pancakes: round(servings * 3)
+
+ingredients:
+  - section: Dry
+    items:
+      # Shorthand lines are parsed and matched to the ingredient database.
+      - 2 cups all-purpose flour
+      - 2 tbsp sugar
+      - 2 tsp baking powder
+      - 1/2 tsp baking soda
+      - 1/2 tsp kosher salt
+  - section: Wet
+    items:
+      # Two variants share the id `dairy`, so steps can refer to @dairy either way.
+      - { id: dairy, ingredient: buttermilk, amount: 2, unit: cup, when: "!no_buttermilk" }
+      - { id: dairy, ingredient: milk, amount: 1.75, unit: cup, when: no_buttermilk }
+      - { id: lemon_juice, ingredient: lemon-juice, amount: 2, unit: tbsp, when: no_buttermilk }
+      - { id: eggs, ingredient: egg, amount: 2 }
+      - { id: butter, ingredient: butter, amount: 3, unit: tbsp, note: "melted, plus more for the pan" }
+  - section: Extras
+    when: blueberries
+    items:
+      - { id: berries, name: fresh blueberries, amount: 1, unit: cup }
+
+steps:
+  - when: no_buttermilk
+    text: Stir @lemon_juice into @dairy and let it stand ~{5} until slightly thickened.
+  - Whisk @all_purpose_flour, @sugar, @baking_powder, @baking_soda and @kosher_salt in a large bowl.
+  - In another bowl whisk @dairy{if no_buttermilk} mixture{end}, @eggs and @butter.
+  - Pour the wet ingredients into the dry and fold just until no dry flour remains. Lumps are good. Rest ~{5}.
+  - >-
+    Heat a buttered griddle over medium heat. Pour scant ⅓-cup portions{if blueberries} and scatter
+    a few @berries{-} on each{end}. Cook until bubbles cover the surface, ~{2.5}, flip and cook ~{1.5} more.
+  - "Keep warm in a {200 | temp} oven while you cook the rest. Makes about {pancakes} pancakes."

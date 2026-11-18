@@ -123,6 +123,14 @@ func ValidateSchema(name, file string, root *yaml.Node) Diags {
 		}
 		seen[msg] = true
 		n := nodeAt(doc, l.InstanceLocation)
+		if n.Kind == yaml.MappingNode && n.Style&yaml.FlowStyle != 0 {
+			for i := 0; i < len(n.Content); i += 2 {
+				if strings.Contains(n.Content[i].Value, " ") {
+					msg += " (hint: a comma inside { … } separates fields, so quote text that contains commas)"
+					break
+				}
+			}
+		}
 		diags = append(diags, Diag{File: file, Line: n.Line, Col: n.Column, Msg: msg})
 	}
 	sort.SliceStable(diags, func(i, j int) bool { return diags[i].Line < diags[j].Line })

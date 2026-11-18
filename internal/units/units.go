@@ -49,6 +49,7 @@ type Rule struct {
 	Denoms []int   `json:"denoms,omitempty" yaml:"denoms"`
 	Tiers  []Tier  `json:"tiers,omitempty" yaml:"tiers"`
 	Min    float64 `json:"min,omitempty" yaml:"min"`   // smallest value this unit may display (ladders) / clamp (ingredients)
+	Max    float64 `json:"max,omitempty" yaml:"max"`   // above this, split into the next larger unit + remainder (ladders)
 	Tiny   string  `json:"tiny,omitempty" yaml:"tiny"` // label when a positive amount rounds to zero
 }
 
@@ -137,7 +138,7 @@ func Default() *Table {
 		Ladders: map[string][]Rung{
 			US + "." + Volume: {
 				{"tsp", Rule{Denoms: []int{2, 4, 8}, Tiny: "pinch"}},
-				{"tbsp", Rule{Denoms: []int{2}, Min: 1}},
+				{"tbsp", Rule{Denoms: []int{2}, Min: 1, Max: 8}},
 				{"cup", Rule{Denoms: []int{2, 3, 4}, Min: 0.25}},
 			},
 			US + "." + Mass: {
@@ -398,7 +399,9 @@ func (t *Table) ruleFor(sys, dim, id string) Rule {
 	return t.Fallback
 }
 
-// ladder picks the largest unit that represents base cleanly.
+// ladder picks the largest unit that represents base cleanly. A unit whose
+// value would exceed its Max is split into the next larger unit plus a
+// remainder ("¾ cup + 2 tbsp").
 func (t *Table) ladder(base float64, sys, dim string) Qty {
 	rungs := t.Ladders[sys+"."+dim]
 	if len(rungs) == 0 {
@@ -416,9 +419,15 @@ func (t *Table) ladder(base float64, sys, dim string) Qty {
 		x := t.Units[r.Unit]
 		val := base / x.Factor
 		v := r.Round(val)
-		if v > 0 && v >= r.Min && relErr(v, val) <= t.Tolerance {
-			return Qty{Value: v, Text: t.text(r.Rule, v), Unit: label(x, v), ID: x.ID}
+		if v <= 0 || v < r.Min || relErr(v, val) > t.Tolerance {
+			continue
 		}
+		if r.Max > 0 && v > r.Max && i+1 < len(rungs) {
+			if q, ok := t.compound(base, r, rungs[i+1]); ok {
+				return q
+			}
+		}
+		return Qty{Value: v, Text: t.text(r.Rule, v), Unit: label(x, v), ID: x.ID}
 	}
 	// Nothing fits within tolerance: use the smallest rung.
 	r := rungs[0]
@@ -432,6 +441,31 @@ func (t *Table) ladder(base float64, sys, dim string) Qty {
 		v = smallest(r.Rule)
 	}
 	return Qty{Value: v, Text: t.text(r.Rule, v), Unit: label(x, v), ID: x.ID}
+}
+
+func (t *Table) compound(base float64, small, big Rung) (Qty, bool) {
+	x, bx := t.Units[small.Unit], t.Units[big.Unit]
+	whole := floorTo(big.Rule, base/bx.Factor)
+	if whole <= 0 || whole < big.Min {
+		return Qty{}, false
+	}
+	rest := small.Round((base - whole*bx.Factor) / x.Factor)
+	if rest <= 0 {
+		return Qty{Value: whole, Text: t.text(big.Rule, whole), Unit: label(bx, whole), ID: bx.ID}, true
+	}
+	text := t.text(big.Rule, whole) + " " + label(bx, whole) + " + " + t.text(small.Rule, rest)
+	return Qty{Value: expr.RoundTo(whole+rest*x.Factor/bx.Factor, 6), Text: text, Unit: label(x, rest), ID: bx.ID}, true
+}
+
+// floorTo rounds x down to the largest value representable by the rule.
+func floorTo(r Rule, x float64) float64 {
+	best := 0.0
+	for _, d := range r.Denoms {
+		if c := math.Floor(x*float64(d)+1e-9) / float64(d); c > best {
+			best = c
+		}
+	}
+	return expr.RoundTo(best, 6)
 }
 
 func smallest(r Rule) float64 {
@@ -508,6 +542,18 @@ func Duration(min float64) string {
 	}
 	if min < 1 {
 		return expr.FormatNumber(math.Max(5, math.Round(min*60/5)*5)) + " sec"
+	}
+	secs := int(math.Round(min * 60))
+	if min < 10 && secs%60 != 0 {
+		sec := int(math.Round(float64(secs%60)/5) * 5)
+		m := secs / 60
+		if sec == 60 {
+			m, sec = m+1, 0
+		}
+		if sec == 0 {
+			return fmt.Sprintf("%d min", m)
+		}
+		return fmt.Sprintf("%d min %d sec", m, sec)
 	}
 	total := int(math.Round(min))
 	h, m := total/60, total%60
