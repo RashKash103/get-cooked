@@ -2,6 +2,8 @@
 title: Fluffy Buttermilk Pancakes
 description: Tall, tender pancakes. No buttermilk? Flip one switch and the recipe uses milk and lemon instead.
 image: buttermilk-pancakes.svg
+images:
+  - { when: blueberries, src: buttermilk-pancakes-blueberries.svg, alt: Pancakes scattered with blueberries }
 category: Breakfast
 tags: [weekend, vegetarian]
 date: 2026-09-14

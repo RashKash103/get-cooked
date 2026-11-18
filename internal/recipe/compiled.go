@@ -23,6 +23,7 @@ type Compiled struct {
 	Ingredients []IngSectionC         `json:"ingredients"`
 	Steps       []StepSectionC        `json:"steps"`
 	Notes       []NoteC               `json:"notes,omitempty"`
+	Images      []ImageC              `json:"images,omitempty"`
 	Ings        map[string]*units.Ing `json:"ings,omitempty"`
 	Units       *units.Table          `json:"units"`
 }
@@ -159,6 +160,16 @@ type StepC struct {
 	Note  tmpl.Template `json:"note,omitempty"`
 	Image string        `json:"image,omitempty"`
 	L     Loc           `json:"-"`
+}
+
+// ImageC is an image variant. Src is the file name relative to the recipe
+// until the site builder rewrites it to a URL (and fills SrcSet).
+type ImageC struct {
+	When   *expr.Expr `json:"when"`
+	Src    string     `json:"src"`
+	SrcSet string     `json:"srcset,omitempty"`
+	Alt    string     `json:"alt,omitempty"`
+	L      Loc        `json:"-"`
 }
 
 // NoteC is a compiled callout.

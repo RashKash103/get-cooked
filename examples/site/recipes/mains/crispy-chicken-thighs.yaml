@@ -2,6 +2,11 @@
 title: Crispy Smoked-Paprika Chicken Thighs
 description: Shatter-crisp skin, juicy meat, and a spice rub you can dial up or down. Oven or air fryer.
 image: crispy-chicken-thighs.svg
+# The recipe page shows the air fryer version when that method is chosen.
+images:
+  - when: method == 'air_fryer'
+    src: crispy-chicken-thighs-air-fryer.svg
+    alt: Crispy chicken thighs in an air fryer basket
 category: Mains
 tags: [weeknight, gluten-free, dairy-free]
 cuisine: American

@@ -123,6 +123,7 @@ export function initRecipe(): void {
     set("steps", renderSteps(m, base));
     set("warnings", renderNotes(m, true));
     set("tips", renderNotes(m, false));
+    paintImage(m);
     for (const el of document.querySelectorAll<HTMLElement>("[data-opt]")) {
       el.hidden = !m.options.includes(el.dataset.opt ?? "");
     }
@@ -161,6 +162,23 @@ export function initRecipe(): void {
     save(keyDone, done.size ? [...done] : undefined);
     paintSteps();
     document.querySelector(".step.current")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Swap the hero image when an image variant matches the reader's choices.
+  function paintImage(m: Model): void {
+    const hero = $<HTMLImageElement>("hero");
+    if (!hero) return;
+    const d = hero.dataset;
+    const src = m.image?.src || d.defaultSrc || "";
+    const srcset = m.image ? m.image.srcset : d.defaultSrcset || "";
+    if (hero.getAttribute("src") !== src) {
+      if (srcset) hero.setAttribute("srcset", srcset);
+      else hero.removeAttribute("srcset");
+      if (src) hero.setAttribute("src", src);
+      else hero.removeAttribute("src");
+    }
+    hero.alt = m.image?.alt || d.defaultAlt || "";
+    hero.hidden = !src;
   }
 
   function paintMeta(): void {

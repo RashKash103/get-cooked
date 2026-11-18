@@ -129,6 +129,7 @@ export interface Compiled {
   notes?: { when?: IR; kind: string; text: Template }[];
   ings?: Record<string, Ing>;
   units: Table;
+  images?: { when: IR; src: string; srcset?: string; alt?: string }[];
 }
 
 export type Value = number | string | boolean;
@@ -177,4 +178,5 @@ export interface Model {
   ingredients: { title: string; items: IngM[] }[];
   steps: { title: string; items: { n: number; segs: Seg[]; note: string; image: string }[] }[];
   notes: { kind: string; text: string }[];
+  image: { src: string; srcset: string; alt: string } | null;
 }

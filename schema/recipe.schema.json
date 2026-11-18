@@ -217,6 +217,29 @@
       "additionalProperties": {
         "$ref": "ingredients.schema.json#/$defs/entry"
       }
+    },
+    "images": {
+      "type": "array",
+      "description": "Image variants for the recipe page: the first whose `when` matches replaces `image` (which stays the default on the index and in previews).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "src",
+          "when"
+        ],
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "when": {
+            "$ref": "#/$defs/when"
+          }
+        }
+      }
     }
   },
   "$defs": {

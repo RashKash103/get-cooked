@@ -90,3 +90,20 @@ test("ranges render and scale", async ({ page }) => {
   await page.goto("/recipes/creamy-tomato-soup/?s=12");
   await expect(page.locator(".ing[data-id=garlic]")).toContainText("6–8 cloves garlic");
 });
+
+test("image variants follow the reader's choices", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('.card a[href$="/crispy-chicken-thighs/"] img')).toHaveAttribute("src", /crispy-chicken-thighs\.svg$/);
+  await page.goto("/recipes/crispy-chicken-thighs/");
+  const hero = page.locator("#hero");
+  await expect(hero).toHaveAttribute("src", /crispy-chicken-thighs\.svg$/);
+  await page.locator("#customize").click();
+  await page.locator("#sheet").getByText("Air fryer").click();
+  await expect(hero).toHaveAttribute("src", /crispy-chicken-thighs-air-fryer\.svg$/);
+  await expect(hero).toHaveAttribute("alt", "Crispy chicken thighs in an air fryer basket");
+  await page.locator("#sheet").getByText("Oven").click();
+  await expect(hero).toHaveAttribute("src", /crispy-chicken-thighs\.svg$/);
+  // A variant chosen through the URL is server-side independent but applied on load.
+  await page.goto("/recipes/buttermilk-pancakes/?o.blueberries=1");
+  await expect(hero).toHaveAttribute("src", /buttermilk-pancakes-blueberries\.svg$/);
+});

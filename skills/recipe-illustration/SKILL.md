@@ -67,6 +67,10 @@ Look at the existing `recipes/**/*.svg` files and match them.
 2. Write `<slug>.svg` next to the recipe. Keep it under about 12 KB; generate
    repetitive dots with a short script if needed and paste the result.
 3. Set `image: <slug>.svg` (and a short `image_alt`) in the recipe.
-4. Run `get-cooked validate`. If a browser preview is available, look at it
+4. If an option visibly changes the dish (a topping, a different cooking
+   vessel), offer a variant: draw `<slug>-<variant>.svg` from the same base
+   (same background and composition, only the changed element differs) and
+   add it under `images:` with a `when:` condition.
+5. Run `get-cooked validate`. If a browser preview is available, look at it
    next to two existing illustrations and adjust until it reads as part of
    the set.

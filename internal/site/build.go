@@ -88,6 +88,9 @@ type recipeView struct {
 	Data          template.JS
 	NotTranslated bool
 	SourceLang    string
+	// The default image (index, previews) when a variant is shown.
+	DefaultImage, DefaultSrcSet, DefaultAlt string
+	HasVariants                             bool
 }
 
 type card struct {
@@ -236,6 +239,18 @@ func (b *builder) lang(l *Lang) error {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
+		pageURL := base + "recipes/" + r.Slug + "/"
+		for ii := range r.C.Images {
+			im := &r.C.Images[ii]
+			if im.Src == "" || isRemote(im.Src) || strings.HasPrefix(im.Src, pageURL) {
+				continue
+			}
+			img, err := b.imgs.process(im.Src, filepath.Dir(r.Path), dir)
+			if err != nil {
+				return fmt.Errorf("%s: image variant: %w", r.Path, err)
+			}
+			im.Src, im.SrcSet = pageURL+img.src, prefixSrcSet(pageURL, img.srcset)
+		}
 		m, err := runtime.Render(r.C, runtime.State{})
 		if err != nil {
 			return fmt.Errorf("%s: %w", r.Path, err)
@@ -254,7 +269,6 @@ func (b *builder) lang(l *Lang) error {
 		if v.ImageAlt == "" {
 			v.ImageAlt = r.Title
 		}
-		pageURL := base + "recipes/" + r.Slug + "/"
 		if r.Image != "" {
 			img, err := b.imgs.process(r.Image, filepath.Dir(r.Path), dir)
 			if err != nil {
@@ -276,6 +290,14 @@ func (b *builder) lang(l *Lang) error {
 				}
 			}
 		}
+		v.DefaultImage, v.DefaultSrcSet, v.DefaultAlt = v.Image, v.SrcSet, v.ImageAlt
+		v.HasVariants = len(r.C.Images) > 0
+		if m.Image != nil {
+			v.Image, v.SrcSet = m.Image.Src, m.Image.SrcSet
+			if m.Image.Alt != "" {
+				v.ImageAlt = m.Image.Alt
+			}
+		}
 		data, err := pageData(r)
 		if err != nil {
 			return err
@@ -284,10 +306,10 @@ func (b *builder) lang(l *Lang) error {
 		p := b.newPage(l, base, r.Title+" · "+cfg.Title, r.Description, b.abs(pageURL), "recipes/"+r.Slug+"/")
 		p.Recipe = v
 		p.BodyClass = "page-recipe"
-		if v.Image != "" {
-			p.OGImage = v.Image
-			if !isRemote(v.Image) {
-				p.OGImage = b.abs(v.Image)
+		if v.DefaultImage != "" {
+			p.OGImage = v.DefaultImage
+			if !isRemote(v.DefaultImage) {
+				p.OGImage = b.abs(v.DefaultImage)
 			}
 		}
 		p.JSONLD = template.JS(jsonLD(r, m, p.OGImage, b.abs(pageURL), l.Code))
@@ -304,7 +326,7 @@ func (b *builder) lang(l *Lang) error {
 			}
 		}
 		c := card{
-			Title: r.Title, Slug: r.Slug, URL: pageURL, Category: r.Category, Image: v.Image, SrcSet: v.SrcSet,
+			Title: r.Title, Slug: r.Slug, URL: pageURL, Category: r.Category, Image: v.DefaultImage, SrcSet: v.DefaultSrcSet,
 			Search:  strings.ToLower(strings.Join(search, " ")),
 			Initial: strings.ToUpper(string([]rune(r.Title)[:1])),
 		}

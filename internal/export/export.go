@@ -210,6 +210,9 @@ func ts(s string) string {
 	return `"` + strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", " ").Replace(s) + `"`
 }
 
+// nb keeps a quantity on one line ("5 ml", "1 ½ cups").
+func nb(s string) string { return strings.ReplaceAll(s, " ", "\u00a0") }
+
 // typ inserts text in markup mode: #"…" (nothing in it is interpreted).
 func typ(s string) string { return "#" + ts(s) }
 
@@ -230,7 +233,7 @@ func Typst(d Doc, paper string) string {
   footer: context [#set text(8pt, fill: luma(130)); %s #h(1fr) #counter(page).display()])
 #set text(font: ("Libertinus Serif", "New Computer Modern"), size: 11pt, lang: %q)
 #set par(leading: 0.62em, justify: false)
-#set list(marker: none, body-indent: 0pt, spacing: 0.75em)
+#set list(marker: none, body-indent: 0pt, spacing: 0.85em)
 #set enum(spacing: 1.05em, body-indent: 0.7em, numbering: n => text(weight: "bold", fill: rgb(%q))[#n])
 #let section(t) = block(above: 1.3em, below: 0.7em, text(size: 8.5pt, weight: "bold", tracking: 0.09em, fill: rgb(%q), upper(t)))
 #let sub(t) = block(above: 0.9em, below: 0.45em, text(size: 9.5pt, style: "italic", fill: luma(90), t))
@@ -238,7 +241,7 @@ func Typst(d Doc, paper string) string {
 #let muted(t) = text(fill: luma(105), t)
 
 `, ts(d.R.Title), paper, typ(d.R.Title), d.Cat.Lang, accent, accent)
-	fmt.Fprintf(&b, "#text(size: 23pt, weight: \"bold\")[%s]\n\n", typ(d.R.Title))
+	fmt.Fprintf(&b, "#block(below: 1em, text(size: 23pt, weight: \"bold\", %s))\n", ts(d.R.Title))
 	if d.R.Description != "" {
 		fmt.Fprintf(&b, "#muted[%s]\n\n", typ(d.R.Description))
 	}
@@ -261,7 +264,7 @@ func Typst(d Doc, paper string) string {
 		for _, it := range s.Items {
 			left.WriteString("- ")
 			if it.Q != nil {
-				fmt.Fprintf(&left, "#qty(%s)%s", ts(it.Q.String()), typ(it.J))
+				fmt.Fprintf(&left, "#qty(%s)%s", ts(nb(it.Q.String())), typ(it.J))
 			}
 			left.WriteString(typ(it.Name))
 			if it.Note != "" {
@@ -294,7 +297,7 @@ func Typst(d Doc, paper string) string {
 			fmt.Fprintf(&right, "%d. ", st.N)
 			for _, seg := range st.Segs {
 				if seg.T == "ing" && seg.Q != "" {
-					fmt.Fprintf(&right, "#qty(%s)%s", ts(seg.Q), typ(seg.J))
+					fmt.Fprintf(&right, "#qty(%s)%s", ts(nb(seg.Q)), typ(seg.J))
 				}
 				right.WriteString(typ(seg.V))
 			}
@@ -304,6 +307,7 @@ func Typst(d Doc, paper string) string {
 			right.WriteString("\n")
 		}
 	}
+	b.WriteString("#v(2pt)\n#line(length: 100%, stroke: 0.5pt + luma(205))\n")
 	fmt.Fprintf(&b, "#grid(columns: (36%%, 1fr), column-gutter: 9mm,\n[\n%s],\n[\n%s])\n\n", left.String(), right.String())
 	var tips []string
 	for _, n := range m.Notes {

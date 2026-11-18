@@ -184,6 +184,10 @@ func TestBuildMultilingual(t *testing.T) {
 		{esChicken, "Esta receta aún no está traducida."},
 		{read("es/index.html"), "Buscar recetas o ingredientes"},
 		{read("sitemap.xml"), "https://example.com/kitchen/es/recipes/cranberry-baked-oatmeal/"},
+		{read("recipes/crispy-chicken-thighs/index.html"), `"src":"/kitchen/recipes/crispy-chicken-thighs/crispy-chicken-thighs-air-fryer.svg"`},
+		{read("recipes/crispy-chicken-thighs/index.html"), `data-default-src="/kitchen/recipes/crispy-chicken-thighs/crispy-chicken-thighs.svg"`},
+		{read("es/recipes/crispy-chicken-thighs/crispy-chicken-thighs-air-fryer.svg"), "<svg"},
+		{read("index.html"), `src="/kitchen/recipes/buttermilk-pancakes/buttermilk-pancakes.svg"`},
 		{read("sw.js"), `self.__GC={"base":"/kitchen/","precache":["/kitchen/assets/app.`},
 	}
 	for _, c := range checks {

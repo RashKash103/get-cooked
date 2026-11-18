@@ -155,6 +155,14 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 		}
 		comp.Notes = append(comp.Notes, NoteC{When: cc.when(n.When), Kind: kind, Text: cc.template(n.Text), L: cc.loc(n.Line, 0)})
 	}
+	for _, v := range f.Images {
+		l := cc.loc(v.Line, 0)
+		if !v.When.Set {
+			cc.errAt(l, "image variants need a `when:` condition (the default image is `image:`)")
+			continue
+		}
+		comp.Images = append(comp.Images, ImageC{When: cc.when(v.When), Src: v.Src, Alt: cc.tr(v.Alt), L: l})
+	}
 	for k := range cc.usedDB {
 		comp.Ings[k] = cc.db.Entries[k].Info
 	}

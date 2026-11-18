@@ -18,6 +18,10 @@ title: Cranberry Baked Oatmeal          # required
 description: One or two sentences.      # shown under the title and on cards
 image: oatmeal.jpg                      # next to the recipe file, or a URL
 image_alt: Golden oatmeal in a square pan
+images:                                 # optional variants for the recipe page
+  - when: cranberries                   # first match wins; `image:` stays the
+    src: oatmeal-cranberries.jpg        # default on the index and in previews
+    alt: Oatmeal studded with cranberries
 category: Breakfast                     # default: the parent folder name
 tags: [make-ahead, vegetarian]
 cuisine: American

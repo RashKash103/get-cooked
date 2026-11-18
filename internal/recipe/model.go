@@ -81,6 +81,7 @@ type File struct {
 	Description  string            `yaml:"description"`
 	Image        string            `yaml:"image"`
 	ImageAlt     string            `yaml:"image_alt"`
+	Images       []ImageVariant    `yaml:"images"`
 	Category     string            `yaml:"category"`
 	Tags         []string          `yaml:"tags"`
 	Cuisine      string            `yaml:"cuisine"`
@@ -98,6 +99,27 @@ type File struct {
 	Steps        []StepEntry       `yaml:"steps"`
 	Notes        []Note            `yaml:"notes"`
 	IngredientDB map[string]DBYAML `yaml:"ingredient_db"`
+}
+
+// ImageVariant replaces the hero image on the recipe page when its
+// condition matches the reader's choices.
+type ImageVariant struct {
+	Src  string `yaml:"src"`
+	Alt  string `yaml:"alt"`
+	When Src    `yaml:"when"`
+	Line int    `yaml:"-"`
+}
+
+// UnmarshalYAML records the position.
+func (v *ImageVariant) UnmarshalYAML(n *yaml.Node) error {
+	type plain ImageVariant
+	var p plain
+	if err := n.Decode(&p); err != nil {
+		return err
+	}
+	p.Line = n.Line
+	*v = ImageVariant(p)
+	return nil
 }
 
 // Source credits where a recipe came from.

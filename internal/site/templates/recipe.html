@@ -1,8 +1,9 @@
 {{define "content"}}
 {{$r := .Recipe}}
 <article class="recipe" id="recipe" data-slug="{{$r.R.Slug}}"{{if $r.NotTranslated}} lang="{{$r.SourceLang}}"{{end}}>
-  {{if $r.Image}}
-  <img class="hero" src="{{$r.Image}}" {{with $r.SrcSet}}srcset="{{.}}" sizes="(min-width: 1024px) 64rem, 100vw"{{end}} alt="{{$r.ImageAlt}}" fetchpriority="high" decoding="async">
+  {{if or $r.Image $r.HasVariants}}
+  <img class="hero" id="hero" {{if $r.Image}}src="{{$r.Image}}"{{else}}hidden{{end}} {{with $r.SrcSet}}srcset="{{.}}"{{end}} sizes="(min-width: 1024px) 64rem, 100vw" alt="{{$r.ImageAlt}}" fetchpriority="high" decoding="async"
+    data-default-src="{{$r.DefaultImage}}" data-default-srcset="{{$r.DefaultSrcSet}}" data-default-alt="{{$r.DefaultAlt}}">
   {{end}}
   {{if $r.NotTranslated}}<p class="untranslated" lang="{{$.Lang}}">{{$.T "not_translated"}}</p>{{end}}
   <header class="recipe-head">

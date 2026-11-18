@@ -75,9 +75,9 @@ func TestTypst(t *testing.T) {
 	src := export.Typst(d, "us-letter")
 	for _, want := range []string{
 		`#set page(paper: "us-letter"`,
-		`#text(size: 23pt, weight: "bold")[#"Crispy Smoked-Paprika Chicken Thighs"]`,
+		`#block(below: 1em, text(size: 23pt, weight: "bold", "Crispy Smoked-Paprika Chicken Thighs"))`,
 		`#section("Ingredients")`,
-		`#qty("6")`,
+		"#qty(\"1\u00a0tbsp\")",
 		`#grid(columns: (36%, 1fr)`,
 		`#"⚠ Spice level 3 is genuinely hot.`,
 	} {

@@ -33,6 +33,15 @@ type Model struct {
 	Ingredients []IngSectionM  `json:"ingredients"`
 	Steps       []StepSectionM `json:"steps"`
 	Notes       []NoteM        `json:"notes"`
+	// Image is the matching image variant (nil: use the recipe's default image).
+	Image *ImageM `json:"image"`
+}
+
+// ImageM is the image variant chosen for the state.
+type ImageM struct {
+	Src    string `json:"src"`
+	SrcSet string `json:"srcset"`
+	Alt    string `json:"alt"`
 }
 
 // TimeM is a rendered time.
@@ -415,6 +424,16 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 		}
 		if len(sec.Items) > 0 {
 			m.Steps = append(m.Steps, sec)
+		}
+	}
+	for _, im := range c.Images {
+		ok, err := r.cond(im.When, im.L)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			m.Image = &ImageM{Src: im.Src, SrcSet: im.SrcSet, Alt: im.Alt}
+			break
 		}
 	}
 	// An ingredient divided between steps lists each step's share.

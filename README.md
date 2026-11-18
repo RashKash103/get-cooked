@@ -46,6 +46,8 @@ notes:
   references (`&pan`) and tap-to-start timers (`~{25}`).
 - Divided ingredients: one total in the list, each step's share underneath.
 - Ranges: `amount: [2, 3]` → "2–3 cloves", scaled and converted.
+- Image variants: the recipe photo can change with the options (the air
+  fryer version, the blueberry version) while the index keeps the default.
 - Recipe references: "¾ loaf sandwich bread" links to the bread recipe at the
   right number of loaves, with options passed through.
 

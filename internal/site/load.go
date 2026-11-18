@@ -217,9 +217,20 @@ func (s *Site) loadLang(l *Lang, files []string, root string, source bool, opts 
 				r.Category = rec.Tr(titleCase(strings.Split(rel, string(filepath.Separator))[0]))
 			}
 		}
-		if source && r != nil && r.Image != "" && !strings.Contains(r.Image, "://") {
-			if _, err := os.Stat(filepath.Join(filepath.Dir(f), r.Image)); err != nil {
-				ds = append(ds, recipe.Diag{File: f, Msg: "image " + r.Image + " not found next to the recipe"})
+		if source && r != nil {
+			imgs := []string{r.Image}
+			if r.C != nil {
+				for _, im := range r.C.Images {
+					imgs = append(imgs, im.Src)
+				}
+			}
+			for _, img := range imgs {
+				if img == "" || strings.Contains(img, "://") {
+					continue
+				}
+				if _, err := os.Stat(filepath.Join(filepath.Dir(f), img)); err != nil {
+					ds = append(ds, recipe.Diag{File: f, Msg: "image " + img + " not found next to the recipe"})
+				}
 			}
 		}
 		if !source && tr != nil {

@@ -281,6 +281,7 @@ export function render(c: Compiled, st: State): Model {
     ingredients: [],
     steps: [],
     notes: [],
+    image: null,
   };
   for (const o of c.options ?? []) if (r.cond(o.when)) m.options.push(o.id);
   for (const t of c.times ?? []) {
@@ -368,6 +369,12 @@ export function render(c: Compiled, st: State): Model {
       items.push({ n, segs: merge(segs), note, image: st.image ?? "" });
     }
     if (items.length > 0) m.steps.push({ title: s.title ?? "", items });
+  }
+  for (const im of c.images ?? []) {
+    if (r.cond(im.when)) {
+      m.image = { src: im.src, srcset: im.srcset ?? "", alt: im.alt ?? "" };
+      break;
+    }
   }
   for (const sec of m.ingredients) {
     for (const it of sec.items) {
