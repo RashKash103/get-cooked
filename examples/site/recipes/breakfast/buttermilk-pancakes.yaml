@@ -8,6 +8,10 @@ date: 2026-09-14
 
 servings: { default: 4, min: 1, max: 12, unit: serving }
 
+times:
+  prep: 10
+  cook: "ceil(servings / 2) * 4"
+
 options:
   - id: no_buttermilk
     type: toggle

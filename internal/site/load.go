@@ -105,6 +105,11 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 				r.Category = titleCase(strings.Split(rel, string(filepath.Separator))[0])
 			}
 		}
+		if r != nil && r.Image != "" && !strings.Contains(r.Image, "://") {
+			if _, err := os.Stat(filepath.Join(filepath.Dir(files[i]), r.Image)); err != nil {
+				ds = append(ds, recipe.Diag{File: files[i], Msg: "image " + r.Image + " not found next to the recipe"})
+			}
+		}
 		results[i] = result{r, ds}
 	})
 	slugs := map[string]string{}

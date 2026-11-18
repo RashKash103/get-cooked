@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/RashKash103/get-cooked/internal/assets"
+	"github.com/RashKash103/get-cooked/internal/config"
 	"github.com/RashKash103/get-cooked/internal/recipe"
 	"github.com/RashKash103/get-cooked/internal/runtime"
 )
@@ -41,7 +42,7 @@ type Assets struct {
 }
 
 type page struct {
-	Site        any
+	Site        *config.Config
 	Base        string
 	Title       string
 	Description string

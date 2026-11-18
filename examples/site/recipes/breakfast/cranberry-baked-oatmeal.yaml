@@ -17,7 +17,7 @@ options:
     choices:
       - { id: maple, label: Maple syrup }
       - { id: brown_sugar, label: Brown sugar }
-      - { id: none, label: Nothing (fruit only) }
+      - { id: none, label: No sugar }
 
 vars:
   # The pan changes with the batch size: 8×8 for two or fewer, 13×9 above that,

@@ -8,6 +8,10 @@ date: 2026-11-15
 
 servings: { default: 4, min: 1, max: 8 }
 
+times:
+  prep: 10
+  cook: "ceil(servings / 2) * 6"
+
 options:
   - id: wheat_bread
     type: toggle

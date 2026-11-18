@@ -25,9 +25,9 @@ describe("expression vectors", () => {
   }
 });
 
-const files = readdirSync(dir).filter((f) => f.endsWith(".json") && f !== "expr-vectors.json");
+const files: string[] = readdirSync(dir).filter((f: string) => f.endsWith(".json") && f !== "expr-vectors.json");
 
-describe.each(files)("recipe %s", (file) => {
+describe.each(files)("recipe %s", (file: string) => {
   const golden = JSON.parse(readFileSync(join(dir, file), "utf8")) as {
     compiled: Compiled;
     cases: { state: State; model: Model }[];

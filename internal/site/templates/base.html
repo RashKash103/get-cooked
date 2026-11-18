@@ -1,5 +1,5 @@
 {{define "base"}}<!doctype html>
-<html lang="{{.Site.Language}}" data-base="{{.Base}}">
+<html lang="{{.Site.Language}}" data-base="{{.Base}}"{{if .Site.Timers.AndroidIntent}} data-timer-intent="true"{{end}}{{with .Site.Timers.IOSShortcut}} data-ios-shortcut="{{.}}"{{end}}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -38,6 +38,7 @@
 <footer class="site-footer">
   <p>{{.Site.Title}}{{with .Site.Author}} · {{.}}{{end}} · Made with <a href="https://github.com/RashKash103/get-cooked">get-cooked</a></p>
 </footer>
+<div class="timers" id="timers" aria-live="polite"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
