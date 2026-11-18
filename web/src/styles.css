@@ -58,6 +58,9 @@
   .untranslated {
     @apply mt-4 rounded-xl bg-stone-200/60 px-4 py-2 text-sm text-stone-600 dark:bg-stone-800/60 dark:text-stone-300;
   }
+  .back-link {
+    @apply -ml-2 inline-flex h-10 items-center gap-1 rounded-full pr-3 pl-1.5 text-sm font-medium text-stone-700 no-underline transition hover:bg-stone-200/70 dark:text-stone-200 dark:hover:bg-stone-800;
+  }
   .brand {
     @apply font-serif text-lg font-semibold tracking-tight no-underline;
   }

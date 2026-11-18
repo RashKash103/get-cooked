@@ -45,3 +45,30 @@ test("theme toggle cycles and is remembered", async ({ page }) => {
   await toggle.click(); // back to system
   expect(await html.evaluate((el) => el.classList.contains("dark"))).toBe(startDark);
 });
+
+test("back control returns to the list with search kept, or links home", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#back")).toHaveCount(0);
+  await page.fill("#search", "bread");
+  await page.locator(".card:visible a", { hasText: "Sandwich Bread" }).click();
+  await expect(page).toHaveURL(/sandwich-bread/);
+  await expect(page.locator("#back")).toHaveText("All recipes");
+  await page.locator("#back").click();
+  await expect(page).toHaveURL(/\/\?q=bread$/);
+  await expect(page.locator("#search")).toHaveValue("bread");
+  await expect(page.locator(".card:visible")).toHaveCount(2);
+
+  // From another recipe it says "Back" and returns there.
+  await page.goto("/recipes/french-toast/");
+  await page.locator(".ing[data-id=bread] a").click();
+  await expect(page.locator("#back")).toHaveText("Back");
+  await page.locator("#back").click();
+  await expect(page).toHaveURL(/french-toast/);
+
+  // Opened directly (shared link), it goes to the index.
+  const fresh = await page.context().newPage();
+  await fresh.goto("/recipes/creamy-tomato-soup/");
+  await expect(fresh.locator("#back")).toHaveText("All recipes");
+  await fresh.locator("#back").click();
+  await expect(fresh).toHaveURL(/127\.0\.0\.1:\d+\/$/);
+});

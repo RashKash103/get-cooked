@@ -1,4 +1,5 @@
 import "./styles.css";
+import { initBack } from "./ui/back";
 import { initIndex } from "./ui/index";
 import { initLang } from "./ui/lang";
 import { initListPage, updateCount } from "./ui/list";
@@ -7,6 +8,7 @@ import { initTheme } from "./ui/theme";
 import { initTimers } from "./ui/timers";
 
 initLang();
+initBack();
 initTheme();
 initTimers();
 initIndex();

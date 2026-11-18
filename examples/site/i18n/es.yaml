@@ -11,6 +11,8 @@ system: metric
 
 ui:
   skip: Ir al contenido
+  all_recipes: Todas las recetas
+  back: Atrás
   theme: Tema
   theme_system: Sistema
   theme_light: Claro

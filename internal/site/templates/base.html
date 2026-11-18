@@ -29,7 +29,8 @@
 {{template "icons"}}
 <a class="skip" href="#main">{{.T "skip"}}</a>
 <header class="topbar">
-  <a class="brand" href="{{.Base}}">{{.Site.Title}}</a>
+  {{if eq .BodyClass "page-index"}}<a class="brand" href="{{.Base}}">{{.Site.Title}}</a>
+  {{else}}<a class="back-link" id="back" href="{{.Base}}"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"></use></svg><span>{{.T "all_recipes"}}</span></a>{{end}}
   <div class="topbar-actions">
   <a class="icon-btn list-link" href="{{.Base}}list/" aria-label="{{.T "list"}}" title="{{.T "list"}}"><svg class="icon" aria-hidden="true"><use href="#i-list"></use></svg><span class="list-count" id="list-count" hidden></span></a>
   {{if .Alternates}}<label class="lang-picker"><span class="sr-only">{{.T "language"}}</span>

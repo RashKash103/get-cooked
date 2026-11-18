@@ -19,6 +19,8 @@ system: ""
 
 ui:
   skip: Skip to content
+  all_recipes: All recipes
+  back: Back
   theme: Theme
   theme_system: System
   theme_light: Light
