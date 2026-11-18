@@ -93,7 +93,10 @@ test("ranges render and scale", async ({ page }) => {
 
 test("image variants follow the reader's choices", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator('.card a[href$="/crispy-chicken-thighs/"] img')).toHaveAttribute("src", /crispy-chicken-thighs\.svg$/);
+  await expect(page.locator('.card a[href$="/crispy-chicken-thighs/"] img')).toHaveAttribute(
+    "src",
+    /crispy-chicken-thighs\.svg$/,
+  );
   await page.goto("/recipes/crispy-chicken-thighs/");
   const hero = page.locator("#hero");
   await expect(hero).toHaveAttribute("src", /crispy-chicken-thighs\.svg$/);
