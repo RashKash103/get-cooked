@@ -1,0 +1,254 @@
+# yaml-language-server: $schema=../../schema/ingredients.schema.json
+#
+# Shared ingredient database. Recipes refer to these keys with `ingredient:`
+# (or are matched automatically by name/alias). Densities enable converting
+# between cups and grams; `round` controls how counted items are rounded.
+
+# ── Baking ────────────────────────────────────────────────────────────────
+all-purpose-flour:
+  name: all-purpose flour
+  aliases: [flour, ap flour, plain flour]
+  grams_per_cup: 125
+  category: baking
+bread-flour:
+  name: bread flour
+  grams_per_cup: 130
+  category: baking
+whole-wheat-flour:
+  name: whole wheat flour
+  grams_per_cup: 120
+  category: baking
+granulated-sugar:
+  name: sugar
+  aliases: [granulated sugar, white sugar]
+  grams_per_cup: 200
+  category: baking
+brown-sugar:
+  name: brown sugar
+  aliases: [light brown sugar, dark brown sugar]
+  grams_per_cup: 213
+  category: baking
+powdered-sugar:
+  name: powdered sugar
+  aliases: [icing sugar, confectioners sugar]
+  grams_per_cup: 120
+  category: baking
+baking-soda:
+  name: baking soda
+  grams_per_cup: 221
+  category: baking
+baking-powder:
+  name: baking powder
+  grams_per_cup: 192
+  category: baking
+instant-yeast:
+  name: instant yeast
+  aliases: [yeast, rapid rise yeast]
+  grams_per_cup: 150
+  unit_grams: { packet: 7, envelope: 7 }
+  category: baking
+vanilla-extract:
+  name: vanilla extract
+  aliases: [vanilla]
+  grams_per_cup: 202
+  measure: volume
+  category: baking
+chocolate-chips:
+  name: chocolate chips
+  aliases: [semisweet chocolate chips, chocolate chunks]
+  grams_per_cup: 170
+  category: baking
+cocoa-powder:
+  name: cocoa powder
+  grams_per_cup: 85
+  category: baking
+cornstarch:
+  grams_per_cup: 128
+  category: baking
+rolled-oats:
+  name: rolled oats
+  aliases: [oats, old-fashioned oats]
+  grams_per_cup: 90
+  category: pantry
+dried-cranberries:
+  name: dried cranberries
+  aliases: [craisins]
+  grams_per_cup: 120
+  category: pantry
+walnuts:
+  name: walnuts
+  grams_per_cup: 117
+  category: pantry
+pecans:
+  grams_per_cup: 109
+  category: pantry
+
+# ── Seasoning ────────────────────────────────────────────────────────────
+kosher-salt:
+  name: kosher salt
+  aliases: [salt, diamond crystal kosher salt]
+  grams_per_cup: 137
+  category: pantry
+flaky-salt:
+  name: flaky sea salt
+  aliases: [maldon salt, sea salt flakes]
+  grams_per_cup: 120
+  category: pantry
+black-pepper:
+  name: black pepper
+  aliases: [pepper, ground black pepper]
+  grams_per_cup: 110
+  category: pantry
+cinnamon:
+  name: ground cinnamon
+  aliases: [cinnamon]
+  grams_per_cup: 125
+  category: pantry
+smoked-paprika:
+  name: smoked paprika
+  aliases: [paprika]
+  grams_per_cup: 110
+  category: pantry
+garlic-powder:
+  name: garlic powder
+  grams_per_cup: 150
+  category: pantry
+cayenne:
+  name: cayenne pepper
+  aliases: [cayenne]
+  grams_per_cup: 85
+  category: pantry
+dried-oregano:
+  name: dried oregano
+  aliases: [oregano]
+  grams_per_cup: 48
+  category: pantry
+red-pepper-flakes:
+  name: red pepper flakes
+  aliases: [chili flakes, crushed red pepper]
+  grams_per_cup: 80
+  category: pantry
+
+# ── Dairy & eggs ─────────────────────────────────────────────────────────
+butter:
+  name: unsalted butter
+  aliases: [butter, salted butter]
+  grams_per_cup: 227
+  unit_grams: { stick: 113 }
+  category: dairy
+egg:
+  name: egg
+  plural: eggs
+  aliases: [large egg, large eggs]
+  grams_each: 50
+  round: { step: 1, min: 1 }
+  category: dairy
+milk:
+  name: milk
+  aliases: [whole milk]
+  grams_per_cup: 245
+  measure: volume
+  category: dairy
+buttermilk:
+  grams_per_cup: 245
+  measure: volume
+  category: dairy
+heavy-cream:
+  name: heavy cream
+  aliases: [whipping cream, double cream]
+  grams_per_cup: 238
+  measure: volume
+  category: dairy
+parmesan:
+  name: grated parmesan
+  aliases: [parmesan cheese, parmigiano reggiano]
+  grams_per_cup: 100
+  category: dairy
+
+# ── Liquids & fats ───────────────────────────────────────────────────────
+water:
+  grams_per_cup: 237
+  measure: volume
+olive-oil:
+  name: olive oil
+  aliases: [extra-virgin olive oil, evoo]
+  grams_per_cup: 216
+  measure: volume
+  category: pantry
+neutral-oil:
+  name: neutral oil
+  aliases: [vegetable oil, canola oil]
+  grams_per_cup: 218
+  measure: volume
+  category: pantry
+coconut-milk:
+  name: coconut milk
+  grams_per_cup: 226
+  measure: volume
+  unit_grams: { can: 400 }
+  category: pantry
+honey:
+  grams_per_cup: 340
+  measure: volume
+  category: pantry
+maple-syrup:
+  name: maple syrup
+  grams_per_cup: 315
+  measure: volume
+  category: pantry
+lemon-juice:
+  name: lemon juice
+  grams_per_cup: 240
+  measure: volume
+  category: produce
+vegetable-broth:
+  name: vegetable broth
+  aliases: [vegetable stock, broth, stock]
+  grams_per_cup: 240
+  measure: volume
+  category: pantry
+
+# ── Produce & proteins ───────────────────────────────────────────────────
+garlic:
+  name: garlic
+  unit_grams: { clove: 5 }
+  category: produce
+yellow-onion:
+  name: yellow onion
+  plural: yellow onions
+  aliases: [onion, onions]
+  grams_each: 150
+  round: { denoms: [2] }
+  category: produce
+lemon:
+  name: lemon
+  plural: lemons
+  grams_each: 100
+  round: { denoms: [2] }
+  category: produce
+crushed-tomatoes:
+  name: crushed tomatoes
+  aliases: [canned crushed tomatoes]
+  grams_per_cup: 245
+  unit_grams: { can: 794 }
+  category: pantry
+fresh-basil:
+  name: fresh basil
+  aliases: [basil, basil leaves]
+  grams_per_cup: 24
+  category: produce
+chicken-thighs:
+  name: bone-in chicken thighs
+  plural: bone-in chicken thighs
+  grams_each: 170
+  round: { step: 1, min: 1 }
+  category: meat
+baby-potatoes:
+  name: baby potatoes
+  category: produce
+banana:
+  name: ripe banana
+  plural: ripe bananas
+  grams_each: 120
+  round: { denoms: [2], min: 0.5 }
+  category: produce

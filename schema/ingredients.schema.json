@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/ingredients.schema.json",
+  "title": "get-cooked ingredient database",
+  "description": "Maps ingredient keys to names, conversions and rounding rules.",
+  "type": "object",
+  "additionalProperties": { "$ref": "#/$defs/entry" },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Display name (singular). Defaults to the key with dashes as spaces." },
+        "plural": { "type": "string", "description": "Plural name, used for counted items (\"3 eggs\")." },
+        "aliases": { "type": "array", "items": { "type": "string" }, "description": "Other names used to auto-match recipe ingredients." },
+        "grams_per_cup": { "type": "number", "exclusiveMinimum": 0, "description": "Density, enabling mass ⇄ volume conversion." },
+        "grams_each": { "type": "number", "exclusiveMinimum": 0, "description": "Weight of one item (e.g. one egg)." },
+        "unit_grams": {
+          "type": "object",
+          "description": "Weight of one count unit, e.g. {stick: 113, clove: 5}.",
+          "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "measure": { "enum": ["volume", "mass"], "description": "Preferred dimension when converting (liquids: volume)." },
+        "round": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Rounding for counted amounts, e.g. eggs {step: 1, min: 1}.",
+          "properties": {
+            "denoms": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 16 } },
+            "step": { "type": "number", "exclusiveMinimum": 0 },
+            "min": { "type": "number", "minimum": 0 }
+          }
+        },
+        "category": { "type": "string", "description": "Shopping category (produce, dairy, baking…)." }
+      }
+    }
+  }
+}

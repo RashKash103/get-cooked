@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Cranberry Baked Oatmeal
+description: Custardy, cinnamon-scented oats that bake while you make coffee. Scales from a single ramekin to a crowd.
+image: cranberry-baked-oatmeal.svg
+image_alt: Golden baked oatmeal studded with cranberries in a square pan
+category: Breakfast
+tags: [make-ahead, vegetarian, kid-friendly]
+date: 2026-10-02
+
+servings: { default: 4, min: 1, max: 12 }
+
+options:
+  - id: sweetener
+    type: choice
+    label: Sweeten with
+    default: maple
+    choices:
+      - { id: maple, label: Maple syrup }
+      - { id: brown_sugar, label: Brown sugar }
+      - { id: none, label: Nothing (fruit only) }
+
+vars:
+  # The pan changes with the batch size: 8×8 for two or fewer, 13×9 above that,
+  # and two 13×9 pans for really big batches.
+  pan: "servings <= 2 ? '8×8 inch baking dish' : servings <= 8 ? '13×9 inch baking dish' : 'two 13×9 inch baking dishes'"
+  # Thin layers bake quickly; bigger batches are deeper and need longer.
+  bake: "servings <= 2 ? 25 : 30 + servings * 2"
+
+times:
+  prep: 10
+  bake: bake
+
+equipment:
+  - { id: dish, name: "{pan}" }
+  - { id: bowl, name: large mixing bowl }
+
+ingredients:
+  - section: Oats
+    items:
+      - { id: oats, ingredient: rolled-oats, amount: 2, unit: cup }
+      - { id: baking_powder, ingredient: baking-powder, amount: 1, unit: tsp }
+      - { id: cinnamon, ingredient: cinnamon, amount: 1, unit: tsp }
+      - { id: salt, ingredient: kosher-salt, amount: 0.25, unit: tsp }
+  - section: Custard
+    items:
+      - { id: milk, ingredient: milk, amount: 1.5, unit: cup }
+      - { id: egg, ingredient: egg, amount: 1 }
+      - id: maple
+        ingredient: maple-syrup
+        amount: 0.25
+        unit: cup
+        when: sweetener == 'maple'
+      - id: brown_sugar
+        ingredient: brown-sugar
+        amount: 0.25
+        unit: cup
+        note: packed
+        when: sweetener == 'brown_sugar'
+      - { id: butter, ingredient: butter, amount: 2, unit: tbsp, note: "melted, plus more for the dish" }
+      - { id: vanilla, ingredient: vanilla-extract, amount: 1, unit: tsp }
+  - section: Mix-ins
+    items:
+      - id: cranberries
+        ingredient: dried-cranberries
+        amount: 0.5
+        unit: cup
+        optional: true
+        default: true
+        option_label: Add dried cranberries
+      - id: walnuts
+        ingredient: walnuts
+        amount: 0.33
+        unit: cup
+        note: roughly chopped
+        optional: true
+
+steps:
+  - Heat the oven to {375 | temp} and butter the &dish.
+  - In a &bowl, stir together @oats, @baking_powder, @cinnamon and @salt.
+  - text: >-
+      Whisk @milk, @egg, @butter and @vanilla{if sweetener == 'maple'} with @maple{elif sweetener == 'brown_sugar'} with @brown_sugar{end}
+      in a second bowl, then pour it over the oats{if cranberries || walnuts} and fold in
+      {if cranberries && walnuts}@cranberries and @walnuts{elif cranberries}@cranberries{else}@walnuts{end}{end}.
+  - Spread the mixture evenly in the dish and let it sit for ~{5} so the oats start to soak.
+  - when: cranberries
+    text: Scatter a small handful of @cranberries{-} over the top so they show after baking.
+  - Bake for ~{bake}, until the center is just set and the edges are golden.
+  - Let it rest ~{5} before serving warm.
+
+notes:
+  - when: servings == 1
+    kind: warning
+    text: A single serving makes a very thin layer, so it may come out softer and more pudding-like. A small ramekin helps.
+  - when: sweetener == 'none'
+    kind: tip
+    text: Unsweetened, it's best with ripe fruit or a drizzle of honey at the table.
+  - kind: tip
+    text: Leftovers keep in the fridge for 4 days. Reheat slices in the microwave with a splash of milk.

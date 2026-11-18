@@ -1,0 +1,21 @@
+# build output
+/dist/
+/bin/
+/coverage.out
+/internal/assets/dist/*
+!/internal/assets/dist/.gitkeep
+/examples/site/public/
+
+# web
+node_modules/
+/web/test-results/
+/e2e/test-results/
+/e2e/playwright-report/
+*.tsbuildinfo
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

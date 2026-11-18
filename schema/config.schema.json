@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/config.schema.json",
+  "title": "get-cooked site config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "base_url": {
+      "type": "string",
+      "description": "Public URL or path prefix, e.g. https://me.github.io/recipes/ or /recipes/."
+    },
+    "language": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "recipes": {
+      "type": "string",
+      "description": "Recipes directory (default: recipes)."
+    },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ingredient database files (default: [ingredients.yaml])."
+    },
+    "static": {
+      "type": "string",
+      "description": "Directory copied verbatim to the output (default: static)."
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "custom_css": {
+          "type": "string"
+        }
+      }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_system": {
+          "enum": [
+            "original",
+            "us",
+            "metric"
+          ]
+        },
+        "fractions": {
+          "enum": [
+            "unicode",
+            "ascii",
+            "decimal"
+          ]
+        },
+        "tolerance": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "custom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "one"
+            ],
+            "properties": {
+              "one": {
+                "type": "string"
+              },
+              "other": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ladders": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "us.volume",
+              "us.mass",
+              "metric.volume",
+              "metric.mass"
+            ]
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/rung"
+            }
+          }
+        },
+        "count": {
+          "$ref": "#/$defs/rule"
+        }
+      }
+    },
+    "timers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "android_intent": {
+          "type": "boolean",
+          "description": "Offer 'Send to Clock app' on Android (experimental)."
+        },
+        "ios_shortcut": {
+          "type": "string",
+          "description": "Name of an iOS Shortcut that takes seconds as input and starts a timer."
+        }
+      }
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "widths": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "denoms": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "below": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        "min": {
+          "type": "number"
+        },
+        "tiny": {
+          "type": "string"
+        }
+      }
+    },
+    "rung": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit"
+      ],
+      "properties": {
+        "unit": {
+          "type": "string"
+        },
+        "denoms": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "below": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        "min": {
+          "type": "number"
+        },
+        "tiny": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

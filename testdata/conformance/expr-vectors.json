@@ -1,0 +1,840 @@
+{
+  "env": {
+    "cranberries": true,
+    "scale": 0.5,
+    "servings": 4,
+    "sweetness": "less",
+    "zero": 0
+  },
+  "vectors": [
+    {
+      "src": "1 + 2 * 3",
+      "ir": [
+        "+",
+        [
+          "n",
+          1
+        ],
+        [
+          "*",
+          [
+            "n",
+            2
+          ],
+          [
+            "n",
+            3
+          ]
+        ]
+      ],
+      "want": 7
+    },
+    {
+      "src": "(1 + 2) * 3",
+      "ir": [
+        "*",
+        [
+          "+",
+          [
+            "n",
+            1
+          ],
+          [
+            "n",
+            2
+          ]
+        ],
+        [
+          "n",
+          3
+        ]
+      ],
+      "want": 9
+    },
+    {
+      "src": "2 ^ 3 ^ 2",
+      "ir": [
+        "^",
+        [
+          "n",
+          2
+        ],
+        [
+          "^",
+          [
+            "n",
+            3
+          ],
+          [
+            "n",
+            2
+          ]
+        ]
+      ],
+      "want": 512
+    },
+    {
+      "src": "-2 ^ 2",
+      "ir": [
+        "neg",
+        [
+          "^",
+          [
+            "n",
+            2
+          ],
+          [
+            "n",
+            2
+          ]
+        ]
+      ],
+      "want": -4
+    },
+    {
+      "src": "2 ^ -1",
+      "ir": [
+        "^",
+        [
+          "n",
+          2
+        ],
+        [
+          "n",
+          -1
+        ]
+      ],
+      "want": 0.5
+    },
+    {
+      "src": "30 + servings * 2",
+      "ir": [
+        "+",
+        [
+          "n",
+          30
+        ],
+        [
+          "*",
+          [
+            "v",
+            "servings"
+          ],
+          [
+            "n",
+            2
+          ]
+        ]
+      ],
+      "want": 38
+    },
+    {
+      "src": "servings \u003c= 2 ? '8x8' : '13x9'",
+      "ir": [
+        "?",
+        [
+          "\u003c=",
+          [
+            "v",
+            "servings"
+          ],
+          [
+            "n",
+            2
+          ]
+        ],
+        [
+          "s",
+          "8x8"
+        ],
+        [
+          "s",
+          "13x9"
+        ]
+      ],
+      "want": "13x9"
+    },
+    {
+      "src": "servings \u003e 6 ? 'a' : servings \u003e 3 ? 'b' : 'c'",
+      "ir": [
+        "?",
+        [
+          "\u003e",
+          [
+            "v",
+            "servings"
+          ],
+          [
+            "n",
+            6
+          ]
+        ],
+        [
+          "s",
+          "a"
+        ],
+        [
+          "?",
+          [
+            "\u003e",
+            [
+              "v",
+              "servings"
+            ],
+            [
+              "n",
+              3
+            ]
+          ],
+          [
+            "s",
+            "b"
+          ],
+          [
+            "s",
+            "c"
+          ]
+        ]
+      ],
+      "want": "b"
+    },
+    {
+      "src": "cranberries \u0026\u0026 servings \u003e 1",
+      "ir": [
+        "\u0026\u0026",
+        [
+          "v",
+          "cranberries"
+        ],
+        [
+          "\u003e",
+          [
+            "v",
+            "servings"
+          ],
+          [
+            "n",
+            1
+          ]
+        ]
+      ],
+      "want": true
+    },
+    {
+      "src": "!cranberries || false",
+      "ir": [
+        "||",
+        [
+          "!",
+          [
+            "v",
+            "cranberries"
+          ]
+        ],
+        [
+          "b",
+          false
+        ]
+      ],
+      "want": false
+    },
+    {
+      "src": "sweetness == 'less' ? 0.7 : 1",
+      "ir": [
+        "?",
+        [
+          "==",
+          [
+            "v",
+            "sweetness"
+          ],
+          [
+            "s",
+            "less"
+          ]
+        ],
+        [
+          "n",
+          0.7
+        ],
+        [
+          "n",
+          1
+        ]
+      ],
+      "want": 0.7
+    },
+    {
+      "src": "sweetness != \"less\"",
+      "ir": [
+        "!=",
+        [
+          "v",
+          "sweetness"
+        ],
+        [
+          "s",
+          "less"
+        ]
+      ],
+      "want": false
+    },
+    {
+      "src": "10 % 3",
+      "ir": [
+        "%",
+        [
+          "n",
+          10
+        ],
+        [
+          "n",
+          3
+        ]
+      ],
+      "want": 1
+    },
+    {
+      "src": "7 / 2",
+      "ir": [
+        "/",
+        [
+          "n",
+          7
+        ],
+        [
+          "n",
+          2
+        ]
+      ],
+      "want": 3.5
+    },
+    {
+      "src": "min(3, 1, 2) + max(1, 5)",
+      "ir": [
+        "+",
+        [
+          "call",
+          "min",
+          [
+            "n",
+            3
+          ],
+          [
+            "n",
+            1
+          ],
+          [
+            "n",
+            2
+          ]
+        ],
+        [
+          "call",
+          "max",
+          [
+            "n",
+            1
+          ],
+          [
+            "n",
+            5
+          ]
+        ]
+      ],
+      "want": 6
+    },
+    {
+      "src": "round(2.5) + round(-2.5)",
+      "ir": [
+        "+",
+        [
+          "call",
+          "round",
+          [
+            "n",
+            2.5
+          ]
+        ],
+        [
+          "call",
+          "round",
+          [
+            "n",
+            -2.5
+          ]
+        ]
+      ],
+      "want": 0
+    },
+    {
+      "src": "round(2.4)",
+      "ir": [
+        "call",
+        "round",
+        [
+          "n",
+          2.4
+        ]
+      ],
+      "want": 2
+    },
+    {
+      "src": "round(7, 5)",
+      "ir": [
+        "call",
+        "round",
+        [
+          "n",
+          7
+        ],
+        [
+          "n",
+          5
+        ]
+      ],
+      "want": 5
+    },
+    {
+      "src": "round(7.5, 5)",
+      "ir": [
+        "call",
+        "round",
+        [
+          "n",
+          7.5
+        ],
+        [
+          "n",
+          5
+        ]
+      ],
+      "want": 10
+    },
+    {
+      "src": "floor(7.9) + ceil(1.1)",
+      "ir": [
+        "+",
+        [
+          "call",
+          "floor",
+          [
+            "n",
+            7.9
+          ]
+        ],
+        [
+          "call",
+          "ceil",
+          [
+            "n",
+            1.1
+          ]
+        ]
+      ],
+      "want": 9
+    },
+    {
+      "src": "ceil(11, 6)",
+      "ir": [
+        "call",
+        "ceil",
+        [
+          "n",
+          11
+        ],
+        [
+          "n",
+          6
+        ]
+      ],
+      "want": 12
+    },
+    {
+      "src": "clamp(servings, 1, 3)",
+      "ir": [
+        "call",
+        "clamp",
+        [
+          "v",
+          "servings"
+        ],
+        [
+          "n",
+          1
+        ],
+        [
+          "n",
+          3
+        ]
+      ],
+      "want": 3
+    },
+    {
+      "src": "abs(-3)",
+      "ir": [
+        "call",
+        "abs",
+        [
+          "n",
+          -3
+        ]
+      ],
+      "want": 3
+    },
+    {
+      "src": "sqrt(16)",
+      "ir": [
+        "call",
+        "sqrt",
+        [
+          "n",
+          16
+        ]
+      ],
+      "want": 4
+    },
+    {
+      "src": "pow(2, 10)",
+      "ir": [
+        "call",
+        "pow",
+        [
+          "n",
+          2
+        ],
+        [
+          "n",
+          10
+        ]
+      ],
+      "want": 1024
+    },
+    {
+      "src": "lerp(20, 30, scale)",
+      "ir": [
+        "call",
+        "lerp",
+        [
+          "n",
+          20
+        ],
+        [
+          "n",
+          30
+        ],
+        [
+          "v",
+          "scale"
+        ]
+      ],
+      "want": 25
+    },
+    {
+      "src": "if(servings == 4, 'four', 'other')",
+      "ir": [
+        "call",
+        "if",
+        [
+          "==",
+          [
+            "v",
+            "servings"
+          ],
+          [
+            "n",
+            4
+          ]
+        ],
+        [
+          "s",
+          "four"
+        ],
+        [
+          "s",
+          "other"
+        ]
+      ],
+      "want": "four"
+    },
+    {
+      "src": "plural(servings, 'cookie')",
+      "ir": [
+        "call",
+        "plural",
+        [
+          "v",
+          "servings"
+        ],
+        [
+          "s",
+          "cookie"
+        ]
+      ],
+      "want": "cookies"
+    },
+    {
+      "src": "plural(1, 'loaf', 'loaves')",
+      "ir": [
+        "call",
+        "plural",
+        [
+          "n",
+          1
+        ],
+        [
+          "s",
+          "loaf"
+        ],
+        [
+          "s",
+          "loaves"
+        ]
+      ],
+      "want": "loaf"
+    },
+    {
+      "src": "plural(2, 'loaf', 'loaves')",
+      "ir": [
+        "call",
+        "plural",
+        [
+          "n",
+          2
+        ],
+        [
+          "s",
+          "loaf"
+        ],
+        [
+          "s",
+          "loaves"
+        ]
+      ],
+      "want": "loaves"
+    },
+    {
+      "src": "'x' + 1.256",
+      "ir": [
+        "+",
+        [
+          "s",
+          "x"
+        ],
+        [
+          "n",
+          1.256
+        ]
+      ],
+      "want": "x1.26"
+    },
+    {
+      "src": "str(1/3)",
+      "ir": [
+        "call",
+        "str",
+        [
+          "/",
+          [
+            "n",
+            1
+          ],
+          [
+            "n",
+            3
+          ]
+        ]
+      ],
+      "want": "0.33"
+    },
+    {
+      "src": "1_000 + .5",
+      "ir": [
+        "+",
+        [
+          "n",
+          1000
+        ],
+        [
+          "n",
+          0.5
+        ]
+      ],
+      "want": 1000.5
+    },
+    {
+      "src": "3 × 2",
+      "ir": [
+        "*",
+        [
+          "n",
+          3
+        ],
+        [
+          "n",
+          2
+        ]
+      ],
+      "want": 6
+    },
+    {
+      "src": "false ? 1/zero : 2",
+      "ir": [
+        "?",
+        [
+          "b",
+          false
+        ],
+        [
+          "/",
+          [
+            "n",
+            1
+          ],
+          [
+            "v",
+            "zero"
+          ]
+        ],
+        [
+          "n",
+          2
+        ]
+      ],
+      "want": 2
+    },
+    {
+      "src": "1 / zero",
+      "ir": [
+        "/",
+        [
+          "n",
+          1
+        ],
+        [
+          "v",
+          "zero"
+        ]
+      ],
+      "error": "division by zero"
+    },
+    {
+      "src": "1 % zero",
+      "ir": [
+        "%",
+        [
+          "n",
+          1
+        ],
+        [
+          "v",
+          "zero"
+        ]
+      ],
+      "error": "modulo by zero"
+    },
+    {
+      "src": "1 + true",
+      "ir": [
+        "+",
+        [
+          "n",
+          1
+        ],
+        [
+          "b",
+          true
+        ]
+      ],
+      "error": "cannot add number and boolean"
+    },
+    {
+      "src": "servings == 'four'",
+      "ir": [
+        "==",
+        [
+          "v",
+          "servings"
+        ],
+        [
+          "s",
+          "four"
+        ]
+      ],
+      "error": "cannot compare"
+    },
+    {
+      "src": "servings ? 1 : 2",
+      "ir": [
+        "?",
+        [
+          "v",
+          "servings"
+        ],
+        [
+          "n",
+          1
+        ],
+        [
+          "n",
+          2
+        ]
+      ],
+      "error": "expects true/false"
+    },
+    {
+      "src": "'a' \u003c 'b'",
+      "ir": [
+        "\u003c",
+        [
+          "s",
+          "a"
+        ],
+        [
+          "s",
+          "b"
+        ]
+      ],
+      "error": "expects a number"
+    },
+    {
+      "src": "!servings",
+      "ir": [
+        "!",
+        [
+          "v",
+          "servings"
+        ]
+      ],
+      "error": "expects true/false"
+    },
+    {
+      "src": "sqrt(-1)",
+      "ir": [
+        "call",
+        "sqrt",
+        [
+          "n",
+          -1
+        ]
+      ],
+      "error": "negative"
+    },
+    {
+      "src": "round(1, 0)",
+      "ir": [
+        "call",
+        "round",
+        [
+          "n",
+          1
+        ],
+        [
+          "n",
+          0
+        ]
+      ],
+      "error": "step must be positive"
+    }
+  ]
+}
