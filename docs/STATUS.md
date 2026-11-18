@@ -1,5 +1,7 @@
 # Status (2026-11-18)
 
+Repository: https://github.com/RashKash103/get-cooked (MIT).
+
 Everything in `docs/design.md` is implemented, tested and committed:
 
 - Recipe language: expressions, options, vars, variants, templates, divided
@@ -21,11 +23,11 @@ Everything in `docs/design.md` is implemented, tested and committed:
   Playwright e2e, action smoke test), GoReleaser release with the skills
   asset, composite GitHub Action, Dependabot.
 
-## Before the first release
+## Releases
 
-- Push to GitHub and tag `v0.1.0`. The release workflow publishes binaries,
-  checksums and `get-cooked-skills.tar.gz`, and moves the `v0` tag.
-- Choose a license (none is included yet).
+- v0.1.0 published 2026-11-18 (binaries for linux/darwin/windows × amd64/arm64,
+  checksums, `get-cooked-skills.tar.gz`; floating `v0` tag for the Action).
+- To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
 
