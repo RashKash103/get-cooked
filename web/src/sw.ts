@@ -1,10 +1,10 @@
-// Service worker: offline support for the kitchen. Placeholders are filled in
-// by the site builder (internal/site/build.go).
-const sw = self as unknown as ServiceWorkerGlobalScope;
-
-const VERSION = "__GC_VERSION__";
-const BASE = "__GC_BASE__";
-const PRECACHE = ["__GC_PRECACHE__"];
+// Service worker: offline support for the kitchen.
+// The site builder prepends `self.__GC = {version, base, precache}`.
+const sw = self as unknown as ServiceWorkerGlobalScope & { __GC?: { version: string; base: string; precache: string[] } };
+const cfg = sw.__GC ?? { version: "dev", base: "/", precache: [] };
+const VERSION = cfg.version;
+const BASE = cfg.base;
+const PRECACHE = cfg.precache;
 const CACHE = `get-cooked-${VERSION}`;
 
 sw.addEventListener("install", (e: ExtendableEvent) => {

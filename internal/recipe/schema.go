@@ -27,7 +27,7 @@ var (
 
 func loadSchemas() {
 	c := jsonschema.NewCompiler()
-	for _, name := range []string{"recipe", "ingredients", "config"} {
+	for _, name := range []string{"recipe", "ingredients", "config", "i18n"} {
 		b, err := schema.FS.ReadFile(name + ".schema.json")
 		if err != nil {
 			schemaErr = err
@@ -44,7 +44,7 @@ func loadSchemas() {
 		}
 	}
 	schemas = map[string]*jsonschema.Schema{}
-	for _, name := range []string{"recipe", "ingredients", "config"} {
+	for _, name := range []string{"recipe", "ingredients", "config", "i18n"} {
 		s, err := c.Compile(schemaBase + name + ".schema.json")
 		if err != nil {
 			schemaErr = err

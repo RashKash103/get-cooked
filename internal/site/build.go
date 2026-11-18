@@ -406,9 +406,8 @@ func writeMeta(out, title, base, absolute string, urls []string, as Assets, cat 
 		return err
 	}
 	version := hash([]byte(as.JS + as.CSS + time.Now().UTC().Format(time.RFC3339)))
-	sw = bytes.ReplaceAll(sw, []byte("__GC_VERSION__"), []byte(version))
-	sw = bytes.ReplaceAll(sw, []byte("__GC_BASE__"), []byte(base))
-	sw = bytes.ReplaceAll(sw, []byte("__GC_PRECACHE__"), []byte(base+as.JS+`","`+base+as.CSS+`","`+base))
+	prelude, _ := json.Marshal(map[string]any{"version": version, "base": base, "precache": []string{base + as.JS, base + as.CSS, base}})
+	sw = append([]byte("self.__GC="+string(prelude)+";\n"), sw...)
 	if err := os.WriteFile(filepath.Join(out, "sw.js"), sw, 0o644); err != nil {
 		return err
 	}

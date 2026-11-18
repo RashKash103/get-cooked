@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/i18n.schema.json",
+  "title": "get-cooked UI translation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "description": "The language's own name, shown in the picker." },
+    "dir": { "enum": ["ltr", "rtl"] },
+    "decimal": { "type": "string", "maxLength": 1 },
+    "of": { "type": "string", "description": "Word between a measured amount and an ingredient name (\"de\")." },
+    "system": { "enum": ["", "original", "us", "metric"], "description": "Default unit system for this language." },
+    "ui": { "type": "object", "additionalProperties": { "type": "string" } },
+    "times": { "type": "object", "additionalProperties": { "type": "string" } },
+    "servings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "one": { "type": "string" }, "other": { "type": "string" } }
+    },
+    "duration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "hr": { "type": "string" }, "min": { "type": "string" }, "sec": { "type": "string" } }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "one": { "type": "string" }, "other": { "type": "string" } }
+      }
+    },
+    "ingredients": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "name": { "type": "string" }, "plural": { "type": "string" } }
+      }
+    }
+  }
+}

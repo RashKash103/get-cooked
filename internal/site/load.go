@@ -143,6 +143,15 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 	}
 
 	for i, code := range cfg.Languages {
+		if b, err := os.ReadFile(i18n.Path(cfg.Dir, code)); err == nil {
+			var root yaml.Node
+			if err := yaml.Unmarshal(b, &root); err != nil {
+				return nil, fmt.Errorf("%s: %w", i18n.Path(cfg.Dir, code), err)
+			}
+			if ds := recipe.ValidateSchema("i18n", i18n.Path(cfg.Dir, code), &root); ds.HasErrors() {
+				return nil, ds
+			}
+		}
 		cat, err := i18n.Load(dir, code)
 		if err != nil {
 			return nil, err

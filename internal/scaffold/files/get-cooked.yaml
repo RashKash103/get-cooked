@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/config.schema.json
+title: {{TITLE}}
+description: Family recipes that scale.
+# Where the site will live. For GitHub Pages project sites this is
+# https://<user>.github.io/<repo>/ (the deploy workflow passes it automatically).
+base_url: /
+# Languages: the first is the language recipes are written in. Add more to get
+# a language picker (run `get-cooked i18n init <lang>`).
+languages: [en]
+theme:
+  accent: "#ea580c"
+units:
+  default_system: original   # original | us | metric

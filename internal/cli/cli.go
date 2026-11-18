@@ -56,7 +56,7 @@ func NewRoot(stdout, stderr io.Writer) *cobra.Command {
 	root.SetErr(stderr)
 	root.AddCommand(
 		buildCmd(), serveCmd(), validateCmd(), renderCmd(), initCmd(), newCmd(),
-		importCmd(), schemaCmd(), i18nCmd(), versionCmd(),
+		importCmd(), schemaCmd(), i18nCmd(), skillsCmd(), docsCmd(), versionCmd(),
 	)
 	return root
 }
@@ -138,7 +138,7 @@ func escapeGH(s string) string {
 func renderCmd() *cobra.Command {
 	var servings float64
 	var sets []string
-	var system, dir string
+	var system, dir, lang string
 	var asJSON bool
 	cmd := &cobra.Command{
 		Use:   "render <recipe.yaml>",
@@ -155,8 +155,20 @@ func renderCmd() *cobra.Command {
 				return printLoadError(cmd, err, "text")
 			}
 			abs, _ := filepath.Abs(args[0])
+			recipes := s.Recipes
+			if lang != "" {
+				found := false
+				for _, l := range s.Langs {
+					if l.Code == lang {
+						recipes, found = l.Recipes, true
+					}
+				}
+				if !found {
+					return fmt.Errorf("language %q is not in `languages:` (%s)", lang, strings.Join(s.Config.Languages, ", "))
+				}
+			}
 			var r *recipe.Recipe
-			for _, x := range s.Recipes {
+			for _, x := range recipes {
 				if p, _ := filepath.Abs(x.Path); p == abs {
 					r = x
 				}
@@ -200,6 +212,7 @@ func renderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&system, "units", "", "unit system: original, us or metric")
 	cmd.Flags().StringVarP(&dir, "source", "s", "", "site directory (default: nearest parent with get-cooked.yaml)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "print the rendered model as JSON")
+	cmd.Flags().StringVar(&lang, "lang", "", "language (default: the source language)")
 	return cmd
 }
 
