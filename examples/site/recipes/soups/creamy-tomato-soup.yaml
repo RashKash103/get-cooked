@@ -52,5 +52,7 @@ steps:
   - Stir in @cream and warm through without boiling. Taste and add @sugar if needed.
 
 notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."
   - kind: tip
     text: The soup freezes beautifully for up to 3 months. Add the {if vegan}coconut milk{else}cream{end} after thawing.

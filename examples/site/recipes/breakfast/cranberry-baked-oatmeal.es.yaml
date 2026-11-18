@@ -3,6 +3,7 @@
 # original. Keep {…} expressions, @ingredient, &equipment and ~{timer} references
 # unchanged (you may move them). Regenerate with: get-cooked i18n extract
 strings:
+  "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it.": "Solo es un ejemplo: esta receta existe para mostrar get-cooked y no se ha probado. Por favor, no cocines con ella."
   Cranberry Baked Oatmeal: Avena horneada con arándanos
   "Custardy, cinnamon-scented oats that bake while you make coffee. Scales from a single ramekin to a crowd.": Avena cremosa con aroma a canela que se hornea mientras preparas el café. Sirve desde un ramequín hasta una multitud.
   Golden baked oatmeal studded with cranberries in a square pan: Avena horneada dorada con arándanos en una fuente cuadrada

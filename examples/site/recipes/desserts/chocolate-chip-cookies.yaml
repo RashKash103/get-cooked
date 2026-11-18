@@ -82,6 +82,8 @@ steps:
   - Cool on the sheet ~{5} before moving to a rack.
 
 notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."
   - when: rest == 'none'
     kind: tip
     text: Unrested dough spreads more. For thicker cookies, chill the scooped dough for even 15 minutes.

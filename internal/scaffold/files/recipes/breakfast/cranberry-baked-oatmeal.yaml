@@ -89,6 +89,8 @@ steps:
   - Let it rest ~{5} before serving warm.
 
 notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."
   - when: servings == 1
     kind: warning
     text: A single serving makes a very thin layer, so it may come out softer and more pudding-like. A small ramekin helps.

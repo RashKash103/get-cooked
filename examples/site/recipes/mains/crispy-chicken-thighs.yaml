@@ -95,6 +95,8 @@ steps:
       - Rest the chicken ~{5}, sprinkle with @salt.finish and serve with @lemon{-} wedges for squeezing.
 
 notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."
   - when: heat == 3
     kind: warning
     text: Spice level 3 is genuinely hot. Keep some yogurt or sour cream on the table.

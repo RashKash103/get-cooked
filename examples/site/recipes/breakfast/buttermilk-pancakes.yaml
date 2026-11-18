@@ -58,3 +58,7 @@ steps:
     Heat a buttered griddle over medium heat. Pour scant ⅓-cup portions{if blueberries} and scatter
     a few @berries{-} on each{end}. Cook until bubbles cover the surface, ~{2.5}, flip and cook ~{1.5} more.
   - "Keep warm in a {200 | temp} oven while you cook the rest. Makes about {pancakes} pancakes."
+
+notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."

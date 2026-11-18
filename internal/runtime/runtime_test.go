@@ -130,12 +130,16 @@ func TestOatmealScenarios(t *testing.T) {
 		t.Errorf("2 servings pan = %q", m.Equipment[0].Name)
 	}
 	for _, n := range m.Notes {
-		if n.Kind == "warning" {
-			t.Errorf("unexpected warning at 2 servings: %s", n.Text)
+		if strings.Contains(n.Text, "softer") {
+			t.Errorf("unexpected softness warning at 2 servings: %s", n.Text)
 		}
 	}
 	m = render(t, r, State{Servings: 1})
-	if m.Notes[0].Kind != "warning" || !strings.Contains(m.Notes[0].Text, "softer") {
+	soft := false
+	for _, n := range m.Notes {
+		soft = soft || n.Kind == "warning" && strings.Contains(n.Text, "softer")
+	}
+	if !soft {
 		t.Errorf("1 serving should warn about a softer result, got %+v", m.Notes)
 	}
 

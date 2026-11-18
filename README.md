@@ -1,5 +1,13 @@
 # get-cooked
 
+> [!WARNING]
+> This project was written by AI (Claude) under my direction. Use it with
+> caution, and only after inspecting the code in this repository yourself.
+> The only things tested are the features I rely on in my own use of this
+> tool, and I don't guarantee fixes for issues anyone else runs into. You're
+> free to fork it or contribute (see [Contributing](#contributing)); I'll
+> merge changes in as I'm able to review them.
+
 **Recipes that think.** get-cooked turns a folder of YAML recipes into a fast,
 mobile-first recipe website where everything adapts to the reader: change the
 servings and amounts, pans, times and even steps update; flip an option
@@ -8,6 +16,22 @@ rewrites itself.
 
 It's a single Go binary with no runtime dependencies, designed to run in
 GitHub Actions and publish to GitHub Pages (or any static host).
+
+The recipes in the screenshots and in [examples/site](examples/site) are
+**examples only**: untested illustrations of the format. Please don't cook
+from them.
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png"><img src="docs/screenshots/desktop-light.png" alt="A recipe on desktop: ingredients beside steps, with amounts highlighted"></picture>
+</p>
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/index-dark.png"><img src="docs/screenshots/index-light.png" alt="Recipe index with search and categories" width="190"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/recipe-dark.png"><img src="docs/screenshots/recipe-light.png" alt="Recipe page on a phone, showing the air fryer image variant" width="190"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/customize-dark.png"><img src="docs/screenshots/customize-light.png" alt="Customize sheet: cooking method, spice level and units" width="190"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/cook-dark.png"><img src="docs/screenshots/cook-light.png" alt="Cook mode with step navigation and a running timer" width="190"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/list-dark.png"><img src="docs/screenshots/list-light.png" alt="Shopping list merging ingredients from two recipes" width="190"></picture>
+</p>
 
 ```yaml
 title: Cranberry Baked Oatmeal
@@ -204,6 +228,19 @@ timers:
 A future native wrapper app can take over timers and screen wake by injecting
 `window.GetCookedNative = { setTimer(seconds, label), keepScreenOn(on) }`.
 
+## Documentation
+
+| Document | What's in it |
+|---|---|
+| [docs/recipe-format.md](docs/recipe-format.md) | The complete recipe language: options, expressions, templates, variants, ranges, divided ingredients, recipe references, image variants, translations and the ingredient database (also `get-cooked docs`) |
+| [docs/github-actions.md](docs/github-actions.md) | Building and deploying a site in CI (GitHub Pages and other hosts) |
+| [docs/design.md](docs/design.md) | Architecture: how the compiler, the two runtimes and the site builder fit together |
+| [skills/README.md](skills/README.md) | The Claude Code skills and how to install them |
+| [examples/site](examples/site) | A complete example site (English and Spanish). Its recipes are untested illustrations of the format; don't cook from them |
+| [schema/](schema) | JSON Schemas for recipes, the ingredient database, site config and UI translations (also `get-cooked schema`) |
+| [docs/STATUS.md](docs/STATUS.md) | What's done and ideas for later |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup and how to contribute |
+
 ## Development
 
 ```sh
@@ -214,6 +251,7 @@ make e2e         # Playwright, mobile + desktop, against the real binary
 make lint        # golangci-lint + biome
 make golden      # refresh golden files after intentional changes
 make serve       # serve the example site
+make screenshots # regenerate the README screenshots (light and dark)
 ```
 
 How it fits together is described in [docs/design.md](docs/design.md). The
@@ -221,3 +259,13 @@ key idea: Go parses recipes into a compact IR, and both a Go runtime (for
 server rendering, validation and the CLI) and a TypeScript runtime (for the
 browser) evaluate it. Golden tests guarantee the two produce identical output
 and identical HTML in every language.
+
+## Contributing
+
+Forks and pull requests are welcome. I'll review and merge them as I'm able.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) first; for bigger changes,
+open an issue to discuss the idea before writing code.
+
+## License
+
+[MIT](LICENSE)

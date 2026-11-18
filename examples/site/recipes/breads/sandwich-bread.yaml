@@ -64,3 +64,7 @@ steps:
   - Cover and let rise until doubled, ~{60}{if wheat >= 50} (whole wheat dough can take a little longer){end}.
   - "{if servings > 1}Divide the dough into {servings} pieces. {end}Shape into {servings > 1 ? 'logs' : 'a log'} and place in the greased &loaf_pan. Rise until crowned an inch above the rim, ~{45}."
   - Bake at {350 | temp} ~{bake} until deep golden and {195 | temp} inside. Cool completely before slicing.
+
+notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."

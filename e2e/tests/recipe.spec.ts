@@ -32,12 +32,13 @@ test("servings change pans, times, amounts and notes", async ({ page }) => {
   await expect(page.locator("#equipment")).toContainText("13×9 inch baking dish");
   await setServings(page, 3);
   await expect(page.locator("#times")).toContainText("36 min"); // 30 + 3 × 2
-  await expect(page.locator("#warnings")).toBeEmpty();
+  await expect(page.locator("#warnings")).not.toContainText("softer");
+  await expect(page.locator("#warnings")).toContainText("Example only");
   await setServings(page, 2);
   await expect(page.locator("#equipment")).toContainText("8×8 inch baking dish");
   await expect(page.locator(".ing[data-id=oats]")).toContainText("1 cup rolled oats");
   await setServings(page, 1);
-  await expect(page.locator("#warnings .note-warning")).toContainText("softer");
+  await expect(page.locator("#warnings")).toContainText("softer");
   await expect(page.locator(".ing[data-id=salt]")).toContainText("pinch");
   await expect(page).toHaveURL(/\?s=1/);
   // State survives a reload (URL) and a fresh visit (local storage).

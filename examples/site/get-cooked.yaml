@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../schema/config.schema.json
 title: The Test Kitchen
-description: Sample recipes for get-cooked. Change the servings, flip options and watch everything adapt.
+description: "Example recipes that demonstrate get-cooked: change the servings, flip options and watch everything adapt. They are untested illustrations of the format, so please don't cook from them."
 base_url: /
 # The first language is the one recipes are written in. Others are served at
 # /<lang>/ with a language picker; see i18n/ and <recipe>.<lang>.yaml files.

@@ -45,3 +45,7 @@ steps:
   - Whisk @eggs, @milk, @sugar, @vanilla, @cinnamon and @salt in a shallow dish.
   - Soak each slice ~{0.5} per side.
   - Melt a little @butter{-} in a skillet over medium heat and cook the slices until deep golden, ~{3} per side.
+
+notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."

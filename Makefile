@@ -3,7 +3,7 @@ BIN := bin/get-cooked
 VERSION ?= dev
 LDFLAGS := -s -w -X github.com/RashKash103/get-cooked/internal/cli.Version=$(VERSION)
 
-.PHONY: all deps web build test test-go test-web e2e lint fmt golden serve example clean
+.PHONY: all deps web build test test-go test-web e2e lint fmt golden serve example screenshots clean
 
 all: lint test build
 
@@ -39,6 +39,10 @@ fmt:
 # Regenerate golden files after intentional runtime or markup changes.
 golden:
 	go test ./internal/expr ./internal/runtime ./internal/site -update
+
+# Regenerate the README screenshots (light and dark).
+screenshots: build
+	cd e2e && node screenshots.mjs
 
 serve: build
 	$(BIN) serve -s examples/site
