@@ -96,7 +96,7 @@ func (db *DB) Add(key string, y DBYAML, tb *units.Table, loc Loc) Diags {
 	if e.Name == "" {
 		e.Name = strings.ReplaceAll(key, "-", " ")
 	}
-	info := &units.Ing{Name: e.Name, Plural: e.Plural, GramsEach: y.GramsEach, Measure: y.Measure}
+	info := &units.Ing{Name: e.Name, Plural: e.Plural, GramsEach: y.GramsEach, Measure: y.Measure, Cat: y.Category}
 	if y.GramsPerCup > 0 {
 		info.GramsPerML = y.GramsPerCup / tb.Units["cup"].Factor
 	}

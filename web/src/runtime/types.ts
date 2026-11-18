@@ -58,10 +58,12 @@ export interface Ing {
   ug?: Record<string, number>;
   measure?: string;
   round?: Rule;
+  cat?: string;
 }
 
 export interface Qty {
   v: number;
+  h?: number;
   t: string;
   u: string;
   id: string;
@@ -110,6 +112,7 @@ export interface Amount {
   n?: number;
   s?: boolean;
   e?: IR;
+  hi?: Amount;
 }
 
 export interface Compiled {

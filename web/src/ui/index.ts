@@ -1,4 +1,5 @@
 // Index page: instant client-side search and category filter.
+import { load } from "./storage";
 export function initIndex(): void {
   const input = document.getElementById("search") as HTMLInputElement | null;
   const cards = [...document.querySelectorAll<HTMLElement>(".card")];
@@ -8,13 +9,17 @@ export function initIndex(): void {
   const params = new URLSearchParams(location.search);
   input.value = params.get("q") ?? "";
   let cat = params.get("c") ?? "";
+  const saved = new Set(load<string[]>("gc:saved", []));
+  const savedChip = chips.find((c) => c.dataset.cat === "__saved");
+  if (savedChip) savedChip.hidden = saved.size === 0;
 
   function apply(): void {
     const terms = input?.value.toLowerCase().trim().split(/\s+/).filter(Boolean) ?? [];
     let shown = 0;
     for (const c of cards) {
       const hay = c.dataset.search ?? "";
-      const ok = (!cat || c.dataset.cat === cat) && terms.every((t) => hay.includes(t));
+      const inCat = cat === "__saved" ? saved.has(c.dataset.slug ?? "") : !cat || c.dataset.cat === cat;
+      const ok = inCat && terms.every((t) => hay.includes(t));
       c.hidden = !ok;
       if (ok) shown++;
     }

@@ -32,7 +32,7 @@ ingredients:
       - 2 tbsp sugar
       - 2 tsp baking powder
       - 1/2 tsp baking soda
-      - 1/2 tsp kosher salt
+      - 1/2-3/4 tsp kosher salt
   - section: Wet
     items:
       # Two variants share the id `dairy`, so steps can refer to @dairy either way.
@@ -44,7 +44,7 @@ ingredients:
   - section: Extras
     when: blueberries
     items:
-      - { id: berries, name: fresh blueberries, amount: 1, unit: cup }
+      - { id: berries, ingredient: blueberries, amount: 1, unit: cup }
 
 steps:
   - when: no_buttermilk

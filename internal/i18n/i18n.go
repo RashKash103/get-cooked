@@ -49,6 +49,7 @@ type Catalog struct {
 	Servings    Label              `yaml:"servings"`
 	Duration    map[string]string  `yaml:"duration"`
 	Units       map[string]Label   `yaml:"units"`
+	Categories  map[string]string  `yaml:"categories"`
 	Ingredients map[string]IngName `yaml:"ingredients"`
 }
 
@@ -110,6 +111,10 @@ func Load(siteDir, lang string) (*Catalog, error) {
 	merge(c.UI, o.UI)
 	merge(c.Times, o.Times)
 	merge(c.Duration, o.Duration)
+	if c.Categories == nil {
+		c.Categories = map[string]string{}
+	}
+	merge(c.Categories, o.Categories)
 	if o.Servings.One != "" {
 		c.Servings.One = o.Servings.One
 	}

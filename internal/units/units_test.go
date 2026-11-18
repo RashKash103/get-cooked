@@ -70,6 +70,26 @@ func TestFormat(t *testing.T) {
 	}
 }
 
+func TestFormatRange(t *testing.T) {
+	tb := Default()
+	cases := []struct {
+		lo, hi float64
+		unit   string
+		want   string
+	}{
+		{2, 3, "clove", "2–3 cloves"},
+		{0.5, 1, "tsp", "½–1 tsp"},
+		{1, 3, "tsp", "1 tsp – 1 tbsp"},
+		{1, 1.01, "cup", "1 cup"},
+		{1, 2, "each", "1–2"},
+	}
+	for _, c := range cases {
+		if got := tb.FormatRange(c.lo, c.hi, c.unit, Original, nil, false).String(); got != c.want {
+			t.Errorf("FormatRange(%v, %v, %s) = %q want %q", c.lo, c.hi, c.unit, got, c.want)
+		}
+	}
+}
+
 func TestLookup(t *testing.T) {
 	tb := Default()
 	for in, want := range map[string]string{

@@ -57,6 +57,7 @@ func (l *Lang) Prefix(source string) string {
 type LoadOptions struct {
 	Drafts bool // include draft recipes
 	Sweep  bool // run the runtime validation sweep
+	Strict bool // extra warnings (ingredients that can't convert, …)
 }
 
 // IsRecipeFile reports whether path looks like a recipe file (and not a
@@ -162,6 +163,9 @@ func Load(dir string, opts LoadOptions) (*Site, error) {
 		s.Langs = append(s.Langs, l)
 	}
 	s.Recipes = s.Langs[0].Recipes
+	if opts.Strict {
+		s.Diags = append(s.Diags, strictChecks(s)...)
+	}
 	return s, nil
 }
 
@@ -328,4 +332,34 @@ func titleCase(s string) string {
 		words[i] = strings.ToUpper(w[:1]) + w[1:]
 	}
 	return strings.Join(words, " ")
+}
+
+// strictChecks warns about ingredients measured by volume or weight that have
+// no density, so they can't switch between cups and grams.
+func strictChecks(s *Site) recipe.Diags {
+	var out recipe.Diags
+	for _, r := range s.Recipes {
+		for _, sec := range r.C.Ingredients {
+			for _, ic := range sec.Items {
+				u, ok := s.Units.Units[ic.Unit]
+				if !ok || ic.Recipe != nil || ic.Fixed || (u.Dim != "volume" && u.Dim != "mass") {
+					continue
+				}
+				var info *units.Ing
+				if ic.Ref != "" {
+					info = r.C.Ings[ic.Ref]
+				}
+				if info == nil || info.GramsPerML == 0 {
+					msg := fmt.Sprintf("%q has no density, so it can't convert between volume and weight", ic.Name)
+					if ic.Ref == "" {
+						msg += "; add it to the ingredient database with grams_per_cup"
+					} else {
+						msg += fmt.Sprintf("; add grams_per_cup to %q in the ingredient database", ic.Ref)
+					}
+					out = append(out, recipe.Diag{File: r.Path, Line: ic.L.Line, Warn: true, Msg: msg})
+				}
+			}
+		}
+	}
+	return out
 }

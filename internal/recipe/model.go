@@ -41,6 +41,27 @@ func (s *Src) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
+// AmountSrc is an amount: one value, or a [low, high] range.
+type AmountSrc struct {
+	Src
+	Hi *Src
+}
+
+// UnmarshalYAML accepts a scalar or a two-element sequence.
+func (a *AmountSrc) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.SequenceNode {
+		if len(n.Content) != 2 {
+			return &yaml.TypeError{Errors: []string{fmt.Sprintf("line %d: a range amount needs exactly two values, like [1, 2]", n.Line)}}
+		}
+		if err := a.Src.UnmarshalYAML(n.Content[0]); err != nil {
+			return err
+		}
+		a.Hi = &Src{}
+		return a.Hi.UnmarshalYAML(n.Content[1])
+	}
+	return a.Src.UnmarshalYAML(n)
+}
+
 // at returns the source position of a byte offset within the scalar.
 func (s Src) at(file string, offset int) Loc {
 	switch s.Style {
@@ -207,7 +228,7 @@ type IngItem struct {
 	Ingredient  string    `yaml:"ingredient"`
 	Name        string    `yaml:"name"`
 	Plural      string    `yaml:"plural"`
-	Amount      Src       `yaml:"amount"`
+	Amount      AmountSrc `yaml:"amount"`
 	Unit        string    `yaml:"unit"`
 	Scale       *bool     `yaml:"scale"`
 	FixedUnit   bool      `yaml:"fixed_unit"`

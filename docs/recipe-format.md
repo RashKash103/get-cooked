@@ -116,6 +116,7 @@ ingredients:
   - id: eggs
     ingredient: egg
     amount: "max(1, round(2 * scale))"   # string: raw expression, NOT auto-scaled
+  - { id: garlic, ingredient: garlic, amount: [2, 3], unit: clove }   # range: "2–3 cloves"
   - id: vanilla
     name: vanilla bean paste    # name without a database entry
     amount: 1
@@ -143,6 +144,9 @@ Rules:
   (variants): `{id: fat, ingredient: butter, when: "!vegan"}` and
   `{id: fat, ingredient: olive-oil, when: vegan}`. Steps say `@fat` either way.
 - An amount that evaluates to 0 hides the ingredient.
+- Ranges (`amount: [low, high]`, numbers or expressions) scale and convert
+  like single amounts; shorthand lines such as `2-3 cloves garlic` become
+  ranges too. The shopping list buys the high end.
 - Units: tsp, tbsp, cup, fl oz, pint, quart, gallon, ml, l, g, kg, oz, lb,
   plus count units (clove, can, slice, pinch, dash, stick, sprig, bunch, …).
   Leave the unit out for counted items ("2 eggs"). Declare other count units

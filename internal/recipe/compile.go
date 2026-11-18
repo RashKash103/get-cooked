@@ -341,6 +341,10 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 		if l.Amount > 0 {
 			a := l.Amount
 			d.amt = &AmountC{N: &a, S: true}
+			if l.AmountMax > l.Amount {
+				h := l.AmountMax
+				d.amt.Hi = &AmountC{N: &h, S: true}
+			}
 		}
 		if l.Unit == "" && l.Amount > 1 {
 			d.plur = l.Name
@@ -740,13 +744,17 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 			switch {
 			case d.amt != nil:
 				ic.Amount = d.amt
-			case it.Amount.Num != nil:
-				n := *it.Amount.Num
-				ic.Amount = &AmountC{N: &n, S: it.Scale == nil || *it.Scale}
 			case it.Amount.Set:
-				if e := cc.expr(it.Amount, "amount"); e != nil {
-					ic.Amount = &AmountC{E: e}
+				ic.Amount = cc.amountC(it.Amount.Src, it.Scale)
+				if ic.Amount != nil && it.Amount.Hi != nil {
+					ic.Amount.Hi = cc.amountC(*it.Amount.Hi, it.Scale)
+					if it.Recipe != "" {
+						cc.errAt(d.loc, "a recipe reference can't use a range amount")
+					}
 				}
+			}
+			if ic.Amount != nil && ic.Amount.Hi != nil && it.Split.Kind != 0 {
+				cc.errAt(d.loc, "a split ingredient can't also use a range amount")
 			}
 			if it.Split.Kind != 0 {
 				if it.Amount.Set {
@@ -777,6 +785,21 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 		}
 		comp.Ingredients = append(comp.Ingredients, sc)
 	}
+}
+
+// amountC compiles a number (scaled unless scale: false) or an expression.
+func (cc *cctx) amountC(s Src, scale *bool) *AmountC {
+	if s.Num != nil {
+		n := *s.Num
+		if n < 0 {
+			cc.errAt(s.at(cc.file, 0), "amount must not be negative")
+		}
+		return &AmountC{N: &n, S: scale == nil || *scale}
+	}
+	if e := cc.expr(s, "amount"); e != nil {
+		return &AmountC{E: e}
+	}
+	return nil
 }
 
 func (cc *cctx) steps(f *File, comp *Compiled) {

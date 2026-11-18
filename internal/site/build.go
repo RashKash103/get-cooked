@@ -60,6 +60,8 @@ type page struct {
 	Index       *indexView
 	Alternates  []alternate
 	I18n        template.JS
+	ListData    template.JS
+	Feed        string
 	cat         *i18n.Catalog
 }
 
@@ -89,7 +91,7 @@ type recipeView struct {
 }
 
 type card struct {
-	Title, URL, Image, SrcSet, Category, Time, Search, Initial string
+	Title, Slug, URL, Image, SrcSet, Category, Time, Search, Initial string
 }
 
 type indexView struct {
@@ -99,6 +101,9 @@ type indexView struct {
 
 // jsKeys are the UI strings the browser needs.
 var jsKeys = []string{
+	"notes", "ingredients", "equipment", "steps", "source", "units", "units_us", "units_metric", "units_original", "uses",
+	"list", "list_add", "list_update", "list_added", "list_remove", "list_make", "list_confirm_clear", "list_items",
+	"scale_prompt", "step_of", "all_done", "save", "saved", "copied", "exit_cook", "cook",
 	"step", "uses", "unsupported", "cook_on", "cook_on_unsupported", "copied", "copy_failed", "link_copied",
 	"timer_started", "timer_set", "timer_done", "timer_done_short", "timer_add", "timer_pause", "timer_resume",
 	"timer_cancel", "timer_dismiss", "timer_clock_app", "mark_done", "theme", "theme_system", "theme_light", "theme_dark",
@@ -110,6 +115,7 @@ type builder struct {
 	out, root, absolute     string
 	as                      Assets
 	recipeTpl, indexTpl, nf *template.Template
+	listTpl                 *template.Template
 	imgs                    *imageProcessor
 	sitemap                 []string
 }
@@ -158,6 +164,9 @@ func Build(s *Site, opts BuildOptions) error {
 	if b.nf, err = parse("404.html"); err != nil {
 		return err
 	}
+	if b.listTpl, err = parse("list.html"); err != nil {
+		return err
+	}
 	if b.as, err = writeAssets(cfg.Path(cfg.Theme.CustomCSS), cfg.Theme.CustomCSS != "", b.out, opts.LiveReload); err != nil {
 		return err
 	}
@@ -202,7 +211,12 @@ func (b *builder) newPage(l *Lang, base, title, desc, canonical, path string) pa
 	if dir == "" {
 		dir = "ltr"
 	}
+	feed := ""
+	if b.absolute != "" {
+		feed = base + "feed.xml"
+	}
 	return page{
+		Feed: feed,
 		Site: b.s.Config, Base: base, Root: b.root, Lang: l.Code, Dir: dir, Title: title, Description: desc,
 		Accent: template.CSS(b.s.Config.Theme.Accent), Assets: b.as, Canonical: canonical,
 		Alternates: b.alternates(l, path), I18n: template.JS(j), cat: cat,
@@ -290,7 +304,7 @@ func (b *builder) lang(l *Lang) error {
 			}
 		}
 		c := card{
-			Title: r.Title, URL: pageURL, Category: r.Category, Image: v.Image, SrcSet: v.SrcSet,
+			Title: r.Title, Slug: r.Slug, URL: pageURL, Category: r.Category, Image: v.Image, SrcSet: v.SrcSet,
 			Search:  strings.ToLower(strings.Join(search, " ")),
 			Initial: strings.ToUpper(string([]rune(r.Title)[:1])),
 		}
@@ -318,6 +332,29 @@ func (b *builder) lang(l *Lang) error {
 		return err
 	}
 	b.sitemap = append(b.sitemap, base)
+	if b.absolute != "" {
+		if err := writeFeed(filepath.Join(out, "feed.xml"), b.absolute, base, cfg.Title, l); err != nil {
+			return err
+		}
+	}
+	// Shopping list: rendered in the browser from local storage.
+	system := cfg.Units.DefaultSystem
+	if l.Catalog.System != "" {
+		system = l.Catalog.System
+	}
+	ld, err := json.Marshal(map[string]any{"units": l.Units, "system": system, "categories": l.Catalog.Categories})
+	if err != nil {
+		return err
+	}
+	lp := b.newPage(l, base, l.Catalog.T("list")+" · "+cfg.Title, "", "", "list/")
+	lp.ListData = template.JS(ld)
+	lp.BodyClass = "page-list"
+	if err := os.MkdirAll(filepath.Join(out, "list"), 0o755); err != nil {
+		return err
+	}
+	if err := writeTemplate(b.listTpl, filepath.Join(out, "list", "index.html"), lp); err != nil {
+		return err
+	}
 	np := b.newPage(l, base, l.Catalog.T("not_found")+" · "+cfg.Title, "", "", "")
 	np.BodyClass = "page-404"
 	return writeTemplate(b.nf, filepath.Join(out, "404.html"), np)
@@ -340,7 +377,7 @@ func prefixSrcSet(prefix, srcset string) string {
 
 // pageData is the JSON embedded in each recipe page for the TS runtime.
 func pageData(r *recipe.Recipe) (string, error) {
-	b, err := json.Marshal(map[string]any{"slug": r.Slug, "title": r.Title, "compiled": r.C})
+	b, err := json.Marshal(map[string]any{"slug": r.Slug, "title": r.Title, "description": r.Description, "source": r.Source, "compiled": r.C})
 	if err != nil {
 		return "", err
 	}
@@ -482,4 +519,34 @@ func copyDir(src, dst string) error {
 		}
 		return copyFile(p, filepath.Join(dst, rel))
 	})
+}
+
+// writeFeed writes an Atom feed of the newest recipes.
+func writeFeed(path, absolute, base, title string, l *Lang) error {
+	var sb strings.Builder
+	updated := "1970-01-01T00:00:00Z"
+	n := 0
+	var entries strings.Builder
+	for _, r := range l.Recipes {
+		if n == 20 {
+			break
+		}
+		n++
+		date := r.Date
+		if date == "" {
+			date = "1970-01-01"
+		}
+		ts := date + "T00:00:00Z"
+		if ts > updated {
+			updated = ts
+		}
+		u := absolute + base + "recipes/" + r.Slug + "/"
+		fmt.Fprintf(&entries, "  <entry>\n    <title>%s</title>\n    <link href=\"%s\"/>\n    <id>%s</id>\n    <updated>%s</updated>\n    <summary>%s</summary>\n  </entry>\n",
+			esc(r.Title), esc(u), esc(u), ts, esc(r.Description))
+	}
+	fmt.Fprintf(&sb, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"%s\">\n  <title>%s</title>\n  <link href=\"%s\"/>\n  <link rel=\"self\" href=\"%sfeed.xml\"/>\n  <id>%s</id>\n  <updated>%s</updated>\n",
+		esc(l.Code), esc(title), esc(absolute+base), esc(absolute+base), esc(absolute+base), updated)
+	sb.WriteString(entries.String())
+	sb.WriteString("</feed>\n")
+	return os.WriteFile(path, []byte(sb.String()), 0o644)
 }

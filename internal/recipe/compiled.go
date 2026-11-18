@@ -135,10 +135,13 @@ type WithC struct {
 }
 
 // AmountC is either a number (scaled when S) or an expression.
+//
+// Hi is the upper end of a range ("1–2 cloves").
 type AmountC struct {
-	N *float64   `json:"n,omitempty"`
-	S bool       `json:"s,omitempty"`
-	E *expr.Expr `json:"e,omitempty"`
+	N  *float64   `json:"n,omitempty"`
+	S  bool       `json:"s,omitempty"`
+	E  *expr.Expr `json:"e,omitempty"`
+	Hi *AmountC   `json:"hi,omitempty"`
 }
 
 // StepSectionC is a group of steps.

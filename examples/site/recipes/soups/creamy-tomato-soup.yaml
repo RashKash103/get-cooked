@@ -34,7 +34,7 @@ ingredients:
   - { id: fat, ingredient: butter, amount: 3, unit: tbsp, when: "!vegan" }
   - { id: fat, ingredient: olive-oil, amount: 3, unit: tbsp, when: vegan }
   - { id: onion, ingredient: yellow-onion, amount: 1, note: chopped }
-  - { id: garlic, ingredient: garlic, amount: 4, unit: clove, note: smashed }
+  - { id: garlic, ingredient: garlic, amount: [3, 4], unit: clove, note: smashed }
   - { id: flakes, ingredient: red-pepper-flakes, amount: 0.25, unit: tsp }
   - { id: tomatoes, ingredient: crushed-tomatoes, amount: cans, unit: can, note: 28 oz each }
   - { id: broth, ingredient: vegetable-broth, amount: 2, unit: cup }

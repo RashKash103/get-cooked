@@ -78,6 +78,40 @@ func TestRender(t *testing.T) {
 	}
 }
 
+func TestExport(t *testing.T) {
+	r := filepath.Join(exampleSite, "recipes/breakfast/buttermilk-pancakes.yaml")
+	out := mustRun(t, "export", r, "--servings", "2", "--set", "no_buttermilk=true")
+	if !strings.Contains(out, "# Fluffy Buttermilk Pancakes") || !strings.Contains(out, "*I don't have buttermilk*") {
+		t.Errorf("md:\n%s", out)
+	}
+	if out := mustRun(t, "export", r, "-f", "typ", "--lang", "es"); !strings.Contains(out, `#section("Ingredientes")`) {
+		t.Errorf("typ:\n%s", out)
+	}
+	dst := filepath.Join(t.TempDir(), "p.txt")
+	mustRun(t, "export", r, "-o", dst)
+	if b, _ := os.ReadFile(dst); strings.Contains(string(b), "**") {
+		t.Error("txt should have no markup")
+	}
+	if _, code := run(t, "export", r, "-f", "docx"); code == 0 {
+		t.Error("unknown format should fail")
+	}
+}
+
+func TestStrict(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := scaffold.Write(dir, "T"); err != nil {
+		t.Fatal(err)
+	}
+	bad := filepath.Join(dir, "recipes/x.yaml")
+	_ = os.WriteFile(bad, []byte("title: X\nservings: 2\ningredients: [{id: dust, name: moon dust, amount: 1, unit: cup}]\nsteps: [Add @dust.]\n"), 0o644)
+	if out := mustRun(t, "validate", "-s", dir); strings.Contains(out, "moon dust") {
+		t.Error("non-strict should not warn")
+	}
+	if out := mustRun(t, "validate", "-s", dir, "--strict"); !strings.Contains(out, `"moon dust" has no density`) {
+		t.Errorf("strict:\n%s", out)
+	}
+}
+
 func TestInitNewBuildAndErrors(t *testing.T) {
 	if !assets.Built() {
 		t.Skip("frontend bundle not built (run pnpm build)")
@@ -100,7 +134,7 @@ func TestInitNewBuildAndErrors(t *testing.T) {
 	mustRun(t, "validate", "-s", dir)
 	pub := filepath.Join(dir, "out")
 	mustRun(t, "build", "-s", dir, "-o", pub, "--base-url", "https://example.com/r/")
-	for _, f := range []string{"index.html", "404.html", "sw.js", "manifest.webmanifest", "sitemap.xml", "robots.txt",
+	for _, f := range []string{"index.html", "404.html", "sw.js", "manifest.webmanifest", "sitemap.xml", "robots.txt", "feed.xml", "list/index.html",
 		"recipes/lemon-bars/index.html", "recipes/cranberry-baked-oatmeal/index.html", "recipes/cranberry-baked-oatmeal/cranberry-baked-oatmeal.svg"} {
 		if _, err := os.Stat(filepath.Join(pub, f)); err != nil {
 			t.Errorf("missing %s", f)

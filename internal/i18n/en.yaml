@@ -71,6 +71,35 @@ ui:
   timer_cancel: Cancel timer
   timer_dismiss: Dismiss timer
   timer_clock_app: Open in Clock app
+  notes: Notes
+  export: Export
+  export_markdown: Download Markdown
+  export_text: Copy as text
+  export_print: Print or save as PDF
+  list: Shopping list
+  list_add: Add to list
+  list_update: Update list
+  list_added: "Added to your shopping list"
+  list_empty: Your shopping list is empty. Add ingredients from any recipe.
+  list_recipes: Recipes
+  list_items: Items
+  list_copy: Copy list
+  list_clear_checked: Remove checked
+  list_clear: Clear list
+  list_confirm_clear: Clear the whole shopping list?
+  list_remove: "Remove {name}"
+  list_make: make it
+  scale_prompt: "How much {name} do you have? (now {q})"
+  scale_hint: Tap an amount to scale the recipe to what you have
+  save: Save recipe
+  saved: Saved
+  my_notes: Your notes
+  my_notes_placeholder: Notes for next time (kept on this device)
+  prev_step: Previous step
+  next_step: Next step
+  step_of: "Step {n} of {total}"
+  exit_cook: Exit cook mode
+  all_done: All done. Enjoy!
 
 # Labels for keys under a recipe's `times:`. Unknown keys are title-cased.
 times:
@@ -98,6 +127,17 @@ duration:
 
 # Unit labels. Only list units whose names differ from the built-in ones.
 units: {}
+
+# Shopping list aisle names for ingredient database categories.
+categories:
+  produce: Produce
+  dairy: Dairy & eggs
+  meat: Meat & fish
+  baking: Baking
+  pantry: Pantry
+  frozen: Frozen
+  bakery: Bakery
+  other: Other
 
 # Display names for ingredient database entries, keyed like ingredients.yaml.
 ingredients: {}

@@ -219,6 +219,7 @@ vegetable-broth:
 garlic:
   name: garlic
   unit_grams: { clove: 5 }
+  round: { denoms: [2], min: 0.5 }
   category: produce
 yellow-onion:
   name: yellow onion
@@ -252,6 +253,11 @@ chicken-thighs:
   category: meat
 baby-potatoes:
   name: baby potatoes
+  category: produce
+blueberries:
+  name: fresh blueberries
+  aliases: [blueberries, blueberry]
+  grams_per_cup: 148
   category: produce
 banana:
   name: ripe banana

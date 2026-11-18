@@ -56,7 +56,7 @@ func NewRoot(stdout, stderr io.Writer) *cobra.Command {
 	root.SetErr(stderr)
 	root.AddCommand(
 		buildCmd(), serveCmd(), validateCmd(), renderCmd(), initCmd(), newCmd(),
-		importCmd(), schemaCmd(), i18nCmd(), skillsCmd(), docsCmd(), versionCmd(),
+		importCmd(), schemaCmd(), i18nCmd(), skillsCmd(), docsCmd(), exportCmd(), versionCmd(),
 	)
 	return root
 }
@@ -73,14 +73,14 @@ func versionCmd() *cobra.Command {
 
 func validateCmd() *cobra.Command {
 	var dir, format string
-	var drafts bool
+	var drafts, strict bool
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Check recipes, the ingredient database and config for errors",
 		Long: "Validates every recipe against the schema, checks expressions and references, and renders each\n" +
 			"recipe across servings, options and unit systems to catch problems that only appear at runtime.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			s, err := site.Load(dir, site.LoadOptions{Drafts: drafts, Sweep: true})
+			s, err := site.Load(dir, site.LoadOptions{Drafts: drafts, Sweep: true, Strict: strict})
 			if err != nil {
 				return printLoadError(cmd, err, format)
 			}
@@ -97,6 +97,7 @@ func validateCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&dir, "source", "s", ".", "site directory")
 	cmd.Flags().StringVar(&format, "format", "text", "output format: text, github or json")
 	cmd.Flags().BoolVar(&drafts, "drafts", true, "also validate drafts")
+	cmd.Flags().BoolVar(&strict, "strict", false, "also warn about ingredients that can't convert units")
 	return cmd
 }
 

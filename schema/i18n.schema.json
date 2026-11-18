@@ -5,29 +5,85 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "name": { "type": "string", "description": "The language's own name, shown in the picker." },
-    "dir": { "enum": ["ltr", "rtl"] },
-    "decimal": { "type": "string", "maxLength": 1 },
-    "of": { "type": "string", "description": "Word between a measured amount and an ingredient name (\"de\")." },
-    "system": { "enum": ["", "original", "us", "metric"], "description": "Default unit system for this language." },
-    "ui": { "type": "object", "additionalProperties": { "type": "string" } },
-    "times": { "type": "object", "additionalProperties": { "type": "string" } },
+    "name": {
+      "type": "string",
+      "description": "The language's own name, shown in the picker."
+    },
+    "dir": {
+      "enum": [
+        "ltr",
+        "rtl"
+      ]
+    },
+    "decimal": {
+      "type": "string",
+      "maxLength": 1
+    },
+    "of": {
+      "type": "string",
+      "description": "Word between a measured amount and an ingredient name (\"de\")."
+    },
+    "system": {
+      "enum": [
+        "",
+        "original",
+        "us",
+        "metric"
+      ],
+      "description": "Default unit system for this language."
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "times": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "servings": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "one": { "type": "string" }, "other": { "type": "string" } }
+      "properties": {
+        "one": {
+          "type": "string"
+        },
+        "other": {
+          "type": "string"
+        }
+      }
     },
     "duration": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "hr": { "type": "string" }, "min": { "type": "string" }, "sec": { "type": "string" } }
+      "properties": {
+        "hr": {
+          "type": "string"
+        },
+        "min": {
+          "type": "string"
+        },
+        "sec": {
+          "type": "string"
+        }
+      }
     },
     "units": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "properties": { "one": { "type": "string" }, "other": { "type": "string" } }
+        "properties": {
+          "one": {
+            "type": "string"
+          },
+          "other": {
+            "type": "string"
+          }
+        }
       }
     },
     "ingredients": {
@@ -35,8 +91,22 @@
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "properties": { "name": { "type": "string" }, "plural": { "type": "string" } }
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "plural": {
+            "type": "string"
+          }
+        }
       }
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Shopping list aisle names for ingredient categories."
     }
   }
 }

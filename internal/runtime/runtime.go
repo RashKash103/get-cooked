@@ -134,6 +134,7 @@ type rctx struct {
 type active struct {
 	ic    *recipe.IngC
 	value float64
+	hi    float64 // upper end of a range (0 when not a range)
 	has   bool
 	parts map[string]float64
 }
@@ -300,6 +301,16 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 					continue
 				}
 				a.value, a.has = v, true
+				if ic.Amount.Hi != nil {
+					h, err := r.amount(ic, *ic.Amount.Hi, ic.ID)
+					if err != nil {
+						return nil, err
+					}
+					if h < v {
+						return nil, fail(ic.L, "range of %q goes down: %s to %s", ic.ID, expr.FormatNumber(v), expr.FormatNumber(h))
+					}
+					a.hi = h
+				}
 			}
 			if len(ic.Split) > 0 {
 				a.parts = map[string]float64{}
@@ -352,7 +363,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 		for _, a := range ps.items {
 			im := IngM{ID: a.ic.ID, Optional: a.ic.Optional, Uses: []UseM{}}
 			if a.has {
-				q := r.qty(a.ic, a.value)
+				q := r.qtyRange(a.ic, a.value, a.hi)
 				im.Q = &q
 				if im.Link, err = r.link(a.ic, a.value); err != nil {
 					return nil, err
@@ -484,6 +495,22 @@ func (r *rctx) link(ic *recipe.IngC, v float64) (*LinkM, error) {
 	return l, nil
 }
 
+// qtyRange formats an amount, or a range when hi > 0.
+func (r *rctx) qtyRange(ic *recipe.IngC, v, hi float64) units.Qty {
+	if hi <= 0 || ic.Recipe != nil {
+		return r.qty(ic, v)
+	}
+	unit := ic.Unit
+	if unit == "" {
+		unit = "each"
+	}
+	var info *units.Ing
+	if ic.Ref != "" {
+		info = r.c.Ings[ic.Ref]
+	}
+	return r.c.Units.FormatRange(v, hi, unit, r.system, info, ic.Fixed)
+}
+
 func (r *rctx) qty(ic *recipe.IngC, v float64) units.Qty {
 	if ref := ic.Recipe; ref != nil {
 		q := recipeRule.Round(v)
@@ -508,7 +535,7 @@ func (r *rctx) qty(ic *recipe.IngC, v float64) units.Qty {
 }
 
 func (r *rctx) name(ic *recipe.IngC, q *units.Qty) string {
-	if q != nil && q.ID == "each" && q.Value > 1 && ic.Plural != "" {
+	if q != nil && q.ID == "each" && q.Max() > 1 && ic.Plural != "" {
 		return ic.Plural
 	}
 	return ic.Name
@@ -592,7 +619,11 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 					}
 					v *= p
 				}
-				qq := r.qty(a.ic, v)
+				h := 0.0
+				if s.Part == "" && a.hi > 0 {
+					h = a.hi * v / a.value
+				}
+				qq := r.qtyRange(a.ic, v, h)
 				q = &qq
 				seg.Q = qq.String()
 				seg.J = r.c.Units.Join(q)

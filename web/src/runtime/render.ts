@@ -60,6 +60,7 @@ export function environment(c: Compiled, st: State): { env: Env; servings: numbe
 interface Active {
   ic: IngC;
   value: number;
+  hi: number;
   has: boolean;
   parts?: Map<string, number>;
 }
@@ -117,6 +118,12 @@ class Renderer {
     return this.units.format(v, ic.unit || "each", this.system, info, Boolean(ic.fixed));
   }
 
+  qtyRange(ic: IngC, v: number, hi: number): Qty {
+    if (hi <= 0 || ic.recipe) return this.qty(ic, v);
+    const info = ic.ref ? this.c.ings?.[ic.ref] : undefined;
+    return this.units.formatRange(v, hi, ic.unit || "each", this.system, info, Boolean(ic.fixed));
+  }
+
   link(ic: IngC, v: number): LinkM | null {
     const ref = ic.recipe;
     if (!ref) return null;
@@ -134,7 +141,7 @@ class Renderer {
   }
 
   name(ic: IngC, q: Qty | null): string {
-    if (q && q.id === "each" && q.v > 1 && ic.plural) return ic.plural;
+    if (q && q.id === "each" && Math.max(q.v, q.h ?? 0) > 1 && ic.plural) return ic.plural;
     return ic.name;
   }
 
@@ -186,7 +193,8 @@ class Renderer {
             if (p <= 0) throw new RenderError(`@${s.ing} portion must be positive`);
             v *= p;
           }
-          q = this.qty(a.ic, v);
+          const h = !s.pt && a.hi > 0 ? (a.hi * v) / a.value : 0;
+          q = this.qtyRange(a.ic, v, h);
           g.q = qtyString(q);
           g.j = this.units.join(q);
           if (this.step > 0 && (s.pt || s.p)) {
@@ -286,12 +294,17 @@ export function render(c: Compiled, st: State): Model {
     const ps = { title: s.title ?? "", items: [] as Active[] };
     for (const ic of s.items) {
       if (!r.cond(ic.when)) continue;
-      const a: Active = { ic, value: 0, has: false };
+      const a: Active = { ic, value: 0, hi: 0, has: false };
       if (ic.amount) {
         const v = r.amount(ic.amount, ic.id);
         if (v === 0) continue;
         a.value = v;
         a.has = true;
+        if (ic.amount.hi) {
+          const h = r.amount(ic.amount.hi, ic.id);
+          if (h < v) throw new RenderError(`range of "${ic.id}" goes down`);
+          a.hi = h;
+        }
       }
       if (ic.split && ic.split.length > 0) {
         a.parts = new Map();
@@ -331,7 +344,7 @@ export function render(c: Compiled, st: State): Model {
         uses: [],
       };
       if (a.has) {
-        im.q = r.qty(a.ic, a.value);
+        im.q = r.qtyRange(a.ic, a.value, a.hi);
         im.link = r.link(a.ic, a.value);
       }
       im.name = r.name(a.ic, im.q);

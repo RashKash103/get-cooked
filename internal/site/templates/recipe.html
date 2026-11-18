@@ -7,9 +7,13 @@
   {{if $r.NotTranslated}}<p class="untranslated" lang="{{$.Lang}}">{{$.T "not_translated"}}</p>{{end}}
   <header class="recipe-head">
     {{with $r.R.Category}}<p class="eyebrow"><a href="{{$.Base}}?c={{.}}">{{.}}</a></p>{{end}}
-    <h1 class="recipe-title">{{$r.R.Title}}</h1>
+    <div class="title-row">
+      <h1 class="recipe-title">{{$r.R.Title}}</h1>
+      <button type="button" class="icon-btn save-btn" id="save" aria-pressed="false" aria-label="{{$.T "save"}}" title="{{$.T "save"}}"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg></button>
+    </div>
     {{with $r.R.Description}}<p class="recipe-desc">{{.}}</p>{{end}}
     <dl class="times" id="times">{{$r.Times}}</dl>
+    <p class="print-only print-meta" id="print-meta"></p>
   </header>
 
   <div class="controls" id="controls">
@@ -24,6 +28,12 @@
     <button type="button" class="pill" id="cook-mode" aria-pressed="false" title="{{$.T "cook_help"}}">
       <svg class="icon" aria-hidden="true"><use href="#i-flame"></use></svg><span>{{$.T "cook"}}</span>
     </button>
+    <div class="cook-nav" id="cook-nav">
+      <button type="button" class="icon-btn" id="prev-step" aria-label="{{$.T "prev_step"}}"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
+      <output class="step-of" id="step-of" aria-live="polite"></output>
+      <button type="button" class="icon-btn next-btn" id="next-step" aria-label="{{$.T "next_step"}}"><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <button type="button" class="icon-btn" id="exit-cook" aria-label="{{$.T "exit_cook"}}" title="{{$.T "exit_cook"}}"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    </div>
   </div>
 
   <div id="warnings" class="notes">{{$r.Warnings}}</div>
@@ -37,15 +47,27 @@
         <ul class="equip-list" id="equipment">{{$r.Equipment}}</ul>
       </div>
       <div class="tools">
-        <button type="button" class="link-btn" id="copy-ingredients"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>{{$.T "copy_list"}}</button>
+        <button type="button" class="link-btn" id="add-to-list"><svg class="icon" aria-hidden="true"><use href="#i-list"></use></svg><span>{{$.T "list_add"}}</span></button>
         <button type="button" class="link-btn" id="share"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg>{{$.T "share"}}</button>
-        <button type="button" class="link-btn" id="print"><svg class="icon" aria-hidden="true"><use href="#i-printer"></use></svg>{{$.T "print"}}</button>
+        <details class="menu" id="export-menu">
+          <summary class="link-btn"><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>{{$.T "export"}}</summary>
+          <div class="menu-items">
+            <button type="button" data-export="print"><svg class="icon" aria-hidden="true"><use href="#i-printer"></use></svg>{{$.T "export_print"}}</button>
+            <button type="button" data-export="md"><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>{{$.T "export_markdown"}}</button>
+            <button type="button" data-export="text"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>{{$.T "export_text"}}</button>
+          </div>
+        </details>
       </div>
+      <p class="scale-hint">{{$.T "scale_hint"}}</p>
     </div>
     <div class="col-steps">
       <h2 class="h2">{{$.T "steps"}}</h2>
       <div id="steps">{{$r.Steps}}</div>
       <div id="tips" class="notes">{{$r.Tips}}</div>
+      <details class="my-notes" id="my-notes">
+        <summary>{{$.T "my_notes"}}</summary>
+        <textarea id="my-notes-text" rows="4" placeholder="{{$.T "my_notes_placeholder"}}" aria-label="{{$.T "my_notes"}}"></textarea>
+      </details>
     </div>
   </div>
 

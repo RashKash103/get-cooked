@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/RashKash103/get-cooked/internal/assets"
+	"github.com/RashKash103/get-cooked/internal/export"
 	"github.com/RashKash103/get-cooked/internal/runtime"
 )
 
@@ -41,6 +42,7 @@ func TestBlocksGolden(t *testing.T) {
 		Dict     map[string]string `json:"dict"`
 		Compiled any               `json:"compiled"`
 		State    runtime.State     `json:"state"`
+		Meta     map[string]any    `json:"meta"`
 		HTML     map[string]string `json:"html"`
 	}
 	states := []runtime.State{
@@ -64,8 +66,17 @@ func TestBlocksGolden(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%s %s: %v", l.Code, r.Slug, err)
 				}
+				opts := map[string]any{}
+				for _, o := range r.C.Options {
+					opts[o.ID] = o.Default
+				}
+				for k, v := range st.Options {
+					opts[k] = v
+				}
+				md := export.Markdown(export.Doc{R: r, M: m, Cat: l.Catalog, Opts: opts})
 				cases = append(cases, tc{
 					Lang: l.Code, Slug: r.Slug, Base: base, Dict: dict, Compiled: r.C, State: st,
+					Meta: map[string]any{"title": r.Title, "description": r.Description, "source": r.Source},
 					HTML: map[string]string{
 						"times":       renderTimes(m),
 						"equipment":   renderEquipment(m),
@@ -73,6 +84,7 @@ func TestBlocksGolden(t *testing.T) {
 						"steps":       renderSteps(m, base, l.Catalog),
 						"warnings":    renderNotes(m, true),
 						"tips":        renderNotes(m, false),
+						"markdown":    md,
 					},
 				})
 			}

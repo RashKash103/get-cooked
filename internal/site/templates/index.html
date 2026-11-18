@@ -8,15 +8,14 @@
     <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
     <input type="search" id="search" placeholder="{{.T "search"}}" aria-label="{{.T "search"}}" autocomplete="off">
   </div>
-  {{if gt (len .Index.Categories) 1}}
   <nav class="chips">
     <button type="button" class="chip" data-cat="" aria-pressed="true">{{.T "all"}}</button>
-    {{range .Index.Categories}}<button type="button" class="chip" data-cat="{{.}}" aria-pressed="false">{{.}}</button>{{end}}
+    <button type="button" class="chip" data-cat="__saved" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg> {{.T "saved"}}</button>
+    {{if gt (len .Index.Categories) 1}}{{range .Index.Categories}}<button type="button" class="chip" data-cat="{{.}}" aria-pressed="false">{{.}}</button>{{end}}{{end}}
   </nav>
-  {{end}}
   <ul class="cards" id="cards">
     {{range .Index.Cards}}
-    <li class="card" data-cat="{{.Category}}" data-search="{{.Search}}">
+    <li class="card" data-cat="{{.Category}}" data-slug="{{.Slug}}" data-search="{{.Search}}">
       <a href="{{.URL}}" class="card-link">
         {{if .Image}}<img class="card-img" src="{{.Image}}" {{with .SrcSet}}srcset="{{.}}" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"{{end}} alt="" loading="lazy" decoding="async">
         {{else}}<div class="card-img card-ph" aria-hidden="true">{{.Initial}}</div>{{end}}

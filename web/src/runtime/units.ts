@@ -185,6 +185,16 @@ export class Units {
     return this.ladder(base, sys, dim);
   }
 
+  formatRange(lo: number, hi: number, unitID: string, system: string, ing: Ing | undefined, fixed: boolean): Qty {
+    const qh = this.format(hi, unitID, system, ing, fixed);
+    const ql = this.format(lo, unitID, system, ing, fixed);
+    if (qtyString(ql) === qtyString(qh)) return qh;
+    if (ql.id === qh.id && ql.t !== "" && qh.t !== "" && !qh.t.includes("+") && !ql.t.includes("+")) {
+      return { v: ql.v, h: qh.v, t: `${ql.t}–${qh.t}`, u: qh.u, id: qh.id };
+    }
+    return { v: ql.v, h: qh.v, t: `${qtyString(ql)} – ${qtyString(qh)}`, u: "", id: qh.id };
+  }
+
   private ladder(base: number, sys: string, dim: string): Qty {
     const rungs = this.t.ladders[`${sys}.${dim}`] ?? [];
     if (rungs.length === 0) {

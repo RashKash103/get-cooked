@@ -13,6 +13,10 @@ Everything in `docs/design.md` is implemented, tested and committed:
   (init/extract/status), skills (install/list), docs, schema, version.
 - Claude skills: import-recipe, recipe-illustration, add-site-language,
   translate-recipe.
+- Shopping list, saved recipes, personal notes, scale-to-what-you-have,
+  cook-mode step navigation, Atom feed, ranges, `validate --strict`.
+- Export: browser print/PDF layout, Markdown and text; CLI `export` to
+  md/txt/typ/pdf (PDF via the typst CLI).
 - CI (lint, race tests, golden drift, fuzzing, example validation,
   Playwright e2e, action smoke test), GoReleaser release with the skills
   asset, composite GitHub Action, Dependabot.
@@ -25,9 +29,10 @@ Everything in `docs/design.md` is implemented, tested and committed:
 
 ## Ideas
 
+- Static PDFs per recipe at build time (needs typst in the build).
+- Share the shopping list as a link (encode it in the URL).
+
 - Nutrition per serving from the ingredient database.
-- Multi-recipe shopping list (aggregate by ingredient key, convert units).
 - WebP image variants.
-- Quantity ranges ("1–2 cloves").
 - Native wrapper app using the `window.GetCookedNative` bridge.
 - `i18n sync` to add newly introduced UI keys to existing catalogs.

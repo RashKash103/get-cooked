@@ -63,6 +63,35 @@ ui:
   timer_cancel: Cancelar temporizador
   timer_dismiss: Descartar temporizador
   timer_clock_app: Abrir en la app Reloj
+  notes: Notas
+  export: Exportar
+  export_markdown: Descargar Markdown
+  export_text: Copiar como texto
+  export_print: Imprimir o guardar como PDF
+  list: Lista de la compra
+  list_add: Añadir a la lista
+  list_update: Actualizar lista
+  list_added: Añadido a tu lista de la compra
+  list_empty: Tu lista de la compra está vacía. Añade ingredientes desde cualquier receta.
+  list_recipes: Recetas
+  list_items: Artículos
+  list_copy: Copiar lista
+  list_clear_checked: Quitar marcados
+  list_clear: Vaciar lista
+  list_confirm_clear: ¿Vaciar toda la lista de la compra?
+  list_remove: "Quitar {name}"
+  list_make: prepárala
+  scale_prompt: "¿Cuánto {name} tienes? (ahora {q})"
+  scale_hint: Toca una cantidad para ajustar la receta a lo que tienes
+  save: Guardar receta
+  saved: Guardadas
+  my_notes: Tus notas
+  my_notes_placeholder: Notas para la próxima vez (se guardan en este dispositivo)
+  prev_step: Paso anterior
+  next_step: Paso siguiente
+  step_of: "Paso {n} de {total}"
+  exit_cook: Salir del modo cocina
+  all_done: ¡Listo! Que aproveche.
 
 times:
   prep: Preparación
@@ -118,6 +147,16 @@ units:
   tbsp: { one: cda, other: cdas }
   tsp: { one: cdta, other: cdtas }
   floz: { one: oz líq, other: oz líq }
+
+categories:
+  produce: Frutas y verduras
+  dairy: Lácteos y huevos
+  meat: Carne y pescado
+  baking: Repostería
+  pantry: Despensa
+  frozen: Congelados
+  bakery: Panadería
+  other: Otros
 
 ingredients:
   all-purpose-flour: { name: harina de trigo }

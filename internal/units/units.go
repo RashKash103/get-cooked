@@ -82,15 +82,20 @@ type Ing struct {
 	UnitGrams  map[string]float64 `json:"ug,omitempty"`
 	Measure    string             `json:"measure,omitempty"` // volume | mass preference
 	Round      *Rule              `json:"round,omitempty"`
+	Cat        string             `json:"cat,omitempty"` // shopping category
 }
 
 // Qty is a formatted quantity.
 type Qty struct {
 	Value float64 `json:"v"`
+	Hi    float64 `json:"h,omitempty"` // upper end of a range, in the same unit
 	Text  string  `json:"t"`
 	Unit  string  `json:"u"`
 	ID    string  `json:"id"` // display unit id ("" for bare counts)
 }
+
+// Max is the larger end of the quantity.
+func (q Qty) Max() float64 { return math.Max(q.Value, q.Hi) }
 
 // Join returns the text placed between this quantity and an ingredient name:
 // the table's connector word when the quantity has a unit ("2 tazas de"),
@@ -401,6 +406,21 @@ func (t *Table) Format(amount float64, unitID, system string, ing *Ing, fixed bo
 		}
 	}
 	return t.ladder(base, sys, dim)
+}
+
+// FormatRange formats a range such as "1–2 cloves" or "½–1 tsp". The unit is
+// chosen for the high end; when the two ends end up in different units the
+// range is written in full ("2 tsp – 1 tbsp").
+func (t *Table) FormatRange(lo, hi float64, unitID, system string, ing *Ing, fixed bool) Qty {
+	qh := t.Format(hi, unitID, system, ing, fixed)
+	ql := t.Format(lo, unitID, system, ing, fixed)
+	if ql.String() == qh.String() {
+		return qh
+	}
+	if ql.ID == qh.ID && ql.Text != "" && qh.Text != "" && !strings.Contains(qh.Text, "+") && !strings.Contains(ql.Text, "+") {
+		return Qty{Value: ql.Value, Hi: qh.Value, Text: ql.Text + "–" + qh.Text, Unit: qh.Unit, ID: qh.ID}
+	}
+	return Qty{Value: ql.Value, Hi: qh.Value, Text: ql.String() + " – " + qh.String(), ID: qh.ID}
 }
 
 func (t *Table) inLadder(sys, dim, id string) bool {

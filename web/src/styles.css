@@ -163,6 +163,15 @@
   .eyebrow a {
     @apply no-underline;
   }
+  .title-row {
+    @apply flex items-start justify-between gap-2;
+  }
+  .save-btn {
+    @apply mt-1 shrink-0;
+  }
+  .save-btn[aria-pressed="true"] .icon {
+    @apply fill-current text-accent;
+  }
   .recipe-title {
     @apply mt-1 font-serif text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl;
   }
@@ -194,6 +203,23 @@
     .controls {
       @apply static mt-6 justify-start gap-3 rounded-2xl border bg-white px-2 py-2 dark:bg-stone-900;
     }
+  }
+  .cook-nav {
+    @apply hidden flex-1 items-center justify-between gap-1;
+  }
+  .cooking .cook-nav {
+    @apply flex;
+  }
+  .cooking .stepper,
+  .cooking #customize,
+  .cooking #cook-mode {
+    @apply hidden;
+  }
+  .step-of {
+    @apply flex-1 text-center text-sm font-medium tabular-nums;
+  }
+  .next-btn {
+    @apply bg-accent text-white hover:bg-accent;
   }
   .stepper {
     @apply flex items-center rounded-full bg-stone-200/60 dark:bg-stone-800/70;
@@ -274,6 +300,12 @@
   .qty {
     @apply font-semibold tabular-nums;
   }
+  .ing .qty {
+    @apply cursor-pointer decoration-stone-400 decoration-dotted underline-offset-4 hover:underline;
+  }
+  .scale-hint {
+    @apply mt-3 text-xs text-stone-500 dark:text-stone-400;
+  }
   .ing-note {
     @apply text-stone-500 dark:text-stone-400;
   }
@@ -295,6 +327,63 @@
   }
   .tools {
     @apply mt-8 flex flex-wrap gap-x-4 gap-y-2;
+  }
+  .menu {
+    @apply relative;
+  }
+  .menu summary {
+    @apply cursor-pointer list-none;
+  }
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .menu-items {
+    @apply absolute bottom-full left-0 z-20 mb-2 flex w-64 flex-col rounded-2xl border border-stone-200 bg-white p-1.5 shadow-xl lg:top-full lg:bottom-auto lg:mt-2 lg:mb-0 dark:border-stone-800 dark:bg-stone-900;
+  }
+  .menu-items button {
+    @apply flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800;
+  }
+  .my-notes {
+    @apply mt-6 rounded-2xl border border-stone-200 px-4 py-3 text-sm dark:border-stone-800;
+  }
+  .my-notes summary {
+    @apply cursor-pointer font-medium text-stone-600 dark:text-stone-300;
+  }
+  .my-notes textarea {
+    @apply mt-3 block w-full resize-y rounded-xl border border-stone-200 bg-transparent p-3 text-base outline-none focus:border-accent dark:border-stone-700;
+  }
+  .print-only {
+    @apply hidden;
+  }
+  .list-link {
+    @apply relative;
+  }
+  .list-count {
+    @apply absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-accent text-[0.6rem] font-bold text-white;
+  }
+  .list-recipes {
+    @apply space-y-1;
+  }
+  .list-recipe {
+    @apply flex items-center gap-2;
+  }
+  .list-recipe a {
+    @apply font-medium;
+  }
+  .list-recipe .ing-note {
+    @apply whitespace-nowrap;
+  }
+  .list-recipe .icon-btn {
+    @apply ml-auto size-8;
+  }
+  .list-page #list-items {
+    @apply mt-6;
+  }
+  .list-qty {
+    @apply ml-1 font-normal text-stone-500 dark:text-stone-400;
+  }
+  .chip .icon {
+    @apply size-[0.95em];
   }
   .link-btn {
     @apply inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-accent-ink dark:text-stone-400;
@@ -463,30 +552,115 @@
   }
 }
 
+/* Print / "Save as PDF": a clean, readable single page. */
+@page {
+  margin: 14mm 15mm;
+}
 @media print {
   .topbar,
   .controls,
   .tools,
+  .scale-hint,
   .timers,
   .site-footer,
   .hero,
   .toast,
-  .ing-check {
+  .ing-check,
+  .save-btn,
+  .my-notes:not([open]),
+  .my-notes summary,
+  .untranslated,
+  .tags,
+  .sheet {
     display: none !important;
   }
   html {
-    background: white;
-    color: black;
+    background: white !important;
+    color: black !important;
+    font-size: 10.5pt;
   }
   main {
     padding: 0;
+    max-width: none;
+  }
+  .print-only {
+    display: block;
+  }
+  .print-meta {
+    margin-top: 0.4rem;
+    font-size: 9.5pt;
+    font-style: italic;
+    color: #444;
+  }
+  .recipe-head {
+    padding-top: 0;
+  }
+  .recipe-title {
+    font-size: 20pt;
+  }
+  .recipe-desc {
+    color: #333;
   }
   .recipe-grid {
     display: grid;
-    grid-template-columns: 2fr 3fr;
-    gap: 2rem;
+    grid-template-columns: 34% 1fr;
+    gap: 8mm;
+    margin-top: 6mm;
+  }
+  .col-ingredients {
+    position: static;
+  }
+  .ing-label {
+    padding: 0.15rem 0;
+  }
+  .ing-list {
+    border: 0;
+  }
+  .ing-list > * {
+    border: 0 !important;
   }
   .step {
     break-inside: avoid;
+    padding: 0.25rem 0;
+    margin: 0;
+    background: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+  }
+  .step-num {
+    background: none !important;
+    color: black !important;
+    font-weight: 700;
+  }
+  .ref-q {
+    background: none !important;
+    color: black !important;
+    padding: 0;
+  }
+  .timer-chip {
+    background: none !important;
+    color: inherit !important;
+    padding: 0;
+    font-weight: 600;
+  }
+  .timer-chip .icon {
+    display: none;
+  }
+  .note {
+    background: none !important;
+    border: 1px solid #bbb;
+    color: black !important;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .my-notes {
+    border: 1px dashed #999;
+  }
+  .my-notes textarea {
+    border: 0;
+    padding: 0;
+    resize: none;
   }
 }

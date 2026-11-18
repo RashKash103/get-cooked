@@ -1,0 +1,21 @@
+{{define "content"}}
+<div class="list-page" id="list-page">
+  <div class="index-head">
+    <h1 class="index-title">{{.T "list"}}</h1>
+  </div>
+  <p class="empty" id="list-empty">{{.T "list_empty"}}</p>
+  <section id="list-recipes-wrap" hidden>
+    <h2 class="h2 h2-sm">{{.T "list_recipes"}}</h2>
+    <ul class="list-recipes" id="list-recipes"></ul>
+  </section>
+  <section id="list-items-wrap" hidden>
+    <div id="list-items"></div>
+    <div class="tools">
+      <button type="button" class="link-btn" id="list-copy"><svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>{{.T "list_copy"}}</button>
+      <button type="button" class="link-btn" id="list-clear-checked"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>{{.T "list_clear_checked"}}</button>
+      <button type="button" class="link-btn" id="list-clear"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>{{.T "list_clear"}}</button>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="list-data">{{.ListData}}</script>
+{{end}}

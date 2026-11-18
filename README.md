@@ -45,6 +45,7 @@ notes:
   live amounts (`@flour`, `@sugar{1/2}`, `@salt.topping`), equipment
   references (`&pan`) and tap-to-start timers (`~{25}`).
 - Divided ingredients: one total in the list, each step's share underneath.
+- Ranges: `amount: [2, 3]` → "2–3 cloves", scaled and converted.
 - Recipe references: "¾ loaf sandwich bread" links to the bread recipe at the
   right number of loaves, with options passed through.
 
@@ -57,10 +58,19 @@ notes:
 **Site**
 - Mobile first, uncrowded, light and dark mode, prints cleanly, works without
   JavaScript, and works offline once visited (PWA).
-- Cook mode keeps the screen awake. Timers survive reloads and ring with
-  sound, vibration and notifications.
+- Cook mode keeps the screen awake and turns the bottom bar into
+  ‹ Step 3 of 7 › navigation (arrow keys and space work too). Timers survive
+  reloads and ring with sound, vibration and notifications.
+- Shopping list: add recipes as configured; the list merges the same
+  ingredient across recipes (converting units), groups it by aisle and
+  remembers what you've ticked off. Everything stays on the device.
+- Export the recipe exactly as configured: print or save as PDF (a clean
+  cookbook-style layout), download Markdown, or copy as text.
+- Tap any amount to scale the recipe to what you have ("I have 3 eggs").
+- Saved recipes (♥) with an index filter, and private per-recipe notes.
 - Instant search, category filters, shareable links that keep servings and
-  options, schema.org structured data, sitemaps and responsive images.
+  options, schema.org structured data, sitemaps, Atom feed and responsive
+  images.
 - Multiple languages for both UI and recipes, with a language picker. Recipes
   that aren't translated fall back to the original.
 
@@ -116,9 +126,10 @@ recipes with
 | `init [dir]` | Create a site (config, ingredient DB, example recipe, Pages workflow) |
 | `new <title>` | Create a recipe file |
 | `serve` | Preview with live reload |
-| `validate` | Check everything (`--format github` for annotations) |
+| `validate` | Check everything (`--format github` for annotations, `--strict` for unit-conversion gaps) |
 | `build` | Write the static site (`--base-url`, `--drafts`) |
 | `render <file>` | Print a recipe for a state: `--servings 2 --set vegan=true --units metric --lang es [--json]` |
+| `export <file>` | Markdown, text, Typst or PDF (via [Typst](https://typst.app)) for a state: `-f pdf --servings 2 --paper us-letter` |
 | `import <url>` | Draft a recipe from a page's schema.org data |
 | `i18n init/extract/status` | Manage UI and recipe translations |
 | `skills install/list` | Install the Claude Code skills |
