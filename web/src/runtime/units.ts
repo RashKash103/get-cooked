@@ -57,13 +57,18 @@ function gcd(a: number, b: number): number {
   return a;
 }
 
-export function formatFraction(x: number, style = "unicode"): string {
-  if (style === "decimal") return formatNumber(x);
+function decimal(s: string, dec: string): string {
+  return dec && dec !== "." ? s.replace(".", dec) : s;
+}
+
+export function formatFraction(x: number, style = "unicode", dec = "."): string {
+  const fmt = (v: number) => decimal(formatNumber(v), dec);
+  if (style === "decimal") return fmt(x);
   const neg = x < 0;
   const ax = Math.abs(x);
   const whole = Math.floor(ax + 1e-9);
   const frac = ax - whole;
-  if (frac < 1e-6) return formatNumber(x);
+  if (frac < 1e-6) return fmt(x);
   for (let d = 2; d <= 8; d++) {
     const n = round(frac * d);
     if (n === 0 || n === d || Math.abs(frac * d - n) > 1e-4) continue;
@@ -73,15 +78,15 @@ export function formatFraction(x: number, style = "unicode"): string {
     let s: string;
     if (style === "ascii") {
       s = `${num}/${den}`;
-      if (whole > 0) s = `${formatNumber(whole)} ${s}`;
+      if (whole > 0) s = `${fmt(whole)} ${s}`;
     } else {
       const f = UNICODE[`${num}/${den}`];
-      if (!f) return formatNumber(x);
-      s = whole > 0 ? `${formatNumber(whole)} ${f}` : f;
+      if (!f) return fmt(x);
+      s = whole > 0 ? `${fmt(whole)} ${f}` : f;
     }
     return neg ? `-${s}` : s;
   }
-  return formatNumber(x);
+  return fmt(x);
 }
 
 export function qtyString(q: Qty): string {
@@ -114,11 +119,24 @@ export class Units {
   constructor(readonly t: Table) {}
 
   frac(x: number): string {
-    return formatFraction(x, this.t.fractions);
+    return formatFraction(x, this.t.fractions, this.t.dec ?? ".");
+  }
+
+  num(x: number): string {
+    return decimal(formatNumber(x), this.t.dec ?? ".");
+  }
+
+  join(q: Qty | null): string {
+    if (!q || !this.t.of || q.u === "" || q.id === "each") return " ";
+    return ` ${this.t.of} `;
+  }
+
+  duration(min: number): string {
+    return duration(min, this.t.words);
   }
 
   private text(r: Rule, v: number): string {
-    return r.tiers && r.tiers.length > 0 ? formatNumber(v) : this.frac(v);
+    return r.tiers && r.tiers.length > 0 ? this.num(v) : this.frac(v);
   }
 
   private unit(id: string): Unit {
@@ -237,9 +255,10 @@ export function length(v: number, fromCM: boolean, system: string): string {
   return `${formatFraction(round((v / 2.54) * 2) / 2)} in`;
 }
 
-export function duration(min: number): string {
-  if (min <= 0) return "0 min";
-  if (min < 1) return `${formatNumber(Math.max(5, round((min * 60) / 5) * 5))} sec`;
+export function duration(min: number, words?: Record<string, string>): string {
+  const w = (k: string) => words?.[k] || k;
+  if (min <= 0) return `0 ${w("min")}`;
+  if (min < 1) return `${formatNumber(Math.max(5, round((min * 60) / 5) * 5))} ${w("sec")}`;
   const secs = round(min * 60);
   if (min < 10 && secs % 60 !== 0) {
     let sec = round((secs % 60) / 5) * 5;
@@ -248,12 +267,12 @@ export function duration(min: number): string {
       m += 1;
       sec = 0;
     }
-    return sec === 0 ? `${m} min` : `${m} min ${sec} sec`;
+    return sec === 0 ? `${m} ${w("min")}` : `${m} ${w("min")} ${sec} ${w("sec")}`;
   }
   const total = round(min);
   const h = Math.floor(total / 60);
   const m = total % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} hr`;
-  return `${h} hr ${m} min`;
+  if (h === 0) return `${m} ${w("min")}`;
+  if (m === 0) return `${h} ${w("hr")}`;
+  return `${h} ${w("hr")} ${m} ${w("min")}`;
 }

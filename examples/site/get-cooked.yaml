@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../schema/config.schema.json
+title: The Test Kitchen
+description: Sample recipes for get-cooked. Change the servings, flip options and watch everything adapt.
+base_url: /
+# The first language is the one recipes are written in. Others are served at
+# /<lang>/ with a language picker; see i18n/ and <recipe>.<lang>.yaml files.
+languages: [en, es]
+theme:
+  accent: "#ea580c"
+units:
+  default_system: original
+timers:
+  # Offer "open in Clock app" on Android (experimental; see docs).
+  android_intent: true

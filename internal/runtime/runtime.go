@@ -60,10 +60,19 @@ type IngSectionM struct {
 type IngM struct {
 	ID       string     `json:"id"`
 	Q        *units.Qty `json:"q"`
+	J        string     `json:"j"` // text between quantity and name
 	Name     string     `json:"name"`
 	Note     string     `json:"note"`
 	Optional bool       `json:"optional"`
 	Link     *LinkM     `json:"link"`
+	Uses     []UseM     `json:"uses"`
+}
+
+// UseM is the amount of an ingredient used by one step, listed when an
+// ingredient is divided between several steps.
+type UseM struct {
+	N int    `json:"n"`
+	Q string `json:"q"`
 }
 
 // LinkM points at another recipe with the servings and options to open it with.
@@ -93,6 +102,7 @@ type Seg struct {
 	V   string  `json:"v"`
 	ID  string  `json:"id"`
 	Q    string  `json:"q"`
+	J    string  `json:"j"` // text between quantity and name (ing)
 	Min  float64 `json:"min"`
 	Link *LinkM  `json:"link"`
 }
@@ -117,12 +127,15 @@ type rctx struct {
 	env    map[string]expr.Value
 	ings   map[string]*active // active ingredients by id
 	equip  map[string]string  // active equipment names by id
+	step   int                // step being rendered (0 outside steps)
+	uses   map[string][]UseM
 }
 
 type active struct {
 	ic    *recipe.IngC
 	value float64
 	has   bool
+	parts map[string]float64
 }
 
 func fail(l recipe.Loc, format string, args ...any) error {
@@ -220,7 +233,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &rctx{c: c, system: system, env: env, ings: map[string]*active{}, equip: map[string]string{}}
+	r := &rctx{c: c, system: system, env: env, ings: map[string]*active{}, equip: map[string]string{}, uses: map[string][]UseM{}}
 	m := &Model{
 		Servings: servings, Scale: expr.RoundTo(env["scale"].Num, 4), System: system,
 		Options: []string{}, Times: []TimeM{}, Equipment: []EquipM{}, Ingredients: []IngSectionM{},
@@ -249,7 +262,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 		if v < 0 {
 			return nil, fail(t.L, "times.%s is negative (%s)", t.ID, expr.FormatNumber(v))
 		}
-		m.Times = append(m.Times, TimeM{ID: t.ID, Label: t.Label, Minutes: expr.RoundTo(v, 2), Text: units.Duration(v)})
+		m.Times = append(m.Times, TimeM{ID: t.ID, Label: t.Label, Minutes: expr.RoundTo(v, 2), Text: r.c.Units.Duration(v)})
 	}
 
 	// Resolve active ingredients first so steps can reference them.
@@ -279,7 +292,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 			}
 			a := &active{ic: ic}
 			if ic.Amount != nil {
-				v, err := r.amount(ic)
+				v, err := r.amount(ic, *ic.Amount, ic.ID)
 				if err != nil {
 					return nil, err
 				}
@@ -287,6 +300,21 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 					continue
 				}
 				a.value, a.has = v, true
+			}
+			if len(ic.Split) > 0 {
+				a.parts = map[string]float64{}
+				for _, sp := range ic.Split {
+					v, err := r.amount(ic, sp.A, ic.ID+"."+sp.ID)
+					if err != nil {
+						return nil, err
+					}
+					a.parts[sp.ID] = v
+					a.value += v
+				}
+				if a.value == 0 {
+					continue
+				}
+				a.has = true
 			}
 			if _, dup := r.ings[ic.ID]; dup {
 				return nil, fail(ic.L, "ingredient %q is included twice; its `when:` conditions overlap", ic.ID)
@@ -322,7 +350,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 	for _, ps := range pending {
 		sec := IngSectionM{Title: ps.title, Items: []IngM{}}
 		for _, a := range ps.items {
-			im := IngM{ID: a.ic.ID, Optional: a.ic.Optional}
+			im := IngM{ID: a.ic.ID, Optional: a.ic.Optional, Uses: []UseM{}}
 			if a.has {
 				q := r.qty(a.ic, a.value)
 				im.Q = &q
@@ -331,6 +359,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 				}
 			}
 			im.Name = r.name(a.ic, im.Q)
+			im.J = r.c.Units.Join(im.Q)
 			note, err := r.flat(a.ic.Note, a.ic.L)
 			if err != nil {
 				return nil, err
@@ -360,7 +389,10 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 			if !ok {
 				continue
 			}
+			n++
+			r.step = n
 			segs, err := r.segs(st.Text, st.L, nil)
+			r.step = 0
 			if err != nil {
 				return nil, err
 			}
@@ -368,11 +400,19 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 			if err != nil {
 				return nil, err
 			}
-			n++
 			sec.Items = append(sec.Items, StepM{N: n, Segs: merge(segs), Note: note, Image: st.Image})
 		}
 		if len(sec.Items) > 0 {
 			m.Steps = append(m.Steps, sec)
+		}
+	}
+	// An ingredient divided between steps lists each step's share.
+	for si := range m.Ingredients {
+		for ii := range m.Ingredients[si].Items {
+			it := &m.Ingredients[si].Items[ii]
+			if u := r.uses[it.ID]; len(u) >= 2 {
+				it.Uses = u
+			}
 		}
 	}
 	for _, nt := range c.Notes {
@@ -392,22 +432,24 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 	return m, nil
 }
 
-func (r *rctx) amount(ic *recipe.IngC) (float64, error) {
+func (r *rctx) amount(ic *recipe.IngC, a recipe.AmountC, what string) (float64, error) {
 	var v float64
 	switch {
-	case ic.Amount.E != nil:
-		x, err := ic.Amount.E.EvalNum(expr.MapEnv(r.env))
+	case a.E != nil:
+		x, err := a.E.EvalNum(expr.MapEnv(r.env))
 		if err != nil {
-			return 0, fail(ic.L, "amount of %q: %v", ic.ID, err)
+			return 0, fail(ic.L, "amount of %q: %v", what, err)
 		}
 		v = x
-	case ic.Amount.S:
-		v = *ic.Amount.N * r.env["scale"].Num
+	case a.N == nil:
+		v = 0
+	case a.S:
+		v = *a.N * r.env["scale"].Num
 	default:
-		v = *ic.Amount.N
+		v = *a.N
 	}
 	if v < 0 {
-		return 0, fail(ic.L, "amount of %q is negative (%s)", ic.ID, expr.FormatNumber(v))
+		return 0, fail(ic.L, "amount of %q is negative (%s)", what, expr.FormatNumber(v))
 	}
 	return v, nil
 }
@@ -501,7 +543,7 @@ func (r *rctx) flat(t tmpl.Template, l recipe.Loc) (string, error) {
 	var sb strings.Builder
 	for _, s := range segs {
 		if s.T == "ing" && s.Q != "" {
-			sb.WriteString(s.Q + " ")
+			sb.WriteString(s.Q + s.J)
 		}
 		sb.WriteString(s.V)
 	}
@@ -533,6 +575,13 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 			var q *units.Qty
 			if a.has && !s.NameOnly {
 				v := a.value
+				if s.Part != "" {
+					pv, ok := a.parts[s.Part]
+					if !ok {
+						return nil, fail(l, "@%s.%s: this variant of %q has no split named %q", s.ID, s.Part, s.ID, s.Part)
+					}
+					v = pv
+				}
 				if s.Expr != nil {
 					p, err := s.Expr.EvalNum(env)
 					if err != nil {
@@ -546,6 +595,10 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 				qq := r.qty(a.ic, v)
 				q = &qq
 				seg.Q = qq.String()
+				seg.J = r.c.Units.Join(q)
+				if r.step > 0 && (s.Part != "" || s.Expr != nil) {
+					r.uses[s.ID] = append(r.uses[s.ID], UseM{N: r.step, Q: seg.Q})
+				}
 			}
 			if a.has {
 				link, err := r.link(a.ic, a.value)
@@ -570,7 +623,7 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 			if v <= 0 {
 				return nil, fail(l, "timer must be positive, got %s", expr.FormatNumber(v))
 			}
-			out = append(out, Seg{T: "timer", V: units.Duration(v), Min: expr.RoundTo(v, 2)})
+			out = append(out, Seg{T: "timer", V: r.c.Units.Duration(v), Min: expr.RoundTo(v, 2)})
 		case tmpl.KIf:
 			matched := false
 			for _, b := range s.Branches {
@@ -614,7 +667,7 @@ func (r *rctx) format(v expr.Value, f string, args []string) (string, error) {
 	case "int":
 		return expr.FormatNumber(math.Round(x)), nil
 	case "duration":
-		return units.Duration(x), nil
+		return r.c.Units.Duration(x), nil
 	case "temp":
 		return units.Temp(x, false, r.system), nil
 	case "temp_c":

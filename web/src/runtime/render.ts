@@ -1,7 +1,7 @@
 // Port of internal/runtime/runtime.go: renders a compiled recipe for a state.
 import { type Env, EvalError, evaluate, formatNumber, kind, round, roundTo, str } from "./expr";
-import type { Compiled, IngC, IngM, IR, LinkM, Model, OptionC, Qty, Seg, State, Template, Value } from "./types";
-import { duration, length, qtyString, roundRule, temp, Units } from "./units";
+import type { Amount, Compiled, IngC, IngM, IR, LinkM, Model, OptionC, Qty, Seg, State, Template, Value } from "./types";
+import { length, qtyString, roundRule, temp, Units } from "./units";
 
 export class RenderError extends Error {}
 
@@ -47,6 +47,7 @@ interface Active {
   ic: IngC;
   value: number;
   has: boolean;
+  parts?: Map<string, number>;
 }
 
 const fracRule = { denoms: [2, 3, 4, 8] };
@@ -56,6 +57,8 @@ class Renderer {
   readonly units: Units;
   readonly ings = new Map<string, Active>();
   readonly equip = new Map<string, string>();
+  readonly uses = new Map<string, { n: number; q: string }[]>();
+  step = 0;
 
   constructor(
     readonly c: Compiled,
@@ -78,13 +81,13 @@ class Renderer {
     return v;
   }
 
-  amount(ic: IngC): number {
-    const a = ic.amount as NonNullable<IngC["amount"]>;
+  amount(a: Amount, what: string): number {
     let v: number;
-    if (a.e) v = this.num(a.e, `amount of "${ic.id}"`);
-    else if (a.s) v = (a.n ?? 0) * (this.env.scale as number);
-    else v = a.n ?? 0;
-    if (v < 0) throw new RenderError(`amount of "${ic.id}" is negative (${formatNumber(v)})`);
+    if (a.e) v = this.num(a.e, `amount of "${what}"`);
+    else if (a.n === undefined) v = 0;
+    else if (a.s) v = a.n * (this.env.scale as number);
+    else v = a.n;
+    if (v < 0) throw new RenderError(`amount of "${what}" is negative (${formatNumber(v)})`);
     return v;
   }
 
@@ -129,7 +132,7 @@ class Renderer {
       case "int":
         return formatNumber(round(v));
       case "duration":
-        return duration(v);
+        return this.units.duration(v);
       case "temp":
         return temp(v, false, this.system);
       case "temp_c":
@@ -158,6 +161,11 @@ class Renderer {
         let q: Qty | null = null;
         if (a.has && !s.n) {
           let v = a.value;
+          if (s.pt) {
+            const pv = a.parts?.get(s.pt);
+            if (pv === undefined) throw new RenderError(`@${s.ing}.${s.pt}: no split named "${s.pt}"`);
+            v = pv;
+          }
           if (s.p) {
             const p = this.num(s.p, `@${s.ing} portion`);
             if (p <= 0) throw new RenderError(`@${s.ing} portion must be positive`);
@@ -165,6 +173,12 @@ class Renderer {
           }
           q = this.qty(a.ic, v);
           g.q = qtyString(q);
+          g.j = this.units.join(q);
+          if (this.step > 0 && (s.pt || s.p)) {
+            const list = this.uses.get(s.ing) ?? [];
+            list.push({ n: this.step, q: g.q });
+            this.uses.set(s.ing, list);
+          }
         }
         if (a.has) g.link = this.link(a.ic, a.value);
         g.v = this.name(a.ic, q);
@@ -178,7 +192,7 @@ class Renderer {
       } else if ("timer" in s) {
         const v = this.num(s.timer, "timer");
         if (v <= 0) throw new RenderError(`timer must be positive, got ${formatNumber(v)}`);
-        const g = seg("timer", duration(v));
+        const g = seg("timer", this.units.duration(v));
         g.min = roundTo(v, 2);
         out.push(g);
       } else if ("if" in s) {
@@ -202,7 +216,7 @@ class Renderer {
     if (!t || t.length === 0) return "";
     let s = "";
     for (const g of this.segs(t)) {
-      if (g.t === "ing" && g.q !== "") s += `${g.q} `;
+      if (g.t === "ing" && g.q !== "") s += g.q + g.j;
       s += g.v;
     }
     return s;
@@ -210,7 +224,7 @@ class Renderer {
 }
 
 function seg(t: Seg["t"], v: string): Seg {
-  return { t, v, id: "", q: "", min: 0, link: null };
+  return { t, v, id: "", q: "", j: "", min: 0, link: null };
 }
 
 function merge(segs: Seg[]): Seg[] {
@@ -249,7 +263,7 @@ export function render(c: Compiled, st: State): Model {
   for (const t of c.times ?? []) {
     const v = r.num(t.e, `times.${t.id}`);
     if (v < 0) throw new RenderError(`times.${t.id} is negative`);
-    m.times.push({ id: t.id, label: t.label, minutes: roundTo(v, 2), text: duration(v) });
+    m.times.push({ id: t.id, label: t.label, minutes: roundTo(v, 2), text: r.units.duration(v) });
   }
   const pending: { title: string; items: Active[] }[] = [];
   for (const s of c.ingredients) {
@@ -259,9 +273,19 @@ export function render(c: Compiled, st: State): Model {
       if (!r.cond(ic.when)) continue;
       const a: Active = { ic, value: 0, has: false };
       if (ic.amount) {
-        const v = r.amount(ic);
+        const v = r.amount(ic.amount, ic.id);
         if (v === 0) continue;
         a.value = v;
+        a.has = true;
+      }
+      if (ic.split && ic.split.length > 0) {
+        a.parts = new Map();
+        for (const sp of ic.split) {
+          const v = r.amount(sp.a, `${ic.id}.${sp.id}`);
+          a.parts.set(sp.id, v);
+          a.value += v;
+        }
+        if (a.value === 0) continue;
         a.has = true;
       }
       if (r.ings.has(ic.id)) throw new RenderError(`ingredient "${ic.id}" is included twice`);
@@ -281,12 +305,22 @@ export function render(c: Compiled, st: State): Model {
   for (const ps of pending) {
     const items: IngM[] = [];
     for (const a of ps.items) {
-      const im: IngM = { id: a.ic.id, q: null, name: "", note: "", optional: Boolean(a.ic.optional), link: null };
+      const im: IngM = {
+        id: a.ic.id,
+        q: null,
+        j: "",
+        name: "",
+        note: "",
+        optional: Boolean(a.ic.optional),
+        link: null,
+        uses: [],
+      };
       if (a.has) {
         im.q = r.qty(a.ic, a.value);
         im.link = r.link(a.ic, a.value);
       }
       im.name = r.name(a.ic, im.q);
+      im.j = r.units.join(im.q);
       im.note = r.flat(a.ic.note);
       items.push(im);
     }
@@ -298,12 +332,20 @@ export function render(c: Compiled, st: State): Model {
     const items: Model["steps"][number]["items"] = [];
     for (const st of s.items) {
       if (!r.cond(st.when)) continue;
-      const segs = r.segs(st.text);
-      const note = r.flat(st.note);
       n++;
+      r.step = n;
+      const segs = r.segs(st.text);
+      r.step = 0;
+      const note = r.flat(st.note);
       items.push({ n, segs: merge(segs), note, image: st.image ?? "" });
     }
     if (items.length > 0) m.steps.push({ title: s.title ?? "", items });
+  }
+  for (const sec of m.ingredients) {
+    for (const it of sec.items) {
+      const u = r.uses.get(it.id);
+      if (u && u.length >= 2) it.uses = u;
+    }
   }
   for (const nt of c.notes ?? []) {
     if (!r.cond(nt.when)) continue;

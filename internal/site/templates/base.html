@@ -1,5 +1,5 @@
 {{define "base"}}<!doctype html>
-<html lang="{{.Site.Language}}" data-base="{{.Base}}"{{if .Site.Timers.AndroidIntent}} data-timer-intent="true"{{end}}{{with .Site.Timers.IOSShortcut}} data-ios-shortcut="{{.}}"{{end}}>
+<html lang="{{.Lang}}" dir="{{.Dir}}" data-base="{{.Base}}" data-root="{{.Root}}"{{if .Site.Timers.AndroidIntent}} data-timer-intent="true"{{end}}{{with .Site.Timers.IOSShortcut}} data-ios-shortcut="{{.}}"{{end}}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -9,34 +9,42 @@
 <meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 {{with .Canonical}}<link rel="canonical" href="{{.}}">{{end}}
+{{range .Alternates}}<link rel="alternate" hreflang="{{.Code}}" href="{{.URL}}">
+{{end}}
 <meta property="og:title" content="{{.Title}}">
 <meta property="og:type" content="{{if .Recipe}}article{{else}}website{{end}}">
 {{with .Description}}<meta property="og:description" content="{{.}}">{{end}}
 {{with .OGImage}}<meta property="og:image" content="{{.}}">{{end}}
-<link rel="icon" href="{{.Base}}icon.svg" type="image/svg+xml">
-<link rel="manifest" href="{{.Base}}manifest.webmanifest">
-<link rel="stylesheet" href="{{.Base}}{{.Assets.CSS}}">
+<link rel="icon" href="{{.Root}}icon.svg" type="image/svg+xml">
+<link rel="manifest" href="{{.Root}}manifest.webmanifest">
+<link rel="stylesheet" href="{{.Root}}{{.Assets.CSS}}">
 <style>:root{--gc-accent:{{.Accent}}}</style>
 <script>(function(){try{var t=localStorage.getItem("gc:theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})()</script>
-<script type="module" src="{{.Base}}{{.Assets.JS}}"></script>
+<script type="application/json" id="i18n">{{.I18n}}</script>
+<script type="module" src="{{.Root}}{{.Assets.JS}}"></script>
 {{with .JSONLD}}<script type="application/ld+json">{{.}}</script>{{end}}
 </head>
 <body class="{{.BodyClass}}">
 {{template "icons"}}
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">{{.T "skip"}}</a>
 <header class="topbar">
   <a class="brand" href="{{.Base}}">{{.Site.Title}}</a>
-  <button type="button" class="icon-btn" id="theme-toggle" aria-label="Theme: system" title="Theme">
+  <div class="topbar-actions">
+  {{if .Alternates}}<label class="lang-picker"><span class="sr-only">{{.T "language"}}</span>
+    <select id="lang-picker">{{range .Alternates}}<option value="{{.URL}}" data-lang="{{.Code}}"{{if .Current}} selected{{end}}>{{.Name}}</option>{{end}}</select>
+  </label>{{end}}
+  <button type="button" class="icon-btn" id="theme-toggle" aria-label="{{.T "theme"}}: {{.T "theme_system"}}" title="{{.T "theme"}}">
     <svg class="icon theme-system" aria-hidden="true"><use href="#i-monitor"></use></svg>
     <svg class="icon theme-light" aria-hidden="true"><use href="#i-sun"></use></svg>
     <svg class="icon theme-dark" aria-hidden="true"><use href="#i-moon"></use></svg>
   </button>
+  </div>
 </header>
 <main id="main">
 {{template "content" .}}
 </main>
 <footer class="site-footer">
-  <p>{{.Site.Title}}{{with .Site.Author}} · {{.}}{{end}} · Made with <a href="https://github.com/RashKash103/get-cooked">get-cooked</a></p>
+  <p>{{.Site.Title}}{{with .Site.Author}} · {{.}}{{end}} · {{.T "made_with"}} <a href="https://github.com/RashKash103/get-cooked">get-cooked</a></p>
 </footer>
 <div class="timers" id="timers" aria-live="polite"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

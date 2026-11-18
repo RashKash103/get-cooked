@@ -37,6 +37,9 @@ func TestParse(t *testing.T) {
 		{"{if a}{if b}AB{end}{end}", `[{"if":[{"c":["v","a"],"t":[{"if":[{"c":["v","b"],"t":["AB"]}]}]}]}]`},
 		{"{ s == '}' }", `[{"e":["==",["v","s"],["s","}"]]}]`},
 		{"Add @salt-", `["Add ",{"ing":"salt"},"-"]`},
+		{"Add @salt.dough now", `["Add ",{"ing":"salt","pt":"dough"}," now"]`},
+		{"Add @salt.dough{1/2}.", `["Add ",{"ing":"salt","p":["/",["n",1],["n",2]],"pt":"dough"},"."]`},
+		{"Add @salt. Then", `["Add ",{"ing":"salt"},". Then"]`},
 	}
 	for _, c := range cases {
 		got, err := Parse(c.src)

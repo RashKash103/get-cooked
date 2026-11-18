@@ -1,0 +1,169 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/i18n.schema.json
+#
+# Spanish strings for the site UI. Keys you leave out fall back to English.
+# Placeholders like {n} must be kept.
+
+name: Español
+dir: ltr
+decimal: ","
+of: de
+system: metric
+
+ui:
+  skip: Ir al contenido
+  theme: Tema
+  theme_system: Sistema
+  theme_light: Claro
+  theme_dark: Oscuro
+  language: Idioma
+  search: Buscar recetas o ingredientes
+  all: Todas
+  no_match: Ninguna receta coincide.
+  ingredients: Ingredientes
+  equipment: Utensilios
+  steps: Pasos
+  servings: Porciones
+  fewer: Menos
+  more: Más
+  customize: Ajustar
+  cook: Cocinar
+  cook_help: Mantén la pantalla encendida y céntrate en los pasos
+  cook_on: "Modo cocina activado: la pantalla no se apagará"
+  cook_on_unsupported: Modo cocina activado (este navegador no puede mantener la pantalla encendida)
+  copy_list: Copiar lista
+  copied: Ingredientes copiados
+  copy_failed: No se pudo copiar al portapapeles
+  share: Compartir
+  link_copied: Enlace copiado, con tus porciones y opciones
+  print: Imprimir
+  close: Cerrar
+  units: Unidades
+  units_original: Como está escrito
+  units_us: EE. UU.
+  units_metric: Métrico
+  reset: Restablecer
+  source: Fuente
+  step: "Paso {n}"
+  mark_done: "Marcar el paso {n} como hecho"
+  uses: "{q} en el paso {n}"
+  add_ingredient: "Añadir {name}"
+  unsupported: Esta receta no admite esa combinación.
+  not_translated: Esta receta aún no está traducida.
+  not_found: Página no encontrada
+  not_found_body: Puede que esa receta se haya movido.
+  back_home: Volver a todas las recetas
+  made_with: Hecho con
+  timer_started: "Temporizador de {time} iniciado"
+  timer_set: "Temporizador de {time}"
+  timer_done: Temporizador terminado
+  timer_done_short: ¡Listo!
+  timer_add: Añadir un minuto
+  timer_pause: Pausar
+  timer_resume: Reanudar
+  timer_cancel: Cancelar temporizador
+  timer_dismiss: Descartar temporizador
+  timer_clock_app: Abrir en la app Reloj
+
+times:
+  prep: Preparación
+  cook: Cocción
+  rest: Reposo
+  total: Total
+  bake: Horno
+  chill: Frío
+  rise: Levado
+  active: Activo
+  cool: Enfriar
+  marinate: Marinado
+
+servings:
+  one: porción
+  other: porciones
+
+duration:
+  hr: h
+  min: min
+  sec: s
+
+units:
+  bag: { one: bolsa, other: bolsas }
+  bottle: { one: botella, other: botellas }
+  box: { one: caja, other: cajas }
+  bunch: { one: manojo, other: manojos }
+  can: { one: lata, other: latas }
+  clove: { one: diente, other: dientes }
+  cup: { one: taza, other: tazas }
+  dash: { one: chorrito, other: chorritos }
+  drop: { one: gota, other: gotas }
+  envelope: { one: sobre, other: sobres }
+  fillet: { one: filete, other: filetes }
+  gallon: { one: galón, other: galones }
+  handful: { one: puñado, other: puñados }
+  head: { one: cabeza, other: cabezas }
+  jar: { one: frasco, other: frascos }
+  knob: { one: nuez, other: nueces }
+  leaf: { one: hoja, other: hojas }
+  package: { one: paquete, other: paquetes }
+  packet: { one: sobre, other: sobres }
+  piece: { one: pieza, other: piezas }
+  pinch: { one: pizca, other: pizcas }
+  pint: { one: pinta, other: pintas }
+  quart: { one: cuarto de galón, other: cuartos de galón }
+  scoop: { one: cucharada, other: cucharadas }
+  sheet: { one: lámina, other: láminas }
+  slice: { one: rebanada, other: rebanadas }
+  sprig: { one: ramita, other: ramitas }
+  stalk: { one: tallo, other: tallos }
+  stick: { one: barra, other: barras }
+  tbsp: { one: cda, other: cdas }
+  tsp: { one: cdta, other: cdtas }
+  floz: { one: oz líq, other: oz líq }
+
+ingredients:
+  all-purpose-flour: { name: harina de trigo }
+  baby-potatoes: { name: papas baby }
+  baking-powder: { name: polvo de hornear }
+  baking-soda: { name: bicarbonato de sodio }
+  banana: { name: plátano maduro, plural: plátanos maduros }
+  black-pepper: { name: pimienta negra }
+  bread-flour: { name: harina de fuerza }
+  brown-sugar: { name: azúcar moreno }
+  butter: { name: mantequilla sin sal }
+  buttermilk: { name: suero de leche }
+  cayenne: { name: pimienta de cayena }
+  chicken-thighs: { name: muslo de pollo con hueso, plural: muslos de pollo con hueso }
+  chocolate-chips: { name: chispas de chocolate }
+  cinnamon: { name: canela molida }
+  cocoa-powder: { name: cacao en polvo }
+  coconut-milk: { name: leche de coco }
+  cornstarch: { name: maicena }
+  crushed-tomatoes: { name: tomate triturado }
+  dried-cranberries: { name: arándanos rojos secos }
+  dried-oregano: { name: orégano seco }
+  egg: { name: huevo, plural: huevos }
+  egg-yolk: { name: yema de huevo, plural: yemas de huevo }
+  flaky-salt: { name: sal en escamas }
+  fresh-basil: { name: albahaca fresca }
+  garlic: { name: ajo }
+  garlic-powder: { name: ajo en polvo }
+  granulated-sugar: { name: azúcar }
+  heavy-cream: { name: nata para montar }
+  honey: { name: miel }
+  instant-yeast: { name: levadura instantánea }
+  kosher-salt: { name: sal kosher }
+  lemon: { name: limón, plural: limones }
+  lemon-juice: { name: jugo de limón }
+  maple-syrup: { name: jarabe de arce }
+  milk: { name: leche }
+  neutral-oil: { name: aceite neutro }
+  olive-oil: { name: aceite de oliva }
+  parmesan: { name: parmesano rallado }
+  pecans: { name: nueces pecanas }
+  rolled-oats: { name: copos de avena }
+  smoked-paprika: { name: pimentón ahumado }
+  vanilla-extract: { name: extracto de vainilla }
+  vegetable-broth: { name: caldo de verduras }
+  walnuts: { name: nueces }
+  water: { name: agua }
+  whole-wheat-flour: { name: harina integral }
+  yellow-onion: { name: cebolla, plural: cebollas }

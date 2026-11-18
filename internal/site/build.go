@@ -20,6 +20,7 @@ import (
 
 	"github.com/RashKash103/get-cooked/internal/assets"
 	"github.com/RashKash103/get-cooked/internal/config"
+	"github.com/RashKash103/get-cooked/internal/i18n"
 	"github.com/RashKash103/get-cooked/internal/recipe"
 	"github.com/RashKash103/get-cooked/internal/runtime"
 )
@@ -43,7 +44,10 @@ type Assets struct {
 
 type page struct {
 	Site        *config.Config
-	Base        string
+	Base        string // links (includes the language prefix)
+	Root        string // site root (assets, icons, service worker)
+	Lang        string
+	Dir         string
 	Title       string
 	Description string
 	Canonical   string
@@ -54,21 +58,34 @@ type page struct {
 	Assets      Assets
 	Recipe      *recipeView
 	Index       *indexView
+	Alternates  []alternate
+	I18n        template.JS
+	cat         *i18n.Catalog
 }
 
+type alternate struct {
+	Code, Name, URL string
+	Current         bool
+}
+
+// T translates a UI key: {{.T "key" "name" "value"}}.
+func (p page) T(key string, pairs ...string) string { return p.cat.T(key, pairs...) }
+
 type recipeView struct {
-	R           *recipe.Recipe
-	M           *runtime.Model
-	Image       string
-	SrcSet      string
-	ImageAlt    string
-	Times       template.HTML
-	Equipment   template.HTML
-	Ingredients template.HTML
-	Steps       template.HTML
-	Warnings    template.HTML
-	Tips        template.HTML
-	Data        template.JS
+	R             *recipe.Recipe
+	M             *runtime.Model
+	Image         string
+	SrcSet        string
+	ImageAlt      string
+	Times         template.HTML
+	Equipment     template.HTML
+	Ingredients   template.HTML
+	Steps         template.HTML
+	Warnings      template.HTML
+	Tips          template.HTML
+	Data          template.JS
+	NotTranslated bool
+	SourceLang    string
 }
 
 type card struct {
@@ -78,6 +95,23 @@ type card struct {
 type indexView struct {
 	Cards      []card
 	Categories []string
+}
+
+// jsKeys are the UI strings the browser needs.
+var jsKeys = []string{
+	"step", "uses", "unsupported", "cook_on", "cook_on_unsupported", "copied", "copy_failed", "link_copied",
+	"timer_started", "timer_set", "timer_done", "timer_done_short", "timer_add", "timer_pause", "timer_resume",
+	"timer_cancel", "timer_dismiss", "timer_clock_app", "mark_done", "theme", "theme_system", "theme_light", "theme_dark",
+}
+
+type builder struct {
+	s                       *Site
+	opts                    BuildOptions
+	out, root, absolute     string
+	as                      Assets
+	recipeTpl, indexTpl, nf *template.Template
+	imgs                    *imageProcessor
+	sitemap                 []string
 }
 
 // Build writes the site to opts.Out.
@@ -93,18 +127,15 @@ func Build(s *Site, opts BuildOptions) error {
 			baseURL += "/"
 		}
 	}
-	base := baseURL
-	absolute := ""
+	b := &builder{s: s, opts: opts, out: opts.Out, root: baseURL, imgs: newImageProcessor(cfg.Images.Widths)}
 	if u, err := url.Parse(baseURL); err == nil && u.Host != "" {
-		base = u.Path
-		if base == "" {
-			base = "/"
+		b.root = u.Path
+		if b.root == "" {
+			b.root = "/"
 		}
-		absolute = strings.TrimSuffix(baseURL, "/")
-		absolute = strings.TrimSuffix(absolute, strings.TrimSuffix(base, "/"))
+		b.absolute = strings.TrimSuffix(strings.TrimSuffix(baseURL, "/"), strings.TrimSuffix(b.root, "/"))
 	}
-	out := opts.Out
-	if err := os.MkdirAll(out, 0o755); err != nil {
+	if err := os.MkdirAll(b.out, 0o755); err != nil {
 		return err
 	}
 	tpl, err := template.New("").ParseFS(templateFS, "templates/base.html")
@@ -118,44 +149,75 @@ func Build(s *Site, opts BuildOptions) error {
 		}
 		return t.ParseFS(templateFS, "templates/"+name)
 	}
-	recipeTpl, err := parse("recipe.html")
-	if err != nil {
+	if b.recipeTpl, err = parse("recipe.html"); err != nil {
 		return err
 	}
-	indexTpl, err := parse("index.html")
-	if err != nil {
+	if b.indexTpl, err = parse("index.html"); err != nil {
 		return err
 	}
-	notFoundTpl, err := parse("404.html")
-	if err != nil {
+	if b.nf, err = parse("404.html"); err != nil {
 		return err
 	}
-
-	as, err := writeAssets(cfg.Path(cfg.Theme.CustomCSS), cfg.Theme.CustomCSS != "", out, opts.LiveReload)
-	if err != nil {
+	if b.as, err = writeAssets(cfg.Path(cfg.Theme.CustomCSS), cfg.Theme.CustomCSS != "", b.out, opts.LiveReload); err != nil {
 		return err
 	}
-	if err := copyDir(cfg.Path(cfg.Static), out); err != nil {
+	if err := copyDir(cfg.Path(cfg.Static), b.out); err != nil {
 		return err
 	}
-	newPage := func(title, desc, canonical string) page {
-		return page{
-			Site: cfg, Base: base, Title: title, Description: desc, Accent: template.CSS(cfg.Theme.Accent),
-			Assets: as, Canonical: canonical,
+	for _, l := range s.Langs {
+		if err := b.lang(l); err != nil {
+			return err
 		}
 	}
-	abs := func(p string) string {
-		if absolute == "" {
-			return ""
-		}
-		return absolute + p
-	}
+	return writeMeta(b.out, cfg.Title, b.root, b.absolute, b.sitemap, b.as, s.Langs[0].Catalog)
+}
 
-	imgs := newImageProcessor(cfg.Images.Widths)
+func (b *builder) abs(p string) string {
+	if b.absolute == "" {
+		return ""
+	}
+	return b.absolute + p
+}
+
+func (b *builder) alternates(cur *Lang, path string) []alternate {
+	if len(b.s.Langs) < 2 {
+		return nil
+	}
+	src := b.s.Langs[0].Code
+	var out []alternate
+	for _, l := range b.s.Langs {
+		out = append(out, alternate{Code: l.Code, Name: l.Catalog.Name, URL: b.root + l.Prefix(src) + path, Current: l == cur})
+	}
+	return out
+}
+
+func (b *builder) newPage(l *Lang, base, title, desc, canonical, path string) page {
+	cat := l.Catalog
+	js := map[string]string{}
+	for _, k := range jsKeys {
+		js[k] = cat.T(k)
+	}
+	j, _ := json.Marshal(js)
+	dir := cat.Dir
+	if dir == "" {
+		dir = "ltr"
+	}
+	return page{
+		Site: b.s.Config, Base: base, Root: b.root, Lang: l.Code, Dir: dir, Title: title, Description: desc,
+		Accent: template.CSS(b.s.Config.Theme.Accent), Assets: b.as, Canonical: canonical,
+		Alternates: b.alternates(l, path), I18n: template.JS(j), cat: cat,
+	}
+}
+
+func (b *builder) lang(l *Lang) error {
+	cfg := b.s.Config
+	src := b.s.Langs[0].Code
+	prefix := l.Prefix(src)
+	base := b.root + prefix
+	out := filepath.Join(b.out, filepath.FromSlash(prefix))
 	idx := &indexView{}
 	cats := map[string]bool{}
-	var sitemap []string
-	for _, r := range s.Recipes {
+	for _, r := range l.Recipes {
 		dir := filepath.Join(out, "recipes", r.Slug)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
@@ -166,19 +228,21 @@ func Build(s *Site, opts BuildOptions) error {
 		}
 		v := &recipeView{
 			R: r, M: m, ImageAlt: r.ImageAlt,
-			Times:       template.HTML(renderTimes(m)),
-			Equipment:   template.HTML(renderEquipment(m)),
-			Ingredients: template.HTML(renderIngredients(m, base)),
-			Steps:       template.HTML(renderSteps(m, base)),
-			Warnings:    template.HTML(renderNotes(m, true)),
-			Tips:        template.HTML(renderNotes(m, false)),
+			Times:         template.HTML(renderTimes(m)),
+			Equipment:     template.HTML(renderEquipment(m)),
+			Ingredients:   template.HTML(renderIngredients(m, base, l.Catalog)),
+			Steps:         template.HTML(renderSteps(m, base, l.Catalog)),
+			Warnings:      template.HTML(renderNotes(m, true)),
+			Tips:          template.HTML(renderNotes(m, false)),
+			NotTranslated: !l.Translated[r.Slug],
+			SourceLang:    src,
 		}
 		if v.ImageAlt == "" {
 			v.ImageAlt = r.Title
 		}
 		pageURL := base + "recipes/" + r.Slug + "/"
 		if r.Image != "" {
-			img, err := imgs.process(r.Image, filepath.Dir(r.Path), dir)
+			img, err := b.imgs.process(r.Image, filepath.Dir(r.Path), dir)
 			if err != nil {
 				return fmt.Errorf("%s: image: %w", r.Path, err)
 			}
@@ -189,7 +253,6 @@ func Build(s *Site, opts BuildOptions) error {
 				v.Image = img.src
 			}
 		}
-		// Step images live next to the recipe as well.
 		for _, sec := range r.C.Steps {
 			for _, st := range sec.Items {
 				if st.Image != "" && !isRemote(st.Image) {
@@ -204,24 +267,22 @@ func Build(s *Site, opts BuildOptions) error {
 			return err
 		}
 		v.Data = template.JS(data)
-		p := newPage(r.Title+" · "+cfg.Title, r.Description, abs(pageURL))
+		p := b.newPage(l, base, r.Title+" · "+cfg.Title, r.Description, b.abs(pageURL), "recipes/"+r.Slug+"/")
 		p.Recipe = v
 		p.BodyClass = "page-recipe"
 		if v.Image != "" {
-			if isRemote(v.Image) {
-				p.OGImage = v.Image
-			} else {
-				p.OGImage = abs(v.Image)
+			p.OGImage = v.Image
+			if !isRemote(v.Image) {
+				p.OGImage = b.abs(v.Image)
 			}
 		}
-		p.JSONLD = template.JS(jsonLD(r, m, p.OGImage, abs(pageURL)))
-		if err := writeTemplate(recipeTpl, filepath.Join(dir, "index.html"), p); err != nil {
+		p.JSONLD = template.JS(jsonLD(r, m, p.OGImage, b.abs(pageURL), l.Code))
+		if err := writeTemplate(b.recipeTpl, filepath.Join(dir, "index.html"), p); err != nil {
 			return err
 		}
-		sitemap = append(sitemap, pageURL)
+		b.sitemap = append(b.sitemap, pageURL)
 
-		var search []string
-		search = append(search, r.Title, r.Category, r.Cuisine, r.Description)
+		search := []string{r.Title, r.Category, r.Cuisine, r.Description}
 		search = append(search, r.Tags...)
 		for _, s := range m.Ingredients {
 			for _, it := range s.Items {
@@ -247,22 +308,19 @@ func Build(s *Site, opts BuildOptions) error {
 		idx.Categories = append(idx.Categories, c)
 	}
 	sort.Strings(idx.Categories)
-
-	ip := newPage(cfg.Title, cfg.Description, abs(base))
+	ip := b.newPage(l, base, cfg.Title, cfg.Description, b.abs(base), "")
 	ip.Index = idx
 	ip.BodyClass = "page-index"
-	if err := writeTemplate(indexTpl, filepath.Join(out, "index.html"), ip); err != nil {
+	if err := os.MkdirAll(out, 0o755); err != nil {
 		return err
 	}
-	np := newPage("Not found · "+cfg.Title, "", "")
+	if err := writeTemplate(b.indexTpl, filepath.Join(out, "index.html"), ip); err != nil {
+		return err
+	}
+	b.sitemap = append(b.sitemap, base)
+	np := b.newPage(l, base, l.Catalog.T("not_found")+" · "+cfg.Title, "", "", "")
 	np.BodyClass = "page-404"
-	if err := writeTemplate(notFoundTpl, filepath.Join(out, "404.html"), np); err != nil {
-		return err
-	}
-	if err := writeMeta(out, cfg.Title, base, absolute, append([]string{base}, sitemap...), as); err != nil {
-		return err
-	}
-	return nil
+	return writeTemplate(b.nf, filepath.Join(out, "404.html"), np)
 }
 
 func isRemote(s string) bool {
@@ -340,7 +398,7 @@ func writeAssets(customCSS string, hasCustom bool, out string, live bool) (Asset
 	return a, nil
 }
 
-func writeMeta(out, title, base, absolute string, urls []string, as Assets) error {
+func writeMeta(out, title, base, absolute string, urls []string, as Assets, cat *i18n.Catalog) error {
 	fsys := assets.FS()
 	// Service worker: must live at the base so its scope covers the site.
 	sw, err := fs.ReadFile(fsys, "sw.js")

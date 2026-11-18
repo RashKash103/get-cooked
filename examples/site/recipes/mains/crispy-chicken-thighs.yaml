@@ -53,7 +53,8 @@ ingredients:
     note: skin-on, patted very dry
   - section: Rub
     items:
-      - { id: salt, ingredient: kosher-salt, amount: 1.5, unit: tsp }
+      # Divided between the rub and a finishing sprinkle; the list shows both.
+      - { id: salt, ingredient: kosher-salt, unit: tsp, split: { rub: 1.25, finish: 0.25 } }
       - { id: paprika, ingredient: smoked-paprika, amount: 2, unit: tsp }
       - { id: garlic_powder, ingredient: garlic-powder, amount: 1, unit: tsp }
       - { id: oregano, ingredient: dried-oregano, amount: 1, unit: tsp }
@@ -75,7 +76,7 @@ steps:
   - section: Prep
     steps:
       - "{if method == 'oven'}Heat the oven to {425 | temp} and set a wire rack in a &cooker.{else}Preheat the &cooker to {400 | temp} for ~{3}.{end}"
-      - Stir together @salt, @paprika, @garlic_powder, @oregano, @pepper{if heat > 0} and @cayenne{end}.
+      - Stir together @salt.rub, @paprika, @garlic_powder, @oregano, @pepper{if heat > 0} and @cayenne{end}.
       - Rub @chicken{-} with @oil, then press the spice mix all over, getting some under the skin.
   - section: Cook
     steps:
@@ -86,7 +87,7 @@ steps:
           Place up to 4 thighs skin side up in the basket{if batches > 1} (you'll cook {batches} batches){end}.
           Air fry ~{cook}{if batches > 1} per batch{end}, until crisp.
       - Check the thickest thigh with an &thermometer; it should read at least {175 | temp}.
-      - Rest the chicken ~{5}, then serve with @lemon{-} wedges for squeezing.
+      - Rest the chicken ~{5}, sprinkle with @salt.finish and serve with @lemon{-} wedges for squeezing.
 
 notes:
   - when: heat == 3

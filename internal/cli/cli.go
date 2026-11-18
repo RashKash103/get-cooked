@@ -56,7 +56,7 @@ func NewRoot(stdout, stderr io.Writer) *cobra.Command {
 	root.SetErr(stderr)
 	root.AddCommand(
 		buildCmd(), serveCmd(), validateCmd(), renderCmd(), initCmd(), newCmd(),
-		importCmd(), schemaCmd(), versionCmd(),
+		importCmd(), schemaCmd(), i18nCmd(), versionCmd(),
 	)
 	return root
 }
@@ -274,7 +274,7 @@ func writeText(w io.Writer, r *recipe.Recipe, m *runtime.Model) {
 		for _, it := range s.Items {
 			line := it.Name
 			if it.Q != nil {
-				line = it.Q.String() + " " + it.Name
+				line = it.Q.String() + it.J + it.Name
 			}
 			if it.Note != "" {
 				line += ", " + it.Note
@@ -292,7 +292,7 @@ func writeText(w io.Writer, r *recipe.Recipe, m *runtime.Model) {
 			for _, seg := range st.Segs {
 				switch {
 				case seg.T == "ing" && seg.Q != "":
-					sb.WriteString(seg.Q + " " + seg.V)
+					sb.WriteString(seg.Q + seg.J + seg.V)
 				case seg.T == "timer":
 					sb.WriteString("⏲ " + seg.V)
 				default:

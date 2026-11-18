@@ -43,6 +43,7 @@ type Segment struct {
 	Args     []string   // formatter args
 	ID       string     // KIng / KEquip
 	NameOnly bool       // KIng: @id{-}
+	Part     string     // KIng: @id.part (a named split portion)
 	Branches []Branch   // KIf
 	Else     Template   // KIf
 	Pos      int
@@ -214,6 +215,14 @@ func Parse(src string) (Template, error) {
 				continue
 			}
 			seg := Segment{Kind: KIng, ID: id, Pos: i}
+			if j+1 < len(src) && src[j] == '.' && isIDStart(src[j+1]) {
+				k := j + 1
+				for k < len(src) && (isIDStart(src[k]) || src[k] >= '0' && src[k] <= '9') {
+					k++
+				}
+				seg.Part = src[j+1 : k]
+				j = k
+			}
 			if j < len(src) && src[j] == '{' && !isKeywordBrace(src[j:]) {
 				end, err := closeBrace(src, j)
 				if err != nil {
@@ -418,6 +427,9 @@ func (t Template) MarshalJSON() ([]byte, error) {
 			if s.NameOnly {
 				m["n"] = true
 			}
+			if s.Part != "" {
+				m["pt"] = s.Part
+			}
 			out = append(out, m)
 		case KEquip:
 			out = append(out, map[string]any{"eq": s.ID})
@@ -454,6 +466,7 @@ func (t *Template) UnmarshalJSON(b []byte) error {
 			Ing   *string    `json:"ing"`
 			P     *expr.Expr `json:"p"`
 			N     bool       `json:"n"`
+			Pt    string     `json:"pt"`
 			Eq    *string    `json:"eq"`
 			Timer *expr.Expr `json:"timer"`
 			If    []Branch   `json:"if"`
@@ -464,7 +477,7 @@ func (t *Template) UnmarshalJSON(b []byte) error {
 		}
 		switch {
 		case m.Ing != nil:
-			*t = append(*t, Segment{Kind: KIng, ID: *m.Ing, Expr: m.P, NameOnly: m.N})
+			*t = append(*t, Segment{Kind: KIng, ID: *m.Ing, Expr: m.P, NameOnly: m.N, Part: m.Pt})
 		case m.Eq != nil:
 			*t = append(*t, Segment{Kind: KEquip, ID: *m.Eq})
 		case m.Timer != nil:

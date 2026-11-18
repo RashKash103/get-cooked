@@ -2,6 +2,7 @@ import { render } from "../runtime/render";
 import type { Compiled, Model, State, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
 import { recipeURL, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
+import { t } from "./i18n";
 import { load, save } from "./storage";
 import { startTimer } from "./timers";
 import { toast } from "./toast";
@@ -86,7 +87,7 @@ export function initRecipe(): void {
       m = render(c, state);
     } catch (err) {
       console.error(err);
-      toast("That combination isn't supported by this recipe.");
+      toast(t("unsupported"));
       Object.assign(state, structuredClone(last));
       return;
     }
@@ -166,7 +167,7 @@ export function initRecipe(): void {
     paintSteps();
     if (on) {
       const ok = await keepAwake(true);
-      toast(ok ? "Cook mode on: the screen will stay awake" : "Cook mode on (this browser can't keep the screen awake)");
+      toast(ok ? t("cook_on") : t("cook_on_unsupported"));
       document.querySelector(".step.current")?.scrollIntoView({ behavior: "smooth", block: "center" });
     } else {
       await keepAwake(false);
@@ -180,7 +181,7 @@ export function initRecipe(): void {
     if (sv) return changeServings(Number(sv.dataset.servings));
     const chip = t.closest<HTMLElement>(".timer-chip");
     if (chip) {
-      const label = `${data.title} · ${chip.dataset.label ?? "Timer"}`;
+      const label = `${data.title} · ${chip.dataset.label ?? ""}`;
       return startTimer(Number(chip.dataset.min), label);
     }
     const num = t.closest<HTMLElement>(".step-num");
@@ -240,13 +241,13 @@ export function initRecipe(): void {
     const lines = [`${data.title} (${model.yield})`];
     for (const s of model.ingredients) {
       if (s.title) lines.push("", s.title);
-      for (const it of s.items) lines.push(`- ${it.q ? `${qtyString(it.q)} ` : ""}${it.name}${it.note ? `, ${it.note}` : ""}`);
+      for (const it of s.items) lines.push(`- ${it.q ? qtyString(it.q) + it.j : ""}${it.name}${it.note ? `, ${it.note}` : ""}`);
     }
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
-      toast("Ingredients copied");
+      toast(t("copied"));
     } catch {
-      toast("Couldn't copy to the clipboard");
+      toast(t("copy_failed"));
     }
   });
   $("share")?.addEventListener("click", async () => {
@@ -255,7 +256,7 @@ export function initRecipe(): void {
       if (navigator.share) await navigator.share({ title: data.title, url });
       else {
         await navigator.clipboard.writeText(url);
-        toast("Link copied, including your servings and options");
+        toast(t("link_copied"));
       }
     } catch {
       // cancelled

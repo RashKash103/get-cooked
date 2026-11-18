@@ -16,7 +16,8 @@
       "description": "Public URL or path prefix, e.g. https://me.github.io/recipes/ or /recipes/."
     },
     "language": {
-      "type": "string"
+      "type": "string",
+      "description": "Single-language shorthand for languages: [<language>]."
     },
     "author": {
       "type": "string"
@@ -138,6 +139,16 @@
           }
         }
       }
+    },
+    "languages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+      },
+      "description": "Site languages. The first is the language recipes are written in; others are served under /<lang>/ and get a language picker. UI strings come from i18n/<lang>.yaml; recipe translations from <recipe>.<lang>.yaml."
     }
   },
   "$defs": {

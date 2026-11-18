@@ -415,6 +415,17 @@
               "additionalProperties": {
                 "$ref": "#/$defs/expr"
               }
+            },
+            "split": {
+              "type": "object",
+              "minProperties": 2,
+              "description": "Named portions used in different steps, e.g. {dough: 4, topping: 2}. The total is their sum; reference a portion as @id.name. Numbers scale with servings; strings are expressions.",
+              "propertyNames": {
+                "$ref": "#/$defs/identifier"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              }
             }
           },
           "anyOf": [

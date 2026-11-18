@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/RashKash103/get-cooked/internal/expr"
+	"github.com/RashKash103/get-cooked/internal/i18n"
 	"github.com/RashKash103/get-cooked/internal/ingline"
 	"github.com/RashKash103/get-cooked/internal/tmpl"
 	"github.com/RashKash103/get-cooked/internal/units"
@@ -27,6 +28,12 @@ type Compiler struct {
 	Units  *units.Table
 	DB     *DB
 	System string // default unit system
+	// Catalog provides built-in labels (times, servings, "Add …") in the
+	// target language. Nil means English.
+	Catalog *i18n.Catalog
+	// Tr translates recipe text (English source → target language). It is
+	// called for every user-visible string; nil means no translation.
+	Tr func(string) string
 }
 
 // CompileFile reads and compiles a recipe file.
@@ -50,6 +57,15 @@ type cctx struct {
 	eqIDs   map[string]bool
 	usedDB  map[string]bool
 	optWhen map[string]Src
+	parts   map[string]map[string]bool // ingredient id → split names
+}
+
+// tr translates user-visible text.
+func (cc *cctx) tr(s string) string {
+	if s == "" || cc.Tr == nil {
+		return s
+	}
+	return cc.Tr(s)
 }
 
 func (cc *cctx) errAt(l Loc, format string, args ...any) {
@@ -60,9 +76,12 @@ func (cc *cctx) loc(line, col int) Loc { return Loc{cc.file, line, col} }
 
 // Compile compiles recipe source. path is used for diagnostics and the slug.
 func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
-	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}}
+	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}, parts: map[string]map[string]bool{}}
 	if cc.db == nil {
 		cc.db = NewDB()
+	}
+	if cc.Catalog == nil {
+		cc.Compiler = &Compiler{Units: c.Units, DB: c.DB, System: c.System, Catalog: i18n.English(), Tr: c.Tr}
 	}
 	var root yaml.Node
 	if err := yaml.Unmarshal(src, &root); err != nil {
@@ -84,9 +103,9 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 		return nil, Diags{{File: path, Msg: err.Error()}}
 	}
 	r := &Recipe{
-		Path: path, Slug: f.Slug, Title: f.Title, Description: strings.TrimSpace(f.Description),
-		Image: f.Image, ImageAlt: f.ImageAlt, Category: f.Category, Cuisine: f.Cuisine,
-		Tags: f.Tags, Author: f.Author, Source: f.Source, Date: f.Date, Draft: f.Draft,
+		Path: path, Slug: f.Slug, Title: cc.tr(f.Title), Description: cc.tr(strings.TrimSpace(f.Description)),
+		Image: f.Image, ImageAlt: cc.tr(f.ImageAlt), Category: cc.tr(f.Category), Cuisine: cc.tr(f.Cuisine),
+		Tags: trAll(cc, f.Tags), Author: f.Author, Source: f.Source, Date: f.Date, Draft: f.Draft,
 		IngCategories: map[string]string{},
 	}
 	if r.Slug == "" {
@@ -141,6 +160,14 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 	}
 	r.C = comp
 	return r, cc.diags
+}
+
+func trAll(cc *cctx, list []string) []string {
+	out := make([]string, len(list))
+	for i, s := range list {
+		out[i] = cc.tr(s)
+	}
+	return out
 }
 
 // Slugify lowercases s and joins alphanumeric runs with sep.
@@ -208,7 +235,7 @@ func pluralize(s string) string {
 func (cc *cctx) servings(f *File, comp *Compiled) {
 	s := f.Servings
 	l := cc.loc(s.Line, 0)
-	sc := ServingsC{Default: s.Default, Min: s.Min, Max: s.Max, Step: s.Step, One: s.Unit, Other: s.Plural}
+	sc := ServingsC{Default: s.Default, Min: s.Min, Max: s.Max, Step: s.Step, One: cc.tr(s.Unit), Other: cc.tr(s.Plural)}
 	if sc.Step == 0 {
 		sc.Step = 1
 		if sc.Default < 1 {
@@ -222,10 +249,13 @@ func (cc *cctx) servings(f *File, comp *Compiled) {
 		sc.Max = max(sc.Default*4, sc.Min)
 	}
 	if sc.One == "" {
-		sc.One = "serving"
+		sc.One, sc.Other = cc.Catalog.Servings.One, cc.Catalog.Servings.Other
 	}
 	if sc.Other == "" {
-		sc.Other = pluralize(sc.One)
+		sc.Other = sc.One
+		if cc.Catalog.Lang == i18n.Default {
+			sc.Other = pluralize(sc.One)
+		}
 	}
 	if sc.Default < sc.Min || sc.Default > sc.Max {
 		cc.errAt(l, "servings.default (%v) must be between min (%v) and max (%v)", sc.Default, sc.Min, sc.Max)
@@ -289,6 +319,12 @@ func (cc *cctx) collectIngredients(f *File) []*sectionDraft {
 			}
 			seen[d.id] = d
 			cc.ingIDs[d.id] = true
+			for _, kv := range orderedPairs(&d.item.Split) {
+				if cc.parts[d.id] == nil {
+					cc.parts[d.id] = map[string]bool{}
+				}
+				cc.parts[d.id][kv[0].Value] = true
+			}
 		}
 	}
 	return sections
@@ -302,6 +338,7 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 		d.short = l
 		d.name = l.Name
 		d.unit = l.Unit
+		entry = cc.db.Match(l.Name)
 		if l.Amount > 0 {
 			a := l.Amount
 			d.amt = &AmountC{N: &a, S: true}
@@ -310,8 +347,8 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 			d.plur = l.Name
 			d.name = ingline.Singular(l.Name)
 		}
-		entry = cc.db.Match(l.Name)
 		d.id = identFrom(d.name)
+		d.name, d.plur = cc.tr(d.name), cc.tr(d.plur)
 		if l.Note != "" {
 			it.Note = Src{Text: l.Note, Set: true, Line: it.Line.Line, Col: it.Line.Col}
 		}
@@ -328,14 +365,15 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 		} else if it.Name != "" {
 			entry = cc.db.Match(it.Name)
 		}
-		d.name = it.Name
-		d.plur = it.Plural
+		d.name = cc.tr(it.Name)
+		d.plur = cc.tr(it.Plural)
 		if entry != nil {
+			en, ep := cc.entryName(entry)
 			if d.name == "" {
-				d.name = entry.Name
+				d.name = en
 			}
 			if d.plur == "" && it.Name == "" {
-				d.plur = entry.Plural
+				d.plur = ep
 			}
 		}
 		if d.name == "" && it.Recipe == "" {
@@ -371,8 +409,8 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 	if entry != nil {
 		d.ref = entry.Key
 		cc.usedDB[entry.Key] = true
-		if d.plur == "" && d.name == entry.Name {
-			d.plur = entry.Plural
+		if en, ep := cc.entryName(entry); d.plur == "" && d.name == en {
+			d.plur = ep
 		}
 	}
 	if d.unit == "each" {
@@ -382,6 +420,14 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 		cc.errAt(d.loc, "ingredient id %q must be lowercase letters, digits and underscores, starting with a letter", d.id)
 	}
 	return d
+}
+
+// entryName returns the (translated) name and plural of a DB entry.
+func (cc *cctx) entryName(e *DBEntry) (string, string) {
+	if n, ok := cc.Catalog.Ingredients[e.Key]; ok && n.Name != "" {
+		return n.Name, n.Plural
+	}
+	return e.Name, e.Plural
 }
 
 func (cc *cctx) options(f *File, comp *Compiled, sections []*sectionDraft) {
@@ -400,7 +446,7 @@ func (cc *cctx) options(f *File, comp *Compiled, sections []*sectionDraft) {
 		if o.When.Set {
 			cc.optWhen[o.ID] = o.When
 		}
-		oc := OptionC{ID: o.ID, Type: o.Type, Label: o.Label, Help: o.Help, Unit: o.Unit, L: l}
+		oc := OptionC{ID: o.ID, Type: o.Type, Label: cc.tr(o.Label), Help: cc.tr(o.Help), Unit: o.Unit, L: l}
 		if oc.Label == "" {
 			oc.Label = strings.ToUpper(o.ID[:1]) + strings.ReplaceAll(o.ID[1:], "_", " ")
 		}
@@ -424,7 +470,7 @@ func (cc *cctx) options(f *File, comp *Compiled, sections []*sectionDraft) {
 				if id == "" {
 					id = identFrom(ch.Label)
 				}
-				label := ch.Label
+				label := cc.tr(ch.Label)
 				if label == "" {
 					label = strings.ReplaceAll(id, "_", " ")
 				}
@@ -485,13 +531,13 @@ func (cc *cctx) options(f *File, comp *Compiled, sections []*sectionDraft) {
 			}
 			ids[d.id] = true
 			cc.symbols[d.id] = true
-			label := d.item.OptionLabel
+			label := cc.tr(d.item.OptionLabel)
 			if label == "" {
 				name := d.name
 				if d.plur != "" {
 					name = d.plur
 				}
-				label = "Add " + name
+				label = cc.Catalog.T("add_ingredient", "name", name)
 			}
 			comp.Options = append(comp.Options, OptionC{ID: d.id, Type: "toggle", Label: label, Default: d.item.Default, L: d.loc})
 		}
@@ -589,7 +635,6 @@ func optionWhens(id string, cc *cctx) []Src {
 }
 
 func (cc *cctx) times(f *File, comp *Compiled) {
-	labels := map[string]string{"prep": "Prep", "cook": "Cook", "rest": "Rest", "total": "Total", "bake": "Bake", "chill": "Chill", "rise": "Rise", "active": "Active"}
 	var total *TimeC
 	var parts []*expr.Node
 	for _, kv := range orderedPairs(&f.Times) {
@@ -603,10 +648,7 @@ func (cc *cctx) times(f *File, comp *Compiled) {
 		if e == nil {
 			continue
 		}
-		label := labels[id]
-		if label == "" {
-			label = strings.ToUpper(id[:1]) + strings.ReplaceAll(id[1:], "_", " ")
-		}
+		label := cc.Catalog.TimeLabel(id)
 		tc := TimeC{ID: id, Label: label, E: e, L: cc.loc(kv[0].Line, kv[0].Column)}
 		if id == "total" {
 			total = &tc
@@ -620,7 +662,7 @@ func (cc *cctx) times(f *File, comp *Compiled) {
 		for _, p := range parts[1:] {
 			sum = &expr.Node{Op: "+", Args: []*expr.Node{sum, p}, Pos: -1}
 		}
-		total = &TimeC{ID: "total", Label: "Total", E: &expr.Expr{Root: sum}}
+		total = &TimeC{ID: "total", Label: cc.Catalog.TimeLabel("total"), E: &expr.Expr{Root: sum}}
 	}
 	if total != nil {
 		comp.Times = append(comp.Times, *total)
@@ -657,7 +699,7 @@ func (cc *cctx) ingredients(f *File, comp *Compiled, sections []*sectionDraft, r
 	for _, sd := range sections {
 		sc := IngSectionC{Items: []IngC{}}
 		if sd.sec != nil {
-			sc.Title = sd.sec.Section
+			sc.Title = cc.tr(sd.sec.Section)
 			sc.When = cc.when(sd.sec.When)
 			sc.L = cc.loc(sd.sec.Line, 0)
 		}
@@ -707,6 +749,27 @@ func (cc *cctx) ingredients(f *File, comp *Compiled, sections []*sectionDraft, r
 					ic.Amount = &AmountC{E: e}
 				}
 			}
+			if it.Split.Kind != 0 {
+				if it.Amount.Set {
+					cc.errAt(d.loc, "use either `amount:` or `split:`, not both (the total of a split is its sum)")
+				}
+				ic.Amount = nil
+				for _, kv := range orderedPairs(&it.Split) {
+					var src Src
+					if err := src.UnmarshalYAML(kv[1]); err != nil {
+						cc.errAt(cc.loc(kv[0].Line, kv[0].Column), "split.%s must be a number or expression", kv[0].Value)
+						continue
+					}
+					sc := SplitC{ID: kv[0].Value}
+					if src.Num != nil {
+						n := *src.Num
+						sc.A = AmountC{N: &n, S: it.Scale == nil || *it.Scale}
+					} else if e := cc.expr(src, "split."+kv[0].Value); e != nil {
+						sc.A = AmountC{E: e}
+					}
+					ic.Split = append(ic.Split, sc)
+				}
+			}
 			if ic.Amount != nil && ic.Amount.N != nil && *ic.Amount.N < 0 {
 				cc.errAt(d.loc, "amount must not be negative")
 			}
@@ -725,7 +788,7 @@ func (cc *cctx) steps(f *File, comp *Compiled) {
 				comp.Steps = append(comp.Steps, *implicit)
 				implicit = nil
 			}
-			sc := StepSectionC{Title: e.Section.Section, When: cc.when(e.Section.When), L: cc.loc(e.Section.Line, 0), Items: []StepC{}}
+			sc := StepSectionC{Title: cc.tr(e.Section.Section), When: cc.when(e.Section.When), L: cc.loc(e.Section.Line, 0), Items: []StepC{}}
 			for _, sub := range e.Section.Steps {
 				if sub.Section != nil {
 					cc.errAt(cc.loc(sub.Section.Line, 0), "step sections cannot be nested")
@@ -802,7 +865,8 @@ func (cc *cctx) template(s Src) tmpl.Template {
 		cc.diags = append(cc.diags, Diag{File: cc.file, Line: s.Line, Col: s.Col, Warn: true,
 			Msg: fmt.Sprintf("YAML treated %q as a comment and dropped it from the text; put the text in quotes to keep it", s.Comment)})
 	}
-	t, err := tmpl.Parse(strings.TrimSpace(s.Text))
+	s.Text = cc.tr(strings.TrimSpace(s.Text))
+	t, err := tmpl.Parse(s.Text)
 	if err != nil {
 		pos := 0
 		msg := err.Error()
@@ -828,6 +892,13 @@ func (cc *cctx) template(s Src) tmpl.Template {
 		}
 		switch seg.Kind {
 		case tmpl.KIng:
+			if seg.Part != "" && cc.ingIDs[seg.ID] && !cc.parts[seg.ID][seg.Part] {
+				msg := fmt.Sprintf("@%s.%s: ingredient %q has no split named %q", seg.ID, seg.Part, seg.ID, seg.Part)
+				if sg := suggest(seg.Part, keys(cc.parts[seg.ID])); sg != "" {
+					msg += fmt.Sprintf(" (did you mean @%s.%s?)", seg.ID, sg)
+				}
+				cc.errAt(at, "%s", msg)
+			}
 			if !cc.ingIDs[seg.ID] {
 				msg := fmt.Sprintf("@%s does not match any ingredient id", seg.ID)
 				if sg := suggest(seg.ID, keys(cc.ingIDs)); sg != "" {

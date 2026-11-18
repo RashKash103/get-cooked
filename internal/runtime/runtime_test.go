@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/RashKash103/get-cooked/internal/config"
+	"github.com/RashKash103/get-cooked/internal/i18n"
 	"github.com/RashKash103/get-cooked/internal/recipe"
 )
 
@@ -50,6 +51,9 @@ func compileExample(t *testing.T, rel string) *recipe.Recipe {
 		examples = map[string]*recipe.Recipe{}
 		var all []*recipe.Recipe
 		for _, f := range files {
+			if i18n.TranslationLang(f) != "" {
+				continue
+			}
 			r, ds := c.CompileFile(f)
 			if ds.HasErrors() {
 				exampleErr = ds
@@ -89,7 +93,7 @@ func stepText(m *Model) string {
 			var sb strings.Builder
 			for _, seg := range st.Segs {
 				if seg.T == "ing" && seg.Q != "" {
-					sb.WriteString(seg.Q + " ")
+					sb.WriteString(seg.Q + seg.J)
 				}
 				sb.WriteString(seg.V)
 			}
@@ -138,7 +142,7 @@ func TestOatmealScenarios(t *testing.T) {
 	// Cranberries default on: a dedicated step exists and the mixing step mentions them.
 	on := stepText(render(t, r, State{}))
 	off := stepText(render(t, r, State{Options: map[string]any{"cranberries": false}}))
-	if !strings.Contains(on, "Scatter a small handful of dried cranberries") || !strings.Contains(on, "fold in ½ cup dried cranberries") {
+	if !strings.Contains(on, "Scatter the remaining 2 tbsp dried cranberries") || !strings.Contains(on, "fold in 6 tbsp dried cranberries") {
 		t.Errorf("cranberry steps missing:\n%s", on)
 	}
 	if strings.Contains(off, "cranberr") {
@@ -146,6 +150,10 @@ func TestOatmealScenarios(t *testing.T) {
 	}
 	if strings.Count(on, "\n") != strings.Count(off, "\n")+1 {
 		t.Error("toggling cranberries should add exactly one step")
+	}
+	// Cranberries are divided between two steps, so the list shows both shares.
+	if u := ingredient(render(t, r, State{}), "cranberries").Uses; len(u) != 2 || u[0].N != 3 || u[1].Q != "2 tbsp" {
+		t.Errorf("cranberry uses = %+v", u)
 	}
 	if ingredient(render(t, r, State{Options: map[string]any{"cranberries": false}}), "cranberries") != nil {
 		t.Error("cranberries should be removed from the ingredient list")
@@ -238,6 +246,9 @@ func TestConformanceGoldens(t *testing.T) {
 		t.Fatal("no example recipes")
 	}
 	for _, f := range files {
+		if i18n.TranslationLang(f) != "" {
+			continue
+		}
 		rel, _ := filepath.Rel(filepath.Join(exampleSite, "recipes"), f)
 		r := compileExample(t, rel)
 		type tc struct {

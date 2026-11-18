@@ -104,7 +104,15 @@ type IngC struct {
 	Note     tmpl.Template `json:"note,omitempty"`
 	Optional bool          `json:"optional,omitempty"`
 	Recipe   *RecipeRef    `json:"recipe,omitempty"`
+	Split    []SplitC      `json:"split,omitempty"`
 	L        Loc           `json:"-"`
+}
+
+// SplitC is a named portion of an ingredient used in a particular step
+// (`split: {dough: 4, topping: 2}` referenced as @salt.dough).
+type SplitC struct {
+	ID string  `json:"id"`
+	A  AmountC `json:"a"`
 }
 
 // RecipeRef links an ingredient to another recipe (a prerequisite). The amount

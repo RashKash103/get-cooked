@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/RashKash103/get-cooked/internal/expr"
+	"github.com/RashKash103/get-cooked/internal/i18n"
 	"github.com/RashKash103/get-cooked/internal/runtime"
 )
 
@@ -78,7 +79,7 @@ func renderEquipment(m *runtime.Model) string {
 	return sb.String()
 }
 
-func renderIngredients(m *runtime.Model, base string) string {
+func renderIngredients(m *runtime.Model, base string, cat *i18n.Catalog) string {
 	var sb strings.Builder
 	for _, s := range m.Ingredients {
 		sb.WriteString(`<section class="ing-section">`)
@@ -89,7 +90,7 @@ func renderIngredients(m *runtime.Model, base string) string {
 		for _, it := range s.Items {
 			fmt.Fprintf(&sb, `<li class="ing" data-id="%s"><label class="ing-label"><input type="checkbox" class="ing-check" data-id="%s"><span class="ing-text">`, esc(it.ID), esc(it.ID))
 			if it.Q != nil {
-				sb.WriteString(`<span class="qty">` + esc(it.Q.String()) + `</span> `)
+				sb.WriteString(`<span class="qty">` + esc(it.Q.String()) + `</span>` + esc(it.J))
 			}
 			if it.Link != nil {
 				fmt.Fprintf(&sb, `<a class="ing-name ing-link" href="%s">%s</a>`, esc(linkHref(base, it.Link)), esc(it.Name))
@@ -98,6 +99,13 @@ func renderIngredients(m *runtime.Model, base string) string {
 			}
 			if it.Note != "" {
 				sb.WriteString(`<span class="ing-note">, ` + esc(it.Note) + `</span>`)
+			}
+			if len(it.Uses) > 0 {
+				parts := make([]string, len(it.Uses))
+				for i, u := range it.Uses {
+					parts[i] = esc(cat.T("uses", "q", u.Q, "n", fmt.Sprint(u.N)))
+				}
+				sb.WriteString(`<span class="ing-uses">` + strings.Join(parts, " · ") + `</span>`)
 			}
 			sb.WriteString(`</span></label></li>`)
 		}
@@ -113,7 +121,7 @@ func renderSegs(segs []runtime.Seg, base string, label string) string {
 		case "ing":
 			inner := ""
 			if s.Q != "" {
-				inner = `<span class="ref-q">` + esc(s.Q) + `</span> `
+				inner = `<span class="ref-q">` + esc(s.Q) + `</span>` + esc(s.J)
 			}
 			inner += esc(s.V)
 			if s.Link != nil {
@@ -133,7 +141,7 @@ func renderSegs(segs []runtime.Seg, base string, label string) string {
 	return sb.String()
 }
 
-func renderSteps(m *runtime.Model, base string) string {
+func renderSteps(m *runtime.Model, base string, cat *i18n.Catalog) string {
 	var sb strings.Builder
 	for _, s := range m.Steps {
 		sb.WriteString(`<section class="step-section">`)
@@ -142,9 +150,10 @@ func renderSteps(m *runtime.Model, base string) string {
 		}
 		sb.WriteString(`<ol class="step-list">`)
 		for _, st := range s.Items {
-			label := fmt.Sprintf("Step %d", st.N)
-			fmt.Fprintf(&sb, `<li class="step" data-n="%d"><button type="button" class="step-num" aria-label="Mark step %d done">%d</button><div class="step-body"><p class="step-text">%s</p>`,
-				st.N, st.N, st.N, renderSegs(st.Segs, base, label))
+			n := fmt.Sprint(st.N)
+			label := cat.T("step", "n", n)
+			fmt.Fprintf(&sb, `<li class="step" data-n="%d"><button type="button" class="step-num" aria-label="%s">%d</button><div class="step-body"><p class="step-text">%s</p>`,
+				st.N, esc(cat.T("mark_done", "n", n)), st.N, renderSegs(st.Segs, base, label))
 			if st.Note != "" {
 				sb.WriteString(`<p class="step-note">` + esc(st.Note) + `</p>`)
 			}

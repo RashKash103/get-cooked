@@ -67,6 +67,9 @@ type Table struct {
 	Fractions string            `json:"fractions"` // unicode | ascii | decimal
 	Count     Rule              `json:"count"`     // default rounding for count units
 	Fallback  Rule              `json:"fallback"`  // rounding for units outside any ladder
+	Decimal   string            `json:"dec,omitempty"`   // decimal separator ("." when empty)
+	Words     map[string]string `json:"words,omitempty"` // duration words: hr, min, sec
+	Of        string            `json:"of,omitempty"`    // word between a measured amount and a name ("de")
 	aliases   map[string]string
 }
 
@@ -87,6 +90,16 @@ type Qty struct {
 	Text  string  `json:"t"`
 	Unit  string  `json:"u"`
 	ID    string  `json:"id"` // display unit id ("" for bare counts)
+}
+
+// Join returns the text placed between this quantity and an ingredient name:
+// the table's connector word when the quantity has a unit ("2 tazas de"),
+// otherwise a space ("2 huevos").
+func (t *Table) Join(q *Qty) string {
+	if q == nil || t.Of == "" || q.Unit == "" || q.ID == "each" {
+		return " "
+	}
+	return " " + t.Of + " "
 }
 
 // String joins number and unit.
@@ -280,16 +293,25 @@ var unicodeFractions = map[[2]int]string{
 
 // FormatFraction prints x as a mixed fraction when it is (very close to) a
 // fraction with denominator ≤ 8, otherwise as a decimal.
+// Num formats a number with the table's decimal separator.
+func (t *Table) Num(x float64) string {
+	s := expr.FormatNumber(x)
+	if t.Decimal != "" && t.Decimal != "." {
+		s = strings.Replace(s, ".", t.Decimal, 1)
+	}
+	return s
+}
+
 func (t *Table) FormatFraction(x float64) string {
 	if t.Fractions == "decimal" {
-		return expr.FormatNumber(x)
+		return t.Num(x)
 	}
 	neg := x < 0
 	ax := math.Abs(x)
 	whole := math.Floor(ax + 1e-9)
 	frac := ax - whole
 	if frac < 1e-6 {
-		return expr.FormatNumber(x)
+		return t.Num(x)
 	}
 	for d := 2; d <= 8; d++ {
 		n := math.Round(frac * float64(d))
@@ -302,16 +324,16 @@ func (t *Table) FormatFraction(x float64) string {
 		if t.Fractions == "ascii" {
 			s = fmt.Sprintf("%d/%d", num, den)
 			if whole > 0 {
-				s = expr.FormatNumber(whole) + " " + s
+				s = t.Num(whole) + " " + s
 			}
 		} else {
 			f, ok := unicodeFractions[[2]int{num, den}]
 			if !ok {
-				return expr.FormatNumber(x)
+				return t.Num(x)
 			}
 			s = f
 			if whole > 0 {
-				s = expr.FormatNumber(whole) + " " + f
+				s = t.Num(whole) + " " + f
 			}
 		}
 		if neg {
@@ -319,7 +341,7 @@ func (t *Table) FormatFraction(x float64) string {
 		}
 		return s
 	}
-	return expr.FormatNumber(x)
+	return t.Num(x)
 }
 
 func gcd(a, b int) int {
@@ -331,7 +353,7 @@ func gcd(a, b int) int {
 
 func (t *Table) text(r Rule, v float64) string {
 	if len(r.Tiers) > 0 {
-		return expr.FormatNumber(v)
+		return t.Num(v)
 	}
 	return t.FormatFraction(v)
 }
@@ -535,13 +557,26 @@ func Length(v float64, fromCM bool, system string) string {
 
 var plainFrac = &Table{Fractions: "unicode"}
 
+// Duration formats minutes using the table's duration words.
+func (t *Table) Duration(min float64) string {
+	return durationWords(min, t.Words)
+}
+
 // Duration formats minutes as "1 hr 5 min", "45 min" or "30 sec".
-func Duration(min float64) string {
+func Duration(min float64) string { return durationWords(min, nil) }
+
+func durationWords(min float64, words map[string]string) string {
+	w := func(k string) string {
+		if v := words[k]; v != "" {
+			return v
+		}
+		return k
+	}
 	if min <= 0 {
-		return "0 min"
+		return "0 " + w("min")
 	}
 	if min < 1 {
-		return expr.FormatNumber(math.Max(5, math.Round(min*60/5)*5)) + " sec"
+		return expr.FormatNumber(math.Max(5, math.Round(min*60/5)*5)) + " " + w("sec")
 	}
 	secs := int(math.Round(min * 60))
 	if min < 10 && secs%60 != 0 {
@@ -551,18 +586,18 @@ func Duration(min float64) string {
 			m, sec = m+1, 0
 		}
 		if sec == 0 {
-			return fmt.Sprintf("%d min", m)
+			return fmt.Sprintf("%d %s", m, w("min"))
 		}
-		return fmt.Sprintf("%d min %d sec", m, sec)
+		return fmt.Sprintf("%d %s %d %s", m, w("min"), sec, w("sec"))
 	}
 	total := int(math.Round(min))
 	h, m := total/60, total%60
 	switch {
 	case h == 0:
-		return fmt.Sprintf("%d min", m)
+		return fmt.Sprintf("%d %s", m, w("min"))
 	case m == 0:
-		return fmt.Sprintf("%d hr", h)
+		return fmt.Sprintf("%d %s", h, w("hr"))
 	default:
-		return fmt.Sprintf("%d hr %d min", h, m)
+		return fmt.Sprintf("%d %s %d %s", h, w("hr"), m, w("min"))
 	}
 }

@@ -1,0 +1,36 @@
+# es translation of cranberry-baked-oatmeal.yaml.
+# Keys are the original text; translate the values. Empty values fall back to the
+# original. Keep {…} expressions, @ingredient, &equipment and ~{timer} references
+# unchanged (you may move them). Regenerate with: get-cooked i18n extract
+strings:
+  Cranberry Baked Oatmeal: Avena horneada con arándanos
+  "Custardy, cinnamon-scented oats that bake while you make coffee. Scales from a single ramekin to a crowd.": Avena cremosa con aroma a canela que se hornea mientras preparas el café. Sirve desde un ramequín hasta una multitud.
+  Golden baked oatmeal studded with cranberries in a square pan: Avena horneada dorada con arándanos en una fuente cuadrada
+  Breakfast: Desayuno
+  make-ahead: para-adelantar
+  vegetarian: vegetariana
+  kid-friendly: para-niños
+  Sweeten with: Endulzar con
+  Maple syrup: Jarabe de arce
+  Brown sugar: Azúcar moreno
+  No sugar: Sin azúcar
+  Add dried cranberries: Añadir arándanos secos
+  "{if servings <= 2}8×8 inch baking dish{elif servings <= 8}13×9 inch baking dish{else}two 13×9 inch baking dishes{end}": "{if servings <= 2}fuente para horno de 20×20 cm{elif servings <= 8}fuente para horno de 33×23 cm{else}dos fuentes para horno de 33×23 cm{end}"
+  large mixing bowl: bol grande
+  Oats: Avena
+  Custard: Crema
+  packed: compactado
+  "melted, plus more for the dish": "derretida, y un poco más para la fuente"
+  Mix-ins: Añadidos
+  roughly chopped: picadas en trozos grandes
+  "Heat the oven to {375 | temp} and butter the &dish.": "Precalienta el horno a {375 | temp} y engrasa la &dish."
+  "In a &bowl, stir together @oats, @baking_powder, @cinnamon and @salt.": "En un &bowl, mezcla @oats, @baking_powder, @cinnamon y @salt."
+  ? "Whisk @milk, @egg, @butter and @vanilla{if sweetener == 'maple'} with @maple{elif sweetener == 'brown_sugar'} with @brown_sugar{end} in a second bowl, then pour it over the oats{if cranberries || walnuts} and fold in {if cranberries && walnuts}@cranberries{3/4} and @walnuts{elif cranberries}@cranberries{3/4}{else}@walnuts{end}{end}."
+  : "Bate @milk, @egg, @butter y @vanilla{if sweetener == 'maple'} con @maple{elif sweetener == 'brown_sugar'} con @brown_sugar{end} en otro bol, viértelo sobre la avena{if cranberries || walnuts} e incorpora {if cranberries && walnuts}@cranberries{3/4} y @walnuts{elif cranberries}@cranberries{3/4}{else}@walnuts{end}{end}."
+  "Spread the mixture evenly in the dish and let it sit for ~{5} so the oats start to soak.": "Extiende la mezcla en la fuente y deja reposar ~{5} para que la avena empiece a remojarse."
+  "Scatter the remaining @cranberries{1/4} over the top so they show after baking.": "Esparce por encima el resto de @cranberries{1/4} para que se vean después de hornear."
+  "Bake for ~{bake}, until the center is just set and the edges are golden.": "Hornea ~{bake}, hasta que el centro esté cuajado y los bordes dorados."
+  "Let it rest ~{5} before serving warm.": "Deja reposar ~{5} y sirve tibia."
+  "A single serving makes a very thin layer, so it may come out softer and more pudding-like. A small ramekin helps.": "Una sola porción forma una capa muy fina, así que puede quedar más blanda, casi como un pudin. Un ramequín pequeño ayuda."
+  "Unsweetened, it's best with ripe fruit or a drizzle of honey at the table.": "Sin endulzar, queda mejor con fruta madura o un chorrito de miel en la mesa."
+  Leftovers keep in the fridge for 4 days. Reheat slices in the microwave with a splash of milk.: Las sobras se conservan 4 días en la nevera. Recalienta las porciones en el microondas con un chorrito de leche.

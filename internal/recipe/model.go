@@ -217,6 +217,7 @@ type IngItem struct {
 	Default     bool    `yaml:"default"`
 	OptionLabel string  `yaml:"option_label"`
 	Recipe      string  `yaml:"recipe"`
+	Split       yaml.Node `yaml:"split"`
 	With        yaml.Node `yaml:"with"`
 	Line        Src     `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
 	Pos         int     `yaml:"-"`

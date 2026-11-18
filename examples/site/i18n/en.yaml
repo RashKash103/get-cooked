@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/i18n.schema.json
+#
+# English strings for the get-cooked site UI. Copy this file to i18n/<lang>.yaml
+# (or run `get-cooked i18n init <lang>`) and translate the values. Keys you
+# leave out fall back to English. Placeholders like {n} must be kept.
+
+# The language's own name, shown in the language picker.
+name: English
+# Text direction: ltr or rtl.
+dir: ltr
+# Decimal separator used for quantities (e.g. "," for "1,5 kg").
+decimal: "."
+
+ui:
+  skip: Skip to content
+  theme: Theme
+  theme_system: System
+  theme_light: Light
+  theme_dark: Dark
+  language: Language
+  search: Search recipes or ingredients
+  all: All
+  no_match: No recipes match.
+  ingredients: Ingredients
+  equipment: Equipment
+  steps: Steps
+  servings: Servings
+  fewer: Fewer
+  more: More
+  customize: Customize
+  cook: Cook
+  cook_help: Keep the screen on and focus on steps
+  cook_on: "Cook mode on: the screen will stay awake"
+  cook_on_unsupported: Cook mode on (this browser can't keep the screen awake)
+  copy_list: Copy list
+  copied: Ingredients copied
+  copy_failed: Couldn't copy to the clipboard
+  share: Share
+  link_copied: Link copied, including your servings and options
+  print: Print
+  close: Close
+  units: Units
+  units_original: As written
+  units_us: US
+  units_metric: Metric
+  reset: Reset to original
+  source: Source
+  step: "Step {n}"
+  mark_done: "Mark step {n} done"
+  uses: "{q} for step {n}"
+  add_ingredient: "Add {name}"
+  unsupported: That combination isn't supported by this recipe.
+  not_translated: This recipe hasn't been translated yet.
+  not_found: Page not found
+  not_found_body: That recipe may have moved.
+  back_home: Back to all recipes
+  made_with: Made with
+  timer_started: "{time} timer started"
+  timer_set: "Timer set for {time}"
+  timer_done: Timer done
+  timer_done_short: Done!
+  timer_add: Add one minute
+  timer_pause: Pause
+  timer_resume: Resume
+  timer_cancel: Cancel timer
+  timer_dismiss: Dismiss timer
+  timer_clock_app: Open in Clock app
+
+# Labels for keys under a recipe's `times:`. Unknown keys are title-cased.
+times:
+  prep: Prep
+  cook: Cook
+  rest: Rest
+  total: Total
+  bake: Bake
+  chill: Chill
+  rise: Rise
+  active: Active
+  cool: Cool
+  marinate: Marinate
+
+# Default servings unit when a recipe doesn't set one.
+servings:
+  one: serving
+  other: servings
+
+# Words used in durations ("1 hr 5 min").
+duration:
+  hr: hr
+  min: min
+  sec: sec
+
+# Unit labels. Only list units whose names differ from the built-in ones.
+units: {}
+
+# Display names for ingredient database entries, keyed like ingredients.yaml.
+ingredients: {}

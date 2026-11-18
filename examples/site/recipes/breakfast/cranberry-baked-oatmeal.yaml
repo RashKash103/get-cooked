@@ -20,9 +20,6 @@ options:
       - { id: none, label: No sugar }
 
 vars:
-  # The pan changes with the batch size: 8×8 for two or fewer, 13×9 above that,
-  # and two 13×9 pans for really big batches.
-  pan: "servings <= 2 ? '8×8 inch baking dish' : servings <= 8 ? '13×9 inch baking dish' : 'two 13×9 inch baking dishes'"
   # Thin layers bake quickly; bigger batches are deeper and need longer.
   bake: "servings <= 2 ? 25 : 30 + servings * 2"
 
@@ -31,7 +28,11 @@ times:
   bake: bake
 
 equipment:
-  - { id: dish, name: "{pan}" }
+  # The pan changes with the batch size: 8×8 for two or fewer, 13×9 above that,
+  # and two 13×9 pans for really big batches. (Text lives in {if} blocks rather
+  # than in expression strings so it can be translated.)
+  - id: dish
+    name: "{if servings <= 2}8×8 inch baking dish{elif servings <= 8}13×9 inch baking dish{else}two 13×9 inch baking dishes{end}"
   - { id: bowl, name: large mixing bowl }
 
 ingredients:
@@ -80,10 +81,10 @@ steps:
   - text: >-
       Whisk @milk, @egg, @butter and @vanilla{if sweetener == 'maple'} with @maple{elif sweetener == 'brown_sugar'} with @brown_sugar{end}
       in a second bowl, then pour it over the oats{if cranberries || walnuts} and fold in
-      {if cranberries && walnuts}@cranberries and @walnuts{elif cranberries}@cranberries{else}@walnuts{end}{end}.
+      {if cranberries && walnuts}@cranberries{3/4} and @walnuts{elif cranberries}@cranberries{3/4}{else}@walnuts{end}{end}.
   - Spread the mixture evenly in the dish and let it sit for ~{5} so the oats start to soak.
   - when: cranberries
-    text: Scatter a small handful of @cranberries{-} over the top so they show after baking.
+    text: Scatter the remaining @cranberries{1/4} over the top so they show after baking.
   - Bake for ~{bake}, until the center is just set and the edges are golden.
   - Let it rest ~{5} before serving warm.
 

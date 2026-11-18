@@ -1,6 +1,7 @@
 // Kitchen timers: persisted as absolute end times so they survive reloads and
 // backgrounded tabs, with sound, vibration and notifications when they finish.
 import { duration } from "../runtime/units";
+import { t as tr } from "./i18n";
 import { native } from "./native";
 import { load, save } from "./storage";
 import { toast } from "./toast";
@@ -16,6 +17,16 @@ interface Timer {
 }
 
 const KEY = "gc:timers";
+
+// Duration words come from the recipe's unit table when on a recipe page.
+function words(): Record<string, string> | undefined {
+  try {
+    const d = JSON.parse(document.getElementById("recipe-data")?.textContent || "null");
+    return d?.compiled?.units?.words;
+  } catch {
+    return undefined;
+  }
+}
 let timers: Timer[] = load<Timer[]>(KEY, []);
 let interval: ReturnType<typeof setInterval> | undefined;
 let audio: AudioContext | undefined;
@@ -63,11 +74,11 @@ function render(): void {
     .map((t) => {
       const app = clockAppURL(t);
       return `<div class="timer${t.done ? " done" : ""}" data-timer="${t.id}" role="timer">
-  <div class="timer-info"><div class="timer-left">${t.done ? "Done!" : clock(remaining(t))}</div><div class="timer-label">${t.label.replace(/[<>&]/g, "")}</div></div>
-  ${app && !t.done ? `<a class="icon-btn" href="${app}" aria-label="Open in Clock app" title="Open in Clock app"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg></a>` : ""}
-  ${t.done ? "" : `<button type="button" class="icon-btn" data-act="add" aria-label="Add one minute" title="+1 min"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>`}
-  ${t.done ? "" : `<button type="button" class="icon-btn" data-act="toggle" aria-label="${t.paused ? "Resume" : "Pause"}"><svg class="icon" aria-hidden="true"><use href="#i-${t.paused ? "play" : "pause"}"></use></svg></button>`}
-  <button type="button" class="icon-btn" data-act="close" aria-label="${t.done ? "Dismiss" : "Cancel"} timer"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+  <div class="timer-info"><div class="timer-left">${t.done ? tr("timer_done_short") : clock(remaining(t))}</div><div class="timer-label">${t.label.replace(/[<>&]/g, "")}</div></div>
+  ${app && !t.done ? `<a class="icon-btn" href="${app}" aria-label="${tr("timer_clock_app")}" title="${tr("timer_clock_app")}"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg></a>` : ""}
+  ${t.done ? "" : `<button type="button" class="icon-btn" data-act="add" aria-label="${tr("timer_add")}" title="${tr("timer_add")}"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>`}
+  ${t.done ? "" : `<button type="button" class="icon-btn" data-act="toggle" aria-label="${t.paused ? tr("timer_resume") : tr("timer_pause")}"><svg class="icon" aria-hidden="true"><use href="#i-${t.paused ? "play" : "pause"}"></use></svg></button>`}
+  <button type="button" class="icon-btn" data-act="close" aria-label="${t.done ? tr("timer_dismiss") : tr("timer_cancel")}"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>`;
     })
     .join("");
@@ -100,8 +111,8 @@ async function notify(t: Timer): Promise<void> {
   const opts = { body: t.label, tag: `gc-timer-${t.id}`, renotify: true, requireInteraction: true } as NotificationOptions;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
-    if (reg) await reg.showNotification("Timer done", opts);
-    else new Notification("Timer done", opts);
+    if (reg) await reg.showNotification(tr("timer_done"), opts);
+    else new Notification(tr("timer_done"), opts);
   } catch {
     // ignore
   }
@@ -121,7 +132,7 @@ function ring(t: Timer): void {
       return;
     }
     beep();
-    document.title = n % 2 ? "⏰ Timer done" : baseTitle;
+    document.title = n % 2 ? `⏰ ${tr("timer_done")}` : baseTitle;
   }, 3000);
 }
 
@@ -151,7 +162,7 @@ export function startTimer(minutes: number, label: string): void {
   const n = native();
   if (n) {
     n.setTimer(seconds, label);
-    toast(`Timer set for ${duration(minutes)}`);
+    toast(tr("timer_set", { time: duration(minutes, words()) }));
     return;
   }
   // Ask once, from this user gesture, so finished timers can notify.
@@ -177,7 +188,7 @@ export function startTimer(minutes: number, label: string): void {
   });
   persist();
   ensureTicking();
-  toast(`${duration(minutes)} timer started`);
+  toast(tr("timer_started", { time: duration(minutes, words()) }));
 }
 
 export function initTimers(): void {

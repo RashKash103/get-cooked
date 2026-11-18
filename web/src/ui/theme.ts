@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { load, save } from "./storage";
 
 type Theme = "system" | "light" | "dark";
@@ -9,7 +10,7 @@ function apply(theme: Theme): void {
   const btn = document.getElementById("theme-toggle");
   if (btn) {
     btn.dataset.theme = theme;
-    btn.setAttribute("aria-label", `Theme: ${theme}`);
+    btn.setAttribute("aria-label", `${t("theme")}: ${t(`theme_${theme}`)}`);
   }
 }
 

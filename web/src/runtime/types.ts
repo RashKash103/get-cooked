@@ -5,7 +5,7 @@ export type IR = [string, ...unknown[]];
 export type Segment =
   | string
   | { e: IR; f?: string; a?: string[] }
-  | { ing: string; p?: IR; n?: boolean }
+  | { ing: string; p?: IR; n?: boolean; pt?: string }
   | { eq: string }
   | { timer: IR }
   | { if: { c: IR; t: Template }[]; else?: Template };
@@ -45,6 +45,9 @@ export interface Table {
   fractions: string;
   count: Rule;
   fallback: Rule;
+  dec?: string;
+  words?: Record<string, string>;
+  of?: string;
 }
 
 export interface Ing {
@@ -94,12 +97,19 @@ export interface IngC {
   name: string;
   plural?: string;
   unit?: string;
-  amount?: { n?: number; s?: boolean; e?: IR };
+  amount?: Amount;
   fixed?: boolean;
   when?: IR;
   note?: Template;
   optional?: boolean;
   recipe?: RecipeRef;
+  split?: { id: string; a: Amount }[];
+}
+
+export interface Amount {
+  n?: number;
+  s?: boolean;
+  e?: IR;
 }
 
 export interface Compiled {
@@ -137,6 +147,7 @@ export interface Seg {
   v: string;
   id: string;
   q: string;
+  j: string;
   min: number;
   link: LinkM | null;
 }
@@ -144,10 +155,12 @@ export interface Seg {
 export interface IngM {
   id: string;
   q: Qty | null;
+  j: string;
   name: string;
   note: string;
   optional: boolean;
   link: LinkM | null;
+  uses: { n: number; q: string }[];
 }
 
 export interface Model {

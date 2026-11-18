@@ -6,11 +6,11 @@
   </div>
   <div class="search">
     <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
-    <input type="search" id="search" placeholder="Search recipes or ingredients" aria-label="Search recipes" autocomplete="off">
+    <input type="search" id="search" placeholder="{{.T "search"}}" aria-label="{{.T "search"}}" autocomplete="off">
   </div>
   {{if gt (len .Index.Categories) 1}}
-  <nav class="chips" aria-label="Categories">
-    <button type="button" class="chip" data-cat="" aria-pressed="true">All</button>
+  <nav class="chips">
+    <button type="button" class="chip" data-cat="" aria-pressed="true">{{.T "all"}}</button>
     {{range .Index.Categories}}<button type="button" class="chip" data-cat="{{.}}" aria-pressed="false">{{.}}</button>{{end}}
   </nav>
   {{end}}
@@ -28,6 +28,6 @@
     </li>
     {{end}}
   </ul>
-  <p class="empty" id="empty" hidden>No recipes match.</p>
+  <p class="empty" id="empty" hidden>{{.T "no_match"}}</p>
 </div>
 {{end}}

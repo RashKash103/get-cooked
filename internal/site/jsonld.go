@@ -25,12 +25,13 @@ func isoDuration(min float64) string {
 }
 
 // jsonLD returns schema.org/Recipe structured data for the default state.
-func jsonLD(r *recipe.Recipe, m *runtime.Model, image, url string) string {
+func jsonLD(r *recipe.Recipe, m *runtime.Model, image, url, lang string) string {
 	d := map[string]any{
 		"@context":    "https://schema.org",
 		"@type":       "Recipe",
 		"name":        r.Title,
 		"recipeYield": m.Yield,
+		"inLanguage":  lang,
 	}
 	set := func(k, v string) {
 		if v != "" {
@@ -68,7 +69,7 @@ func jsonLD(r *recipe.Recipe, m *runtime.Model, image, url string) string {
 		for _, it := range s.Items {
 			line := it.Name
 			if it.Q != nil {
-				line = it.Q.String() + " " + line
+				line = it.Q.String() + it.J + line
 			}
 			if it.Note != "" {
 				line += ", " + it.Note
@@ -83,7 +84,7 @@ func jsonLD(r *recipe.Recipe, m *runtime.Model, image, url string) string {
 			var sb strings.Builder
 			for _, seg := range st.Segs {
 				if seg.T == "ing" && seg.Q != "" {
-					sb.WriteString(seg.Q + " ")
+					sb.WriteString(seg.Q + seg.J)
 				}
 				sb.WriteString(seg.V)
 			}

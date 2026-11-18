@@ -3,6 +3,7 @@
 import { formatNumber } from "../runtime/expr";
 import type { LinkM, Model, Seg, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
+import { t } from "./i18n";
 
 /** Escapes like Go's html.EscapeString. */
 export function esc(s: string): string {
@@ -47,11 +48,14 @@ export function renderIngredients(m: Model, base: string): string {
     s += `<ul class="ing-list">`;
     for (const it of sec.items) {
       s += `<li class="ing" data-id="${esc(it.id)}"><label class="ing-label"><input type="checkbox" class="ing-check" data-id="${esc(it.id)}"><span class="ing-text">`;
-      if (it.q) s += `<span class="qty">${esc(qtyString(it.q))}</span> `;
+      if (it.q) s += `<span class="qty">${esc(qtyString(it.q))}</span>${esc(it.j)}`;
       s += it.link
         ? `<a class="ing-name ing-link" href="${esc(linkHref(base, it.link))}">${esc(it.name)}</a>`
         : `<span class="ing-name">${esc(it.name)}</span>`;
       if (it.note) s += `<span class="ing-note">, ${esc(it.note)}</span>`;
+      if (it.uses.length > 0) {
+        s += `<span class="ing-uses">${it.uses.map((u) => esc(t("uses", { q: u.q, n: u.n }))).join(" · ")}</span>`;
+      }
       s += `</span></label></li>`;
     }
     s += `</ul></section>`;
@@ -64,7 +68,7 @@ export function renderSegs(segs: Seg[], base: string, label: string): string {
   for (const g of segs) {
     switch (g.t) {
       case "ing": {
-        const inner = (g.q ? `<span class="ref-q">${esc(g.q)}</span> ` : "") + esc(g.v);
+        const inner = (g.q ? `<span class="ref-q">${esc(g.q)}</span>${esc(g.j)}` : "") + esc(g.v);
         s += g.link
           ? `<a class="ref ref-link" href="${esc(linkHref(base, g.link))}">${inner}</a>`
           : `<span class="ref" data-ing="${esc(g.id)}">${inner}</span>`;
@@ -90,8 +94,8 @@ export function renderSteps(m: Model, base: string): string {
     if (sec.title) s += `<h3 class="step-title">${esc(sec.title)}</h3>`;
     s += `<ol class="step-list">`;
     for (const st of sec.items) {
-      const label = `Step ${st.n}`;
-      s += `<li class="step" data-n="${st.n}"><button type="button" class="step-num" aria-label="Mark step ${st.n} done">${st.n}</button><div class="step-body"><p class="step-text">${renderSegs(st.segs, base, label)}</p>`;
+      const label = t("step", { n: st.n });
+      s += `<li class="step" data-n="${st.n}"><button type="button" class="step-num" aria-label="${esc(t("mark_done", { n: st.n }))}">${st.n}</button><div class="step-body"><p class="step-text">${renderSegs(st.segs, base, label)}</p>`;
       if (st.note) s += `<p class="step-note">${esc(st.note)}</p>`;
       if (st.image) s += `<img class="step-img" src="${esc(st.image)}" alt="" loading="lazy">`;
       s += `</div></li>`;

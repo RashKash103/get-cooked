@@ -23,6 +23,9 @@ type Config struct {
 	Description string   `yaml:"description" json:"description,omitempty"`
 	BaseURL     string   `yaml:"base_url" json:"baseUrl"`
 	Language    string   `yaml:"language" json:"language"`
+	// Languages lists the site's languages; the first is the source language
+	// recipes are written in (default: [language]).
+	Languages []string `yaml:"languages" json:"languages"`
 	Author      string   `yaml:"author" json:"author,omitempty"`
 	Recipes     string   `yaml:"recipes" json:"-"`
 	Ingredients []string `yaml:"ingredients" json:"-"`
@@ -89,7 +92,10 @@ func Default(dir string) *Config {
 	}
 }
 
-var hexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+var (
+	hexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+	langRe   = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
+)
 
 // Load reads dir/get-cooked.yaml (optional) over the defaults.
 func Load(dir string) (*Config, error) {
@@ -109,6 +115,20 @@ func Load(dir string) (*Config, error) {
 		if err := dec.Decode(c); err != nil && err.Error() != "EOF" {
 			return nil, fmt.Errorf("%s: %w", FileName, err)
 		}
+	}
+	if len(c.Languages) == 0 {
+		c.Languages = []string{c.Language}
+	}
+	c.Language = c.Languages[0]
+	seen := map[string]bool{}
+	for _, l := range c.Languages {
+		if !langRe.MatchString(l) {
+			return nil, fmt.Errorf("%s: %q is not a language tag like en, es or pt-BR", FileName, l)
+		}
+		if seen[l] {
+			return nil, fmt.Errorf("%s: language %q is listed twice", FileName, l)
+		}
+		seen[l] = true
 	}
 	if !strings.HasSuffix(c.BaseURL, "/") {
 		c.BaseURL += "/"
