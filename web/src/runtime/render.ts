@@ -1,6 +1,20 @@
 // Port of internal/runtime/runtime.go: renders a compiled recipe for a state.
-import { type Env, EvalError, evaluate, formatNumber, kind, round, roundTo, str } from "./expr";
-import type { Amount, Compiled, IngC, IngM, IR, LinkM, Model, OptionC, Qty, Seg, State, Template, Value } from "./types";
+import { type Env, ExprError, evaluate, formatNumber, kind, round, roundTo, str } from "./expr";
+import type {
+  Amount,
+  Compiled,
+  IngC,
+  IngM,
+  IR,
+  LinkM,
+  Model,
+  OptionC,
+  Qty,
+  Seg,
+  State,
+  Template,
+  Value,
+} from "./types";
 import { length, qtyString, roundRule, temp, Units } from "./units";
 
 export class RenderError extends Error {}
@@ -71,7 +85,8 @@ class Renderer {
   cond(e: IR | undefined): boolean {
     if (!e) return true;
     const v = evaluate(e, this.env);
-    if (typeof v !== "boolean") throw new RenderError(`when: condition must be true/false but got ${kind(v)} "${str(v)}"`);
+    if (typeof v !== "boolean")
+      throw new RenderError(`when: condition must be true/false but got ${kind(v)} "${str(v)}"`);
     return v;
   }
 
@@ -243,7 +258,7 @@ function merge(segs: Seg[]): Seg[] {
   return out;
 }
 
-/** Renders a compiled recipe for a state. Throws RenderError/EvalError. */
+/** Renders a compiled recipe for a state. Throws RenderError/ExprError. */
 export function render(c: Compiled, st: State): Model {
   const { env, servings, system } = environment(c, st);
   const r = new Renderer(c, env, system);
@@ -354,4 +369,4 @@ export function render(c: Compiled, st: State): Model {
   return m;
 }
 
-export { EvalError };
+export { ExprError };

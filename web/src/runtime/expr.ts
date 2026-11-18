@@ -1,7 +1,7 @@
 // Evaluator for the expression IR produced by internal/expr (Go).
 import type { IR, Value } from "./types";
 
-export class EvalError extends Error {}
+export class ExprError extends Error {}
 
 /** Rounds half away from zero, like Go's math.Round. */
 export function round(x: number): number {
@@ -30,19 +30,19 @@ export function str(v: Value): string {
 export type Env = Record<string, Value>;
 
 function finite(f: number): number {
-  if (!Number.isFinite(f)) throw new EvalError("result is not a finite number");
+  if (!Number.isFinite(f)) throw new ExprError("result is not a finite number");
   return f;
 }
 
 function num(n: IR, env: Env, what: string): number {
   const v = evaluate(n, env);
-  if (typeof v !== "number") throw new EvalError(`${what} expects a number, got ${kind(v)} "${str(v)}"`);
+  if (typeof v !== "number") throw new ExprError(`${what} expects a number, got ${kind(v)} "${str(v)}"`);
   return v;
 }
 
 function bool(n: IR, env: Env, what: string): boolean {
   const v = evaluate(n, env);
-  if (typeof v !== "boolean") throw new EvalError(`${what} expects true/false, got ${kind(v)} "${str(v)}"`);
+  if (typeof v !== "boolean") throw new ExprError(`${what} expects true/false, got ${kind(v)} "${str(v)}"`);
   return v;
 }
 
@@ -58,7 +58,7 @@ export function evaluate(n: IR, env: Env): Value {
       return a[1] as boolean;
     case "v": {
       const name = a[1] as string;
-      if (!(name in env)) throw new EvalError(`unknown variable "${name}"`);
+      if (!(name in env)) throw new ExprError(`unknown variable "${name}"`);
       return env[name] as Value;
     }
     case "neg":
@@ -77,7 +77,8 @@ export function evaluate(n: IR, env: Env): Value {
     case "!=": {
       const l = evaluate(a[1] as IR, env);
       const r = evaluate(a[2] as IR, env);
-      if (typeof l !== typeof r) throw new EvalError(`cannot compare ${kind(l)} "${str(l)}" with ${kind(r)} "${str(r)}"`);
+      if (typeof l !== typeof r)
+        throw new ExprError(`cannot compare ${kind(l)} "${str(l)}" with ${kind(r)} "${str(r)}"`);
       return op === "==" ? l === r : l !== r;
     }
     case "+": {
@@ -85,7 +86,7 @@ export function evaluate(n: IR, env: Env): Value {
       const r = evaluate(a[2] as IR, env);
       if (typeof l === "number" && typeof r === "number") return finite(l + r);
       if (typeof l === "string" || typeof r === "string") return str(l) + str(r);
-      throw new EvalError(`cannot add ${kind(l)} and ${kind(r)}`);
+      throw new ExprError(`cannot add ${kind(l)} and ${kind(r)}`);
     }
     case "-":
     case "*":
@@ -104,10 +105,10 @@ export function evaluate(n: IR, env: Env): Value {
         case "*":
           return finite(l * r);
         case "/":
-          if (r === 0) throw new EvalError("division by zero");
+          if (r === 0) throw new ExprError("division by zero");
           return finite(l / r);
         case "%":
-          if (r === 0) throw new EvalError("modulo by zero");
+          if (r === 0) throw new ExprError("modulo by zero");
           return finite(l % r);
         case "^":
           return finite(l ** r);
@@ -124,7 +125,7 @@ export function evaluate(n: IR, env: Env): Value {
     case "call":
       return call(a[1] as string, a.slice(2) as IR[], env);
   }
-  throw new EvalError(`invalid expression node "${op}"`);
+  throw new ExprError(`invalid expression node "${op}"`);
 }
 
 function call(name: string, args: IR[], env: Env): Value {
@@ -144,7 +145,7 @@ function call(name: string, args: IR[], env: Env): Value {
   const step = (fn: (v: number) => number): number => {
     if (x.length === 2) {
       const s = x[1] as number;
-      if (s <= 0) throw new EvalError(`${name}() step must be positive`);
+      if (s <= 0) throw new ExprError(`${name}() step must be positive`);
       return finite(fn((x[0] as number) / s) * s);
     }
     return finite(fn(x[0] as number));
@@ -152,9 +153,9 @@ function call(name: string, args: IR[], env: Env): Value {
   const x0 = x[0] as number;
   switch (name) {
     case "min":
-      return x.reduce((m, v) => (v < m ? v : m));
+      return x.reduce((m, v) => Math.min(v, m));
     case "max":
-      return x.reduce((m, v) => (v > m ? v : m));
+      return x.reduce((m, v) => Math.max(v, m));
     case "abs":
       return Math.abs(x0);
     case "round":
@@ -166,12 +167,12 @@ function call(name: string, args: IR[], env: Env): Value {
     case "clamp":
       return Math.min(Math.max(x0, x[1] as number), x[2] as number);
     case "sqrt":
-      if (x0 < 0) throw new EvalError("sqrt() of a negative number");
+      if (x0 < 0) throw new ExprError("sqrt() of a negative number");
       return Math.sqrt(x0);
     case "pow":
       return finite(x0 ** (x[1] as number));
     case "lerp":
       return finite(x0 + ((x[1] as number) - x0) * (x[2] as number));
   }
-  throw new EvalError(`unknown function "${name}"`);
+  throw new ExprError(`unknown function "${name}"`);
 }

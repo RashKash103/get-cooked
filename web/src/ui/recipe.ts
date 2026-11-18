@@ -125,7 +125,9 @@ export function initRecipe(): void {
   function paintSteps(): void {
     const steps = [...document.querySelectorAll<HTMLElement>(".step")];
     if (cooking && (current < 1 || current > steps.length)) {
-      current = steps.find((s) => !done.has(Number(s.dataset.n)))?.dataset.n ? Number(steps.find((s) => !done.has(Number(s.dataset.n)))?.dataset.n) : 1;
+      current = steps.find((s) => !done.has(Number(s.dataset.n)))?.dataset.n
+        ? Number(steps.find((s) => !done.has(Number(s.dataset.n)))?.dataset.n)
+        : 1;
     }
     for (const s of steps) {
       const n = Number(s.dataset.n);
@@ -241,7 +243,8 @@ export function initRecipe(): void {
     const lines = [`${data.title} (${model.yield})`];
     for (const s of model.ingredients) {
       if (s.title) lines.push("", s.title);
-      for (const it of s.items) lines.push(`- ${it.q ? qtyString(it.q) + it.j : ""}${it.name}${it.note ? `, ${it.note}` : ""}`);
+      for (const it of s.items)
+        lines.push(`- ${it.q ? qtyString(it.q) + it.j : ""}${it.name}${it.note ? `, ${it.note}` : ""}`);
     }
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
@@ -276,6 +279,7 @@ export function initRecipe(): void {
     model = render(c, state);
     paintSteps();
     syncSheet();
-    for (const box of document.querySelectorAll<HTMLInputElement>(".ing-check")) box.checked = checked.has(box.dataset.id ?? "");
+    for (const box of document.querySelectorAll<HTMLInputElement>(".ing-check"))
+      box.checked = checked.has(box.dataset.id ?? "");
   }
 }

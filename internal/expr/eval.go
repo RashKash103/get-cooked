@@ -35,9 +35,9 @@ type Value struct {
 }
 
 // Num, Str and Bool construct values.
-func Num(f float64) Value  { return Value{Kind: KNum, Num: f} }
-func Str(s string) Value   { return Value{Kind: KStr, Str: s} }
-func Bool(b bool) Value    { return Value{Kind: KBool, Bool: b} }
+func Num(f float64) Value { return Value{Kind: KNum, Num: f} }
+func Str(s string) Value  { return Value{Kind: KStr, Str: s} }
+func Bool(b bool) Value   { return Value{Kind: KBool, Bool: b} }
 func (v Value) String() string {
 	switch v.Kind {
 	case KNum:

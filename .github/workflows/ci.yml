@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Frontend (lint, typecheck, unit + conformance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm biome ci .
+      - run: pnpm --filter web typecheck
+      - run: pnpm --filter web test
+      - run: pnpm --filter web build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: internal/assets/dist
+          if-no-files-found: error
+
+  go:
+    name: Go (lint, test, validate examples)
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: internal/assets/dist
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.15
+      - name: Test (race, coverage)
+        run: go test -race -coverprofile=coverage.out ./...
+      - name: Golden files are up to date
+        run: |
+          go test ./internal/expr ./internal/runtime ./internal/site -update
+          git diff --exit-code testdata
+      - name: Fuzz the expression parser
+        run: go test ./internal/expr -run '^$' -fuzz FuzzParse -fuzztime 30s
+      - name: Validate the example site
+        run: go run ./cmd/get-cooked validate -s examples/site --format github
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1 >> "$GITHUB_STEP_SUMMARY"
+
+  e2e:
+    name: End-to-end (Playwright)
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: internal/assets/dist
+      - run: go build -o bin/get-cooked ./cmd/get-cooked
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npx playwright test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+
+  action:
+    name: GitHub Action smoke test
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: internal/assets/dist
+      - run: go build -o "$RUNNER_TEMP/get-cooked" ./cmd/get-cooked
+      - uses: ./
+        with:
+          binary: ${{ runner.temp }}/get-cooked
+          source: examples/site
+          output: ${{ runner.temp }}/site
+          base-url: https://example.com/recipes/
+      - run: test -f "$RUNNER_TEMP/site/recipes/cranberry-baked-oatmeal/index.html"

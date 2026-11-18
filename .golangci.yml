@@ -1,0 +1,44 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  enable:
+    - bodyclose
+    - errorlint
+    - gocritic
+    - misspell
+    - nilerr
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+    staticcheck:
+      checks: ["all", "-QF1003", "-ST1000", "-ST1003", "-ST1020", "-ST1021", "-ST1022"]
+    errorlint:
+      # Our own error types are never wrapped; type switches on them are fine.
+      asserts: false
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+        - singleCaseSwitch
+  exclusions:
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters: [unparam, errorlint, misspell]
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/RashKash103/get-cooked

@@ -1,6 +1,8 @@
 // Service worker: offline support for the kitchen.
 // The site builder prepends `self.__GC = {version, base, precache}`.
-const sw = self as unknown as ServiceWorkerGlobalScope & { __GC?: { version: string; base: string; precache: string[] } };
+const sw = self as unknown as ServiceWorkerGlobalScope & {
+  __GC?: { version: string; base: string; precache: string[] };
+};
 const cfg = sw.__GC ?? { version: "dev", base: "/", precache: [] };
 const VERSION = cfg.version;
 const BASE = cfg.base;
@@ -20,7 +22,9 @@ sw.addEventListener("activate", (e: ExtendableEvent) => {
   e.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("get-cooked-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k.startsWith("get-cooked-") && k !== CACHE).map((k) => caches.delete(k))),
+      )
       .then(() => sw.clients.claim()),
   );
 });
@@ -54,7 +58,9 @@ sw.addEventListener("fetch", (e: FetchEvent) => {
         }
         return res;
       })
-      .catch(async () => (await caches.match(req, { ignoreSearch: true })) ?? (await caches.match(BASE)) ?? Response.error()),
+      .catch(
+        async () => (await caches.match(req, { ignoreSearch: true })) ?? (await caches.match(BASE)) ?? Response.error(),
+      ),
   );
 });
 

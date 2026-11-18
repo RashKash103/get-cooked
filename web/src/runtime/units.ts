@@ -241,7 +241,7 @@ export class Units {
 export function temp(v: number, fromC: boolean, system: string): string {
   const toC = system === "metric" || (system === "original" && fromC);
   if (toC === fromC) return `${formatNumber(round(v))}°${toC ? "C" : "F"}`;
-  if (toC) return `${formatNumber(round((((v - 32) * 5) / 9) / 5) * 5)}°C`;
+  if (toC) return `${formatNumber(round(((v - 32) * 5) / 9 / 5) * 5)}°C`;
   const f = (v * 9) / 5 + 32;
   const step = f > 250 ? 25 : 5;
   return `${formatNumber(round(f / step) * step)}°F`;

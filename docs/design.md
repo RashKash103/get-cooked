@@ -229,7 +229,9 @@ Small, safe, deterministic, side-effect free. Values: number, bool, string.
 | `internal/importer` | URL → schema.org Recipe JSON-LD → draft YAML (ingredient-line parser) |
 | `internal/devserver` | `serve`: static server + rebuild on change + live reload (SSE) |
 | `schema` | embedded JSON Schemas (recipe, ingredients, config) |
-| `skills` | embedded Claude skill(s), installed by `init` |
+| `internal/i18n` | UI catalogs (`i18n/<lang>.yaml` over built-in English), recipe translation files, extraction |
+| `internal/skills` | download/verify/install Claude skills from the matching release (or `main`) |
+| `internal/scaffold` | starter site written by `init` |
 
 ### Frontend (`web/`)
 
@@ -355,8 +357,26 @@ get-cooked version
 | importer | httptest server with saved recipe pages |
 | e2e | Playwright: search, servings, pan swap, 1-serving note, cranberry step, units, URL state, timers, cook mode (mocked wake lock), dark mode, no horizontal overflow, axe |
 
-## Roadmap after v0.1
+## Additions since the first plan
 
-Sub-recipe references (`recipe: pie-crust` with scaled link), nutrition from
+* **Divided ingredients**: `split: {dough: 4, topping: 2}` + `@salt.dough`, and
+  automatic per-step breakdowns for portion references used in 2+ steps. The
+  list keeps one total (the shopping/prep amount) with a small "4 tsp for
+  step 2 · 2 tsp for step 4" line, so it never becomes two lists.
+* **Recipe references**: `recipe: <slug>` ingredients link to prerequisites
+  with servings rounded up to what the target makes and `with:` options.
+* **Languages**: `languages: [en, es]`. UI catalogs merge over built-in
+  English; recipe translations map source text → translation (gettext-style),
+  so logic never forks and missing strings fall back per string. Each
+  language is compiled separately and served under `/<lang>/`. Catalogs also
+  localize unit labels, duration words, the decimal separator, an
+  amount–name connector ("de") and a default unit system.
+* **Skills distribution**: not embedded; `get-cooked skills install`
+  downloads `get-cooked-skills.tar.gz` from the binary's own release (dev
+  builds: `main`), shows the destination and asks before writing.
+
+## Roadmap
+
+Nutrition from
 ingredient DB, multi-recipe shopping list, responsive WebP images, i18n,
 quantity ranges (`1–2 cloves`), native wrapper app using the bridge above.

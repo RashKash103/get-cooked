@@ -146,7 +146,7 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 	}
 	cc.times(&f, comp)
 	cc.equipment(&f, comp)
-	cc.ingredients(&f, comp, items, r)
+	cc.ingredients(comp, items, r)
 	cc.steps(&f, comp)
 	for _, n := range f.Notes {
 		kind := n.Kind
@@ -264,7 +264,6 @@ func (cc *cctx) servings(f *File, comp *Compiled) {
 }
 
 type ingDraft struct {
-	sec   int // index into section list (-1 for top level implicit)
 	item  *IngItem
 	id    string
 	ref   string
@@ -314,7 +313,7 @@ func (cc *cctx) collectIngredients(f *File) []*sectionDraft {
 	seen := map[string]*ingDraft{}
 	for _, sd := range sections {
 		for _, d := range sd.items {
-			if prev, ok := seen[d.id]; ok && (!d.item.When.Set || !prev.item.When.Set) && !(d.item.Optional || prev.item.Optional) {
+			if prev, ok := seen[d.id]; ok && (!d.item.When.Set || !prev.item.When.Set) && !d.item.Optional && !prev.item.Optional {
 				cc.errAt(d.loc, "duplicate ingredient id %q (first at line %d); give each variant a `when:` condition or a distinct `id:`", d.id, prev.loc.Line)
 			}
 			seen[d.id] = d
@@ -695,7 +694,7 @@ func (cc *cctx) equipment(f *File, comp *Compiled) {
 	}
 }
 
-func (cc *cctx) ingredients(f *File, comp *Compiled, sections []*sectionDraft, r *Recipe) {
+func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe) {
 	for _, sd := range sections {
 		sc := IngSectionC{Items: []IngC{}}
 		if sd.sec != nil {

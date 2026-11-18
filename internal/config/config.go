@@ -19,13 +19,13 @@ const FileName = "get-cooked.yaml"
 
 // Config is the site configuration.
 type Config struct {
-	Title       string   `yaml:"title" json:"title"`
-	Description string   `yaml:"description" json:"description,omitempty"`
-	BaseURL     string   `yaml:"base_url" json:"baseUrl"`
-	Language    string   `yaml:"language" json:"language"`
+	Title       string `yaml:"title" json:"title"`
+	Description string `yaml:"description" json:"description,omitempty"`
+	BaseURL     string `yaml:"base_url" json:"baseUrl"`
+	Language    string `yaml:"language" json:"language"`
 	// Languages lists the site's languages; the first is the source language
 	// recipes are written in (default: [language]).
-	Languages []string `yaml:"languages" json:"languages"`
+	Languages   []string `yaml:"languages" json:"languages"`
 	Author      string   `yaml:"author" json:"author,omitempty"`
 	Recipes     string   `yaml:"recipes" json:"-"`
 	Ingredients []string `yaml:"ingredients" json:"-"`

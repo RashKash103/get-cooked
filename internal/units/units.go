@@ -64,9 +64,9 @@ type Table struct {
 	Units     map[string]*Unit  `json:"units"`
 	Ladders   map[string][]Rung `json:"ladders"` // key: "<system>.<dim>", rungs ascending
 	Tolerance float64           `json:"tol"`
-	Fractions string            `json:"fractions"` // unicode | ascii | decimal
-	Count     Rule              `json:"count"`     // default rounding for count units
-	Fallback  Rule              `json:"fallback"`  // rounding for units outside any ladder
+	Fractions string            `json:"fractions"`       // unicode | ascii | decimal
+	Count     Rule              `json:"count"`           // default rounding for count units
+	Fallback  Rule              `json:"fallback"`        // rounding for units outside any ladder
 	Decimal   string            `json:"dec,omitempty"`   // decimal separator ("." when empty)
 	Words     map[string]string `json:"words,omitempty"` // duration words: hr, min, sec
 	Of        string            `json:"of,omitempty"`    // word between a measured amount and a name ("de")

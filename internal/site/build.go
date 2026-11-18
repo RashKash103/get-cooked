@@ -169,7 +169,7 @@ func Build(s *Site, opts BuildOptions) error {
 			return err
 		}
 	}
-	return writeMeta(b.out, cfg.Title, b.root, b.absolute, b.sitemap, b.as, s.Langs[0].Catalog)
+	return writeMeta(b.out, cfg.Title, b.root, b.absolute, b.sitemap, b.as)
 }
 
 func (b *builder) abs(p string) string {
@@ -398,7 +398,7 @@ func writeAssets(customCSS string, hasCustom bool, out string, live bool) (Asset
 	return a, nil
 }
 
-func writeMeta(out, title, base, absolute string, urls []string, as Assets, cat *i18n.Catalog) error {
+func writeMeta(out, title, base, absolute string, urls []string, as Assets) error {
 	fsys := assets.FS()
 	// Service worker: must live at the base so its scope covers the site.
 	sw, err := fs.ReadFile(fsys, "sw.js")

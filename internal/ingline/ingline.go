@@ -94,9 +94,7 @@ func Parse(s string, tb *units.Table) Line {
 				if x, ok := tb.Lookup(cand); ok && x.ID != "each" {
 					l.Unit = x.ID
 					rest = strings.TrimSpace(strings.Join(fields[n:], " "))
-					if strings.HasPrefix(rest, "of ") {
-						rest = rest[3:]
-					}
+					rest = strings.TrimPrefix(rest, "of ")
 					break
 				}
 			}

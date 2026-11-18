@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: get-cooked
+
+before:
+  hooks:
+    - go mod tidy
+    # The frontend bundle must already be in internal/assets/dist (see release.yml).
+    - test -f internal/assets/dist/app.js
+    - go run ./cmd/get-cooked skills pack skills -o dist-skills.tar.gz
+
+builds:
+  - main: ./cmd/get-cooked
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X github.com/RashKash103/get-cooked/internal/cli.Version={{ .Version }}
+      - -X github.com/RashKash103/get-cooked/internal/cli.Commit={{ .ShortCommit }}
+      - -X github.com/RashKash103/get-cooked/internal/cli.Date={{ .Date }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [README.md]
+
+release:
+  extra_files:
+    # Installed by `get-cooked skills install`; matches this release's binary.
+    - glob: dist-skills.tar.gz
+      name_template: get-cooked-skills.tar.gz
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]

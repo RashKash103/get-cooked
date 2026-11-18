@@ -98,9 +98,9 @@ type StepM struct {
 
 // Seg is a piece of rendered step text.
 type Seg struct {
-	T   string  `json:"t"` // text | ing | eq | timer
-	V   string  `json:"v"`
-	ID  string  `json:"id"`
+	T    string  `json:"t"` // text | ing | eq | timer
+	V    string  `json:"v"`
+	ID   string  `json:"id"`
 	Q    string  `json:"q"`
 	J    string  `json:"j"` // text between quantity and name (ing)
 	Min  float64 `json:"min"`

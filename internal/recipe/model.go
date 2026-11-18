@@ -203,24 +203,24 @@ type IngSection struct {
 
 // IngItem is a single ingredient.
 type IngItem struct {
-	ID          string  `yaml:"id"`
-	Ingredient  string  `yaml:"ingredient"`
-	Name        string  `yaml:"name"`
-	Plural      string  `yaml:"plural"`
-	Amount      Src     `yaml:"amount"`
-	Unit        string  `yaml:"unit"`
-	Scale       *bool   `yaml:"scale"`
-	FixedUnit   bool    `yaml:"fixed_unit"`
-	Note        Src     `yaml:"note"`
-	When        Src     `yaml:"when"`
-	Optional    bool    `yaml:"optional"`
-	Default     bool    `yaml:"default"`
-	OptionLabel string  `yaml:"option_label"`
-	Recipe      string  `yaml:"recipe"`
+	ID          string    `yaml:"id"`
+	Ingredient  string    `yaml:"ingredient"`
+	Name        string    `yaml:"name"`
+	Plural      string    `yaml:"plural"`
+	Amount      Src       `yaml:"amount"`
+	Unit        string    `yaml:"unit"`
+	Scale       *bool     `yaml:"scale"`
+	FixedUnit   bool      `yaml:"fixed_unit"`
+	Note        Src       `yaml:"note"`
+	When        Src       `yaml:"when"`
+	Optional    bool      `yaml:"optional"`
+	Default     bool      `yaml:"default"`
+	OptionLabel string    `yaml:"option_label"`
+	Recipe      string    `yaml:"recipe"`
 	Split       yaml.Node `yaml:"split"`
 	With        yaml.Node `yaml:"with"`
-	Line        Src     `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
-	Pos         int     `yaml:"-"`
+	Line        Src       `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
+	Pos         int       `yaml:"-"`
 }
 
 // UnmarshalYAML accepts shorthand text, a section, or an ingredient mapping.

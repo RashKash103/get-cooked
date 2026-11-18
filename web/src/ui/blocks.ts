@@ -7,7 +7,10 @@ import { t } from "./i18n";
 
 /** Escapes like Go's html.EscapeString. */
 export function esc(s: string): string {
-  return s.replace(/[&'<>"]/g, (c) => ({ "&": "&amp;", "'": "&#39;", "<": "&lt;", ">": "&gt;", '"': "&#34;" })[c] as string);
+  return s.replace(
+    /[&'<>"]/g,
+    (c) => ({ "&": "&amp;", "'": "&#39;", "<": "&lt;", ">": "&gt;", '"': "&#34;" })[c] as string,
+  );
 }
 
 export function recipeURL(base: string, slug: string, servings: number, options: Record<string, Value>): string {
@@ -36,7 +39,9 @@ export function renderTimes(m: Model): string {
 
 export function renderEquipment(m: Model): string {
   return m.equipment
-    .map((e) => `<li class="equip">${esc(e.name)}${e.note ? ` <span class="equip-note">${esc(e.note)}</span>` : ""}</li>`)
+    .map(
+      (e) => `<li class="equip">${esc(e.name)}${e.note ? ` <span class="equip-note">${esc(e.note)}</span>` : ""}</li>`,
+    )
     .join("");
 }
 

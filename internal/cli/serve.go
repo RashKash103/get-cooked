@@ -102,7 +102,7 @@ func watchDir(ctx context.Context, dir string, onChange func()) {
 		var sb strings.Builder
 		_ = filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // skip unreadable entries while polling
 			}
 			name := d.Name()
 			if d.IsDir() && (name == "public" || name == "node_modules" || strings.HasPrefix(name, ".") && p != dir) {

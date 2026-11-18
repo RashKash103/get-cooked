@@ -108,7 +108,12 @@ function beep(): void {
 
 async function notify(t: Timer): Promise<void> {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const opts = { body: t.label, tag: `gc-timer-${t.id}`, renotify: true, requireInteraction: true } as NotificationOptions;
+  const opts = {
+    body: t.label,
+    tag: `gc-timer-${t.id}`,
+    renotify: true,
+    requireInteraction: true,
+  } as NotificationOptions;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
     if (reg) await reg.showNotification(tr("timer_done"), opts);

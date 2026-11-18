@@ -1,0 +1,81 @@
+name: get-cooked
+description: Build a get-cooked recipe site (downloads the get-cooked CLI and runs `get-cooked build`).
+author: RashKash103
+branding:
+  icon: book-open
+  color: orange
+
+inputs:
+  version:
+    description: get-cooked version to use, e.g. "1.2.0" or "latest".
+    default: latest
+  source:
+    description: Site directory (contains get-cooked.yaml).
+    default: .
+  output:
+    description: Output directory for the built site.
+    default: public
+  base-url:
+    description: Public URL of the site (overrides base_url), e.g. the GitHub Pages URL.
+    default: ""
+  args:
+    description: Extra arguments for `get-cooked build` (e.g. --drafts).
+    default: ""
+  binary:
+    description: Use an existing get-cooked binary instead of downloading one.
+    default: ""
+
+outputs:
+  output:
+    description: The output directory.
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install get-cooked
+      if: inputs.binary == ''
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        case "${RUNNER_OS}" in
+          Linux) os=linux ;; macOS) os=darwin ;; Windows) os=windows ;;
+          *) echo "unsupported OS ${RUNNER_OS}"; exit 1 ;;
+        esac
+        case "${RUNNER_ARCH}" in
+          X64) arch=amd64 ;; ARM64) arch=arm64 ;;
+          *) echo "unsupported arch ${RUNNER_ARCH}"; exit 1 ;;
+        esac
+        ext=tar.gz; [ "$os" = windows ] && ext=zip
+        if [ "$VERSION" = latest ]; then
+          base="https://github.com/RashKash103/get-cooked/releases/latest/download"
+        else
+          base="https://github.com/RashKash103/get-cooked/releases/download/v${VERSION#v}"
+        fi
+        archive="get-cooked_${os}_${arch}.${ext}"
+        dir="${RUNNER_TEMP}/get-cooked"
+        mkdir -p "$dir" && cd "$dir"
+        curl -fsSL --retry 3 -o "$archive" "$base/$archive"
+        curl -fsSL --retry 3 -o checksums.txt "$base/checksums.txt"
+        grep " ${archive}\$" checksums.txt | sha256sum -c -
+        if [ "$ext" = zip ]; then unzip -q "$archive"; else tar -xzf "$archive"; fi
+        echo "$dir" >> "$GITHUB_PATH"
+        "$dir/get-cooked" version
+    - name: Build site
+      shell: bash
+      env:
+        GC_BIN: ${{ inputs.binary }}
+        GC_SOURCE: ${{ inputs.source }}
+        GC_OUTPUT: ${{ inputs.output }}
+        GC_BASE_URL: ${{ inputs.base-url }}
+        GC_ARGS: ${{ inputs.args }}
+      run: |
+        set -euo pipefail
+        bin="${GC_BIN:-get-cooked}"
+        flags=(build -s "$GC_SOURCE" -o "$GC_OUTPUT" --format github)
+        [ -n "$GC_BASE_URL" ] && flags+=(--base-url "$GC_BASE_URL")
+        # shellcheck disable=SC2206
+        [ -n "$GC_ARGS" ] && flags+=($GC_ARGS)
+        "$bin" "${flags[@]}"

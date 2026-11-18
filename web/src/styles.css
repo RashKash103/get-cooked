@@ -5,8 +5,17 @@
 
 @theme inline {
   --color-accent: var(--gc-accent, #ea580c);
+  /* Accent for text: mixed toward black/white so any configured accent passes contrast. */
+  --color-accent-ink: var(--gc-accent-ink);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+:root {
+  --gc-accent-ink: color-mix(in oklab, var(--gc-accent, #ea580c) 62%, black);
+}
+:root.dark {
+  --gc-accent-ink: color-mix(in oklab, var(--gc-accent, #ea580c) 60%, white);
 }
 
 @layer base {
@@ -70,7 +79,7 @@
     @apply mx-auto max-w-5xl px-4 pb-28;
   }
   .site-footer {
-    @apply mx-auto max-w-5xl px-4 pb-28 text-center text-xs text-stone-500 lg:pb-10;
+    @apply mx-auto max-w-5xl px-4 pb-28 text-center text-xs text-stone-500 lg:pb-10 dark:text-stone-400;
   }
   .site-footer a {
     @apply underline;
@@ -87,7 +96,7 @@
     @apply mt-2 max-w-prose text-stone-600 dark:text-stone-400;
   }
   .index-desc a {
-    @apply text-accent underline;
+    @apply text-accent-ink underline;
   }
   .search {
     @apply relative;
@@ -135,7 +144,7 @@
     @apply inline-flex items-center gap-1;
   }
   .empty {
-    @apply py-16 text-center text-stone-500;
+    @apply py-16 text-center text-stone-500 dark:text-stone-400;
   }
   .notfound {
     @apply py-20 text-center;
@@ -149,7 +158,7 @@
     @apply pt-6;
   }
   .eyebrow {
-    @apply text-xs font-semibold tracking-wider text-accent uppercase;
+    @apply text-xs font-semibold tracking-wider text-accent-ink uppercase;
   }
   .eyebrow a {
     @apply no-underline;
@@ -173,7 +182,7 @@
     @apply font-medium;
   }
   .time-total dd {
-    @apply text-accent;
+    @apply text-accent-ink;
   }
 
   .controls {
@@ -273,7 +282,7 @@
   }
   .ing-link,
   .ref-link {
-    @apply text-accent underline decoration-accent/40 decoration-2;
+    @apply text-accent-ink underline decoration-accent/40 decoration-2;
   }
   .equip-list {
     @apply space-y-1.5 text-sm;
@@ -288,7 +297,7 @@
     @apply mt-8 flex flex-wrap gap-x-4 gap-y-2;
   }
   .link-btn {
-    @apply inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-accent dark:text-stone-400;
+    @apply inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-accent-ink dark:text-stone-400;
   }
 
   .step-section + .step-section {
@@ -328,7 +337,7 @@
     @apply font-medium;
   }
   .ref-q {
-    @apply rounded bg-accent/10 px-1 font-semibold text-accent tabular-nums;
+    @apply rounded bg-accent/10 px-1 font-semibold text-accent-ink tabular-nums;
   }
   .timer-chip {
     @apply mx-0.5 inline-flex items-center gap-1 rounded-full bg-stone-900 px-2.5 py-0.5 align-baseline text-[0.9em] font-medium text-white transition active:scale-95 dark:bg-stone-100 dark:text-stone-900;
