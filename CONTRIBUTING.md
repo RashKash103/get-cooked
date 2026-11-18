@@ -42,6 +42,11 @@ make test     # the TypeScript tests replay the goldens and must match exactly
 
 CI fails if the goldens are out of date.
 
+The built frontend bundle in `internal/assets/dist` is committed so that
+`go install github.com/RashKash103/get-cooked/cmd/get-cooked@latest` works.
+After changing anything under `web/`, run `make web` and commit the result;
+CI checks that it's up to date.
+
 ## Example recipes
 
 The recipes in `examples/site` and the starter recipe written by

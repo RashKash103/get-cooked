@@ -3,8 +3,6 @@
 /bin/
 /coverage.out
 /dist-skills.tar.gz
-/internal/assets/dist/*
-!/internal/assets/dist/.gitkeep
 /examples/site/public/
 
 # web

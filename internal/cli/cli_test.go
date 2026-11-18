@@ -259,8 +259,10 @@ func TestSkillsSource(t *testing.T) {
 	if s := skills.SourceFor("1.2.3"); !strings.Contains(s.URL, "/releases/download/v1.2.3/get-cooked-skills.tar.gz") {
 		t.Error(s.URL)
 	}
-	if s := skills.SourceFor("dev"); !strings.Contains(s.URL, "refs/heads/main") {
-		t.Error(s.URL)
+	for _, v := range []string{"dev", "0.1.1-0.20261118185420-abcdef123456"} {
+		if s := skills.SourceFor(v); !strings.Contains(s.URL, "refs/heads/main") {
+			t.Errorf("%s: %s", v, s.URL)
+		}
 	}
 }
 

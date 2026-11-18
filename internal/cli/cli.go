@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,34 @@ var (
 	Commit  = "none"
 	Date    = "unknown"
 )
+
+func init() {
+	// `go install …@v1.2.3` builds have no -ldflags; take the version from
+	// the module build info so `version` and `skills install` still match
+	// the release.
+	if Version != "dev" {
+		return
+	}
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	if v := info.Main.Version; v != "" && v != "(devel)" {
+		Version = strings.TrimPrefix(v, "v")
+	}
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			if Commit == "none" && len(s.Value) >= 7 {
+				Commit = s.Value[:7]
+			}
+		case "vcs.time":
+			if Date == "unknown" {
+				Date = s.Value
+			}
+		}
+	}
+}
 
 // Execute runs the CLI and returns the process exit code.
 func Execute(args []string, stdout, stderr io.Writer) int {

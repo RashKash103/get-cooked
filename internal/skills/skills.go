@@ -29,7 +29,11 @@ const Repo = "RashKash103/get-cooked"
 // AssetName is the release asset containing the skills.
 const AssetName = "get-cooked-skills.tar.gz"
 
-var releaseRe = regexp.MustCompile(`^v?\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`)
+var (
+	releaseRe = regexp.MustCompile(`^v?\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`)
+	// Go pseudo-versions (`go install …@main`): v0.1.1-0.20261118185420-abcdef123456
+	pseudoRe = regexp.MustCompile(`\d{14}-[0-9a-f]{12}$`)
+)
 
 // Source describes where skills come from.
 type Source struct {
@@ -43,7 +47,7 @@ func SourceFor(version string) Source {
 	if u := os.Getenv("GET_COOKED_SKILLS_URL"); u != "" {
 		return Source{URL: u, Label: u}
 	}
-	if releaseRe.MatchString(version) {
+	if releaseRe.MatchString(version) && !pseudoRe.MatchString(version) {
 		v := "v" + strings.TrimPrefix(version, "v")
 		return Source{
 			URL:   fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", Repo, v, AssetName),

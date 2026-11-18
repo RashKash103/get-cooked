@@ -109,7 +109,13 @@ notes:
 ## Install
 
 Download a binary from the [releases](https://github.com/RashKash103/get-cooked/releases)
-page, or build from source (Go 1.27+, Node 24+, pnpm):
+page, or install with Go (1.27+):
+
+```sh
+go install github.com/RashKash103/get-cooked/cmd/get-cooked@latest
+```
+
+To build from source (Go 1.27+, Node 24+, pnpm):
 
 ```sh
 git clone https://github.com/RashKash103/get-cooked && cd get-cooked
