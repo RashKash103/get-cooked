@@ -49,12 +49,16 @@ ingredients:
   - { id: honey, ingredient: honey, amount: 2, unit: tbsp }
   - { id: butter, ingredient: butter, amount: 3, unit: tbsp, note: soft }
   - { id: salt, ingredient: kosher-salt, amount: 2, unit: tsp }
+  # Bakers weigh flour: show both flours by weight in every unit system
+  # (an inline override of the ingredient database's settings).
   - id: bread_flour
     ingredient: bread-flour
+    measure: mass
     amount: "flour_total * (1 - wheat / 100) * scale"
     unit: cup
   - id: ww_flour
     ingredient: whole-wheat-flour
+    measure: mass
     amount: "flour_total * wheat / 100 * scale"
     unit: cup
 

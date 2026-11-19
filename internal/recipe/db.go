@@ -116,14 +116,47 @@ func (db *DB) Add(key string, y DBYAML, tb *units.Table, loc Loc) Diags {
 	if e.Name == "" {
 		e.Name = strings.ReplaceAll(key, "-", " ")
 	}
-	info := &units.Ing{Name: e.Name, Plural: e.Plural, GramsEach: y.GramsEach, Measure: y.Measure, Cat: y.Category}
+	info, ds := ApplyIngredientFields(&units.Ing{Name: e.Name, Plural: e.Plural}, y, tb, loc, key)
+	diags = append(diags, ds...)
+	e.Info = info
+	db.Entries[key] = e
+	for _, n := range append([]string{key, e.Name, e.Plural}, e.Aliases...) {
+		if n != "" {
+			db.byName[norm(n)] = key
+		}
+	}
+	return diags
+}
+
+// ApplyIngredientFields returns a copy of base with the conversion fields of
+// y applied (density, grams_each, unit_grams, measure, round, category). It
+// is used for ingredient database entries and for per-recipe overrides.
+func ApplyIngredientFields(base *units.Ing, y DBYAML, tb *units.Table, loc Loc, what string) (*units.Ing, Diags) {
+	var diags Diags
+	cp := *base
+	info := &cp
+	if base.UnitGrams != nil {
+		info.UnitGrams = make(map[string]float64, len(base.UnitGrams))
+		for k, v := range base.UnitGrams {
+			info.UnitGrams[k] = v
+		}
+	}
+	if y.GramsEach > 0 {
+		info.GramsEach = y.GramsEach
+	}
+	if y.Measure != "" {
+		info.Measure = y.Measure
+	}
+	if y.Category != "" {
+		info.Cat = y.Category
+	}
 	if d := y.Density; d != nil {
 		f, ok := units.DensityUnits[d.Unit]
 		switch {
 		case !ok:
-			diags = append(diags, loc.Diag("ingredient %q: unknown density unit %q", key, d.Unit))
+			diags = append(diags, loc.Diag("ingredient %q: unknown density unit %q", what, d.Unit))
 		case d.Value <= 0:
-			diags = append(diags, loc.Diag("ingredient %q: density must be positive", key))
+			diags = append(diags, loc.Diag("ingredient %q: density must be positive", what))
 		default:
 			info.GramsPerML = d.Value * f
 		}
@@ -131,7 +164,7 @@ func (db *DB) Add(key string, y DBYAML, tb *units.Table, loc Loc) Diags {
 	for name, g := range y.UnitGrams {
 		x, ok := tb.Lookup(name)
 		if !ok {
-			diags = append(diags, loc.Diag("ingredient %q: unknown unit %q in unit_grams", key, name))
+			diags = append(diags, loc.Diag("ingredient %q: unknown unit %q in unit_grams", what, name))
 			continue
 		}
 		if info.UnitGrams == nil {
@@ -149,14 +182,7 @@ func (db *DB) Add(key string, y DBYAML, tb *units.Table, loc Loc) Diags {
 		}
 		info.Round = &rule
 	}
-	e.Info = info
-	db.Entries[key] = e
-	for _, n := range append([]string{key, e.Name, e.Plural}, e.Aliases...) {
-		if n != "" {
-			db.byName[norm(n)] = key
-		}
-	}
-	return diags
+	return info, diags
 }
 
 func norm(s string) string {

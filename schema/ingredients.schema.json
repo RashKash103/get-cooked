@@ -81,7 +81,7 @@
             "volume",
             "mass"
           ],
-          "description": "Preferred dimension when converting (liquids: volume)."
+          "description": "Show this ingredient by weight (mass) or volume in every unit system when its density is known. Without it, metric shows weight and other systems keep the written dimension."
         },
         "round": {
           "type": "object",

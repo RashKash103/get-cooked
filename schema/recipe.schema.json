@@ -464,6 +464,25 @@
               "additionalProperties": {
                 "$ref": "#/$defs/expr"
               }
+            },
+            "density": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/density"
+            },
+            "grams_each": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/grams_each"
+            },
+            "unit_grams": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/unit_grams"
+            },
+            "measure": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/measure",
+              "description": "Override: show this ingredient by weight (mass) or volume in every unit system, when its density is known."
+            },
+            "round": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/round"
+            },
+            "category": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/category"
             }
           },
           "anyOf": [

@@ -49,15 +49,16 @@ var yamlLineRe = regexp.MustCompile(`line (\d+):?\s*`)
 
 type cctx struct {
 	*Compiler
-	file    string
-	db      *DB
-	diags   Diags
-	symbols map[string]bool
-	ingIDs  map[string]bool
-	eqIDs   map[string]bool
-	usedDB  map[string]bool
-	optWhen map[string]Src
-	parts   map[string]map[string]bool // ingredient id → split names
+	file      string
+	db        *DB
+	diags     Diags
+	symbols   map[string]bool
+	ingIDs    map[string]bool
+	eqIDs     map[string]bool
+	usedDB    map[string]bool
+	optWhen   map[string]Src
+	parts     map[string]map[string]bool // ingredient id → split names
+	overrides map[string]*units.Ing      // per-recipe ingredient overrides
 }
 
 // tr translates user-visible text.
@@ -76,7 +77,7 @@ func (cc *cctx) loc(line, col int) Loc { return Loc{cc.file, line, col} }
 
 // Compile compiles recipe source. path is used for diagnostics and the slug.
 func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
-	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}, parts: map[string]map[string]bool{}}
+	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}, parts: map[string]map[string]bool{}, overrides: map[string]*units.Ing{}}
 	if cc.db == nil {
 		cc.db = NewDB()
 	}
@@ -165,6 +166,9 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 	}
 	for k := range cc.usedDB {
 		comp.Ings[k] = cc.db.Entries[k].Info
+	}
+	for k, info := range cc.overrides {
+		comp.Ings[k] = info
 	}
 	r.C = comp
 	return r, cc.diags
@@ -717,6 +721,23 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 		for _, d := range sd.items {
 			it := d.item
 			ic := IngC{ID: d.id, Ref: d.ref, Name: d.name, Plural: d.plur, Unit: d.unit, Fixed: it.FixedUnit, Optional: it.Optional, L: d.loc}
+			if it.hasOverrides() {
+				base := &units.Ing{Name: d.name, Plural: d.plur}
+				if d.ref != "" {
+					base = cc.db.Entries[d.ref].Info
+				}
+				info, ds := ApplyIngredientFields(base, DBYAML{
+					Measure: it.Measure, Density: it.Density, GramsEach: it.GramsEach,
+					UnitGrams: it.UnitGrams, Round: it.Round, Category: it.Category,
+				}, cc.Units, d.loc, d.id)
+				cc.diags = append(cc.diags, ds...)
+				key := fmt.Sprintf("@%s:%d", d.id, len(cc.overrides))
+				cc.overrides[key] = info
+				ic.Base, ic.Ref = d.ref, key
+				if it.Category != "" {
+					r.IngCategories[d.id] = it.Category
+				}
+			}
 			if d.ref != "" {
 				if cat := cc.db.Entries[d.ref].Category; cat != "" {
 					r.IngCategories[d.id] = cat
@@ -979,4 +1000,8 @@ func contains(list []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func (it *IngItem) hasOverrides() bool {
+	return it.Measure != "" || it.Density != nil || it.GramsEach > 0 || len(it.UnitGrams) > 0 || it.Round != nil || it.Category != ""
 }

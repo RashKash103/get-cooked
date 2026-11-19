@@ -58,12 +58,25 @@ test("back control returns to the list with search kept, or links home", async (
   await expect(page.locator("#search")).toHaveValue("bread");
   await expect(page.locator(".card:visible")).toHaveCount(2);
 
-  // From another recipe it says "Back" and returns there.
+  // From another recipe it still goes to the recipes page.
   await page.goto("/recipes/french-toast/");
   await page.locator(".ing[data-id=bread] a").click();
-  await expect(page.locator("#back")).toHaveText("Back");
+  await expect(page).toHaveURL(/sandwich-bread/);
+  await expect(page.locator("#back")).toHaveText("All recipes");
   await page.locator("#back").click();
-  await expect(page).toHaveURL(/french-toast/);
+  await expect(page).toHaveURL(/127\.0\.0\.1:\d+\/$/);
+
+  // After switching language it goes to that language's recipes page.
+  await page.goto("/");
+  await page.locator(".card a").first().click();
+  await page.locator("#lang-picker").selectOption({ label: "Español" });
+  await expect(page).toHaveURL(/\/es\/recipes\//);
+  await expect(page.locator("#back")).toHaveText("Todas las recetas");
+  await page.locator("#back").click();
+  await expect(page).toHaveURL(/\/es\/$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  // Reset the remembered language for the other tests' fresh contexts.
+  await page.evaluate(() => localStorage.removeItem("gc:lang"));
 
   // Opened directly (shared link), it goes to the index.
   const fresh = await page.context().newPage();

@@ -259,11 +259,19 @@ type IngItem struct {
 	Optional    bool      `yaml:"optional"`
 	Default     bool      `yaml:"default"`
 	OptionLabel string    `yaml:"option_label"`
-	Recipe      string    `yaml:"recipe"`
-	Split       yaml.Node `yaml:"split"`
-	With        yaml.Node `yaml:"with"`
-	Line        Src       `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
-	Pos         int       `yaml:"-"`
+	// Inline overrides of the ingredient database entry (or conversion data
+	// for an ingredient without one).
+	Measure   string             `yaml:"measure"`
+	Density   *Density           `yaml:"density"`
+	GramsEach float64            `yaml:"grams_each"`
+	UnitGrams map[string]float64 `yaml:"unit_grams"`
+	Round     *RoundYAML         `yaml:"round"`
+	Category  string             `yaml:"category"`
+	Recipe    string             `yaml:"recipe"`
+	Split     yaml.Node          `yaml:"split"`
+	With      yaml.Node          `yaml:"with"`
+	Line      Src                `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
+	Pos       int                `yaml:"-"`
 }
 
 // UnmarshalYAML accepts shorthand text, a section, or an ingredient mapping.

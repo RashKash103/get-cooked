@@ -95,7 +95,8 @@ type IngSectionC struct {
 // IngC is a compiled ingredient.
 type IngC struct {
 	ID       string        `json:"id"`
-	Ref      string        `json:"ref,omitempty"` // ingredient DB key
+	Ref      string        `json:"ref,omitempty"`  // key into Compiled.Ings
+	Base     string        `json:"base,omitempty"` // ingredient DB key when Ref is a per-recipe override
 	Name     string        `json:"name"`
 	Plural   string        `json:"plural,omitempty"`
 	Unit     string        `json:"unit,omitempty"`

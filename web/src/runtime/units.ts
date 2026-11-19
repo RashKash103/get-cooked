@@ -185,18 +185,19 @@ export class Units {
     let sys = src.sys ?? "";
     let base = amount * src.f;
     if (!fixed) {
-      if (system === "metric") {
-        sys = "metric";
-        if (dim === "volume" && ing?.gpml && ing.measure !== "volume") {
-          dim = "mass";
-          base *= ing.gpml;
-        }
-      } else if (system === "us") {
-        sys = "us";
-        if (dim === "mass" && ing?.gpml && ing.measure === "volume") {
-          dim = "volume";
-          base /= ing.gpml;
-        }
+      // measure is a display preference in every system (see units.go).
+      let want = "";
+      if (ing?.gpml) {
+        want = ing.measure ?? "";
+        if (want === "" && system === "metric") want = "mass";
+      }
+      if (system === "metric" || system === "us") sys = system;
+      if (want === "mass" && dim === "volume") {
+        dim = "mass";
+        base *= ing?.gpml ?? 0;
+      } else if (want === "volume" && dim === "mass") {
+        dim = "volume";
+        base /= ing?.gpml ?? 1;
       }
     }
     if (fixed || (sys === (src.sys ?? "") && dim === src.dim && !this.inLadder(sys, dim, src.id))) {

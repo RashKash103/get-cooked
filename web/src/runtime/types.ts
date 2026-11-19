@@ -98,6 +98,7 @@ export interface RecipeRef {
 export interface IngC {
   id: string;
   ref?: string;
+  base?: string;
   name: string;
   plural?: string;
   unit?: string;

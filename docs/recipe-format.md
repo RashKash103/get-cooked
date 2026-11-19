@@ -148,6 +148,13 @@ Rules:
   (variants): `{id: fat, ingredient: butter, when: "!vegan"}` and
   `{id: fat, ingredient: olive-oil, when: vegan}`. Steps say `@fat` either way.
 - An amount that evaluates to 0 hides the ingredient.
+- Any ingredient database setting can be overridden inline for one recipe
+  (or given to an ingredient without a database entry): `measure`, `density`,
+  `grams_each`, `unit_grams`, `round`, `category`, plus `name`/`plural`.
+  For example `{ id: flour, ingredient: all-purpose-flour, amount: 2, unit: cup, measure: mass }`
+  always shows the flour by weight, and
+  `{ id: berries, name: wild blueberries, amount: 1, unit: cup, density: { value: 140, unit: g/cup } }`
+  lets an ad-hoc ingredient convert to grams.
 - Ranges (`amount: [low, high]`, numbers or expressions) scale and convert
   like single amounts; shorthand lines such as `2-3 cloves garlic` become
   ranges too. The shopping list buys the high end.
@@ -280,5 +287,5 @@ butter:
 milk:
   density: { value: 1.035, unit: g/ml }  # units: g/ml g/cm3 g/l kg/l kg/m3 g/tsp g/tbsp g/cup
                                          # oz/tbsp oz/cup oz/floz oz/pint lb/cup lb/pint lb/quart lb/gal
-  measure: volume                # liquids stay in ml when converting to metric
+  measure: volume                # always show by volume (liquids); `mass` always by weight
 ```

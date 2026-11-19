@@ -316,3 +316,62 @@ func TestCompiledRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestInlineIngredientOverrides(t *testing.T) {
+	base := compileExample(t, "breakfast/buttermilk-pancakes.yaml")
+	c := &recipe.Compiler{Units: base.C.Units, DB: exampleDB(t), System: "original"}
+	r, ds := c.Compile("t.yaml", []byte(`title: T
+servings: 4
+ingredients:
+  - { id: flour, ingredient: all-purpose-flour, amount: 2, unit: cup, measure: mass }
+  - { id: flour2, ingredient: all-purpose-flour, amount: 2, unit: cup }
+  - { id: berries, name: wild blueberries, amount: 1, unit: cup, density: { value: 140, unit: g/cup }, category: produce }
+  - { id: eggs, ingredient: egg, amount: 2, round: { denoms: [2] } }
+steps: [Mix @flour and @berries.]
+`))
+	if ds.HasErrors() {
+		t.Fatal(ds)
+	}
+	m := render(t, r, State{})
+	if q := ingredient(m, "flour").Q.String(); q != "8 ¾ oz" {
+		t.Errorf("flour with measure: mass = %q", q)
+	}
+	if q := ingredient(m, "flour2").Q.String(); q != "2 cups" {
+		t.Errorf("flour without override = %q (the database entry must not change)", q)
+	}
+	if q := ingredient(render(t, r, State{System: "metric"}), "berries").Q.String(); q != "140 g" {
+		t.Errorf("berries with inline density, metric = %q", q)
+	}
+	if q := ingredient(render(t, r, State{Servings: 1}), "eggs").Q.String(); q != "½" {
+		t.Errorf("eggs with inline rounding at 1 serving = %q", q)
+	}
+	var fl recipe.IngC
+	for _, it := range r.C.Ingredients[0].Items {
+		if it.ID == "flour" {
+			fl = it
+		}
+	}
+	if fl.Base != "all-purpose-flour" || fl.Ref == "all-purpose-flour" || r.C.Ings[fl.Ref].Measure != "mass" || r.C.Ings["all-purpose-flour"].Measure != "" {
+		t.Errorf("override bookkeeping: %+v", fl)
+	}
+	if r.IngCategories["berries"] != "produce" {
+		t.Error("category override")
+	}
+}
+
+func exampleDB(t *testing.T) *recipe.DB {
+	t.Helper()
+	cfg, err := config.Load(exampleSite)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tb, err := cfg.UnitTable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, ds := recipe.LoadDB([]string{cfg.Path("ingredients.yaml")}, tb)
+	if ds.HasErrors() {
+		t.Fatal(ds)
+	}
+	return db
+}

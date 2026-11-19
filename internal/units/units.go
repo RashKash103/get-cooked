@@ -443,17 +443,24 @@ func (t *Table) Format(amount float64, unitID, system string, ing *Ing, fixed bo
 	dim, sys := src.Dim, src.System
 	base := amount * src.Factor // ml or g
 	if !fixed {
+		// measure (mass|volume) is a display preference in every system; with
+		// no preference, metric shows weight whenever the density is known.
+		want := ""
+		if ing != nil && ing.GramsPerML > 0 {
+			want = ing.Measure
+			if want == "" && system == Metric {
+				want = Mass
+			}
+		}
 		switch system {
-		case Metric:
-			sys = Metric
-			if dim == Volume && ing != nil && ing.GramsPerML > 0 && ing.Measure != Volume {
-				dim, base = Mass, base*ing.GramsPerML
-			}
-		case US:
-			sys = US
-			if dim == Mass && ing != nil && ing.GramsPerML > 0 && ing.Measure == Volume {
-				dim, base = Volume, base/ing.GramsPerML
-			}
+		case Metric, US:
+			sys = system
+		}
+		switch {
+		case want == Mass && dim == Volume:
+			dim, base = Mass, base*ing.GramsPerML
+		case want == Volume && dim == Mass:
+			dim, base = Volume, base/ing.GramsPerML
 		}
 	}
 	if fixed || sys == src.System && dim == src.Dim && !t.inLadder(sys, dim, src.ID) {

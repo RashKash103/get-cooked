@@ -65,7 +65,7 @@ export function itemsFrom(c: Compiled, m: Model, href: (l: LinkM) => string): Li
         all.find((x) => x.id === it.id);
       const info = ic?.ref ? c.ings?.[ic.ref] : undefined;
       const item: ListItem = {
-        k: ic?.ref || `n:${it.name.toLowerCase()}`,
+        k: ic?.base || ic?.ref || `n:${it.name.toLowerCase()}`,
         n: ic?.name ?? it.name,
         p: ic?.plural,
         c: info?.cat ?? "",
