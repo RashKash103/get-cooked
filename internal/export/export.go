@@ -281,6 +281,18 @@ func Typst(d Doc, paper string) string {
 	if s := Summary(d); s != "" {
 		fmt.Fprintf(&b, "#text(size: 9.5pt, style: \"italic\", fill: luma(90))[%s]\n\n", typ(s))
 	}
+	// Equipment sits in the header as one line, so it stays on page one
+	// however long the ingredients run.
+	if len(m.Equipment) > 0 {
+		items := make([]string, len(m.Equipment))
+		for i, e := range m.Equipment {
+			items[i] = typ(e.Name)
+			if e.Note != "" {
+				items[i] += fmt.Sprintf(" #muted(%s)", ts("("+e.Note+")"))
+			}
+		}
+		fmt.Fprintf(&b, "#text(size: 9.5pt)[#text(weight: \"bold\", %s) %s]\n\n", ts(d.Cat.T("equipment")+":"), strings.Join(items, " · "))
+	}
 	for _, n := range m.Notes {
 		if n.Kind == "warning" {
 			fmt.Fprintf(&b, "#block(fill: rgb(\"#fef3c7\"), inset: 8pt, radius: 4pt, width: 100%%)[#text(size: 10pt)[%s]]\n\n", mk("⚠ "+n.Text))
@@ -304,16 +316,6 @@ func Typst(d Doc, paper string) string {
 			}
 			if u := uses(d, it); u != "" {
 				fmt.Fprintf(&left, "\\ #text(size: 8.5pt, fill: luma(110))[%s]", mk(u))
-			}
-			left.WriteString("\n")
-		}
-	}
-	if len(m.Equipment) > 0 {
-		fmt.Fprintf(&left, "#section(%s)\n", ts(d.Cat.T("equipment")))
-		for _, e := range m.Equipment {
-			left.WriteString("- " + typ(e.Name))
-			if e.Note != "" {
-				fmt.Fprintf(&left, "#muted(%s)", ts(", "+e.Note))
 			}
 			left.WriteString("\n")
 		}

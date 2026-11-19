@@ -294,9 +294,12 @@ test("the footer names the get-cooked version", async ({ page }) => {
 });
 
 test("printing keeps headings with their steps and drops controls", async ({ page }) => {
-  await page.goto("/recipes/french-toast/");
+  await page.goto("/recipes/cranberry-baked-oatmeal/");
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".swap-btn").first()).toBeHidden();
+  // Equipment moves into the header so it stays on page one.
+  await expect(page.locator("#equipment-wrap")).toBeHidden();
+  await expect(page.locator("#print-equip")).toBeVisible();
   // Grid items fragment badly across pages in some engines; print uses a float.
   expect(await page.locator(".recipe-grid").evaluate((el) => getComputedStyle(el).display)).toBe("block");
   const title = page.locator(".col-steps .h2");

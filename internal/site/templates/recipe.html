@@ -15,6 +15,7 @@
     {{with $r.R.Description}}<p class="recipe-desc">{{.}}</p>{{end}}
     <dl class="times" id="times">{{$r.Times}}</dl>
     <p class="print-only print-meta" id="print-meta"></p>
+    <div class="print-only print-equip" id="print-equip" {{if not $r.M.Equipment}}hidden{{end}}><strong>{{$.T "equipment"}}:</strong> <ul class="equip-inline" id="print-equipment">{{$r.Equipment}}</ul></div>
   </header>
 
   <div class="controls" id="controls">

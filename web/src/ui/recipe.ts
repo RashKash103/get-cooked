@@ -132,6 +132,9 @@ export function initRecipe(): void {
     set("equipment", fr(renderEquipment(m)));
     const ew = $("equipment-wrap");
     if (ew) ew.hidden = m.equipment.length === 0;
+    set("print-equipment", fr(renderEquipment(m)));
+    const pe = $("print-equip");
+    if (pe) pe.hidden = m.equipment.length === 0;
     set("steps", fr(renderSteps(m, base)));
     set("warnings", fr(renderNotes(m, true)));
     set("tips", fr(renderNotes(m, false)));

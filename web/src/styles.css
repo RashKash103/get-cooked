@@ -795,6 +795,31 @@
     color: inherit !important;
     text-decoration: none !important;
   }
+  /* Equipment goes in the header as one line, so it stays on page one
+     however long the ingredients run. */
+  #equipment-wrap {
+    display: none !important;
+  }
+  .print-equip {
+    margin-top: 0.3rem;
+    font-size: 9.5pt;
+  }
+  .print-equip[hidden] {
+    display: none !important;
+  }
+  .equip-inline,
+  .equip-inline .equip {
+    display: inline;
+  }
+  .equip-inline .equip + .equip::before {
+    content: " · ";
+  }
+  .equip-inline .equip-note::before {
+    content: "(";
+  }
+  .equip-inline .equip-note::after {
+    content: ")";
+  }
   .recipe-foot {
     border: 0;
     margin: 0;
