@@ -20,6 +20,21 @@ test("lists recipes and filters by search and category", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Desserts" })).toHaveAttribute("aria-pressed", "true");
 });
 
+test("largest text size fits small screens without clipping the chrome", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.setItem("gc:text", "150"));
+  for (const path of ["/", "/recipes/crispy-chicken-thighs/", "/list/"]) {
+    await page.goto(path);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), path).toBe(false);
+    // Every top-bar control is fully inside the viewport.
+    const rights = await page
+      .locator(".topbar a, .topbar summary, .topbar select")
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+    for (const r of rights) expect(r, path).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+  }
+  await page.evaluate(() => localStorage.removeItem("gc:text"));
+});
+
 test("has no horizontal overflow and no serious accessibility issues", async ({ page }) => {
   for (const path of ["/", "/recipes/cranberry-baked-oatmeal/", "/es/recipes/crispy-chicken-thighs/"]) {
     await page.goto(path);
@@ -31,19 +46,43 @@ test("has no horizontal overflow and no serious accessibility issues", async ({ 
   }
 });
 
-test("theme toggle cycles and is remembered", async ({ page }) => {
+test("display menu sets theme and text size, remembered across pages", async ({ page }) => {
   await page.goto("/");
   const html = page.locator("html");
-  const toggle = page.locator("#theme-toggle");
-  const startDark = await html.evaluate((el) => el.classList.contains("dark"));
-  await toggle.click(); // system → light
+  const menu = page.locator("#display-menu");
+  await menu.locator("summary").click();
+  await menu.locator('[data-theme-set="dark"]').click();
+  await expect(html).toHaveClass(/dark/);
+  await menu.locator('[data-theme-set="light"]').click();
   await expect(html).not.toHaveClass(/dark/);
-  await toggle.click(); // light → dark
-  await expect(html).toHaveClass(/dark/);
-  await page.reload();
-  await expect(html).toHaveClass(/dark/);
-  await toggle.click(); // back to system
-  expect(await html.evaluate((el) => el.classList.contains("dark"))).toBe(startDark);
+  await expect(menu.locator('[data-theme-set="light"]')).toHaveAttribute("aria-pressed", "true");
+
+  const titleHeight = () => page.locator(".index-title").evaluate((el) => el.getBoundingClientRect().height);
+  const before = await titleHeight();
+  const barBefore = await page.locator(".topbar").evaluate((el) => el.getBoundingClientRect().height);
+  await menu.locator('[data-text-size="1"]').click();
+  await menu.locator('[data-text-size="1"]').click();
+  await expect(page.locator("#text-size-value")).toHaveText("125%");
+  expect(await titleHeight()).toBeCloseTo(before * 1.25, 0);
+  // The top bar keeps its size.
+  expect(await page.locator(".topbar").evaluate((el) => el.getBoundingClientRect().height)).toBeCloseTo(barBefore, 0);
+
+  // Remembered on another page, applied before first paint.
+  await page.goto("/recipes/cranberry-baked-oatmeal/");
+  await expect(html).not.toHaveClass(/dark/);
+  const zoom = () => page.evaluate(() => document.documentElement.style.getPropertyValue("--gc-zoom"));
+  expect(await zoom()).toBe("1.25");
+  await page.locator("#display-menu summary").click();
+  await expect(page.locator("#text-size-value")).toHaveText("125%");
+  await page.locator("#text-size-value").click(); // reset
+  await expect(page.locator("#text-size-value")).toHaveText("100%");
+  expect(await zoom()).toBe("");
+  // Limits disable the buttons.
+  for (let i = 0; i < 6; i++) await page.locator('#display-menu [data-text-size="-1"]').click({ force: true });
+  await expect(page.locator('#display-menu [data-text-size="-1"]')).toBeDisabled();
+  await expect(page.locator("#text-size-value")).toHaveText("87.5%");
+  await page.locator("#display-menu").locator('[data-theme-set="system"]').click();
+  await page.locator("#text-size-value").click();
 });
 
 test("back control returns to the list with search kept, or links home", async ({ page }) => {

@@ -174,3 +174,52 @@ func TestI18nNumeralsMigration(t *testing.T) {
 		t.Errorf("template itself changed (%d)", n)
 	}
 }
+
+func TestI18nStringsMigration(t *testing.T) {
+	var m Migration
+	for _, x := range All {
+		if x.ID == "0.5.0-i18n-strings" {
+			m = x
+		}
+	}
+	if m.Apply == nil {
+		t.Fatal("migration not registered")
+	}
+	old := "name: Español\nof: de\n\nui:\n  skip: Ir al contenido\n  theme: Tema\n\n# Times\ntimes:\n  prep: Preparación\n\nduration: { hr: h, min: min, sec: s }\n"
+	out, n := m.Apply([]byte(old))
+	got := string(out)
+	if n == 0 {
+		t.Fatal("nothing added")
+	}
+	for _, want := range []string{
+		"  skip: Ir al contenido\n  theme: Tema\n  # Added by `get-cooked migrate` (English defaults; translate as needed):\n  all_recipes: All recipes\n",
+		"  text_size: Text size\n",
+		"  prep: Preparación\n  # Added by `get-cooked migrate` (English defaults; translate as needed):\n  cook: Cook\n",
+		"duration: { hr: h, min: min, sec: s }",
+		"\nservings:\n  one: serving\n",
+		"\ncategories:\n  produce: Produce\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	if strings.Count(got, "skip:") != 1 || strings.Contains(got, "theme: Theme") {
+		t.Errorf("existing keys must not be duplicated or changed:\n%s", got)
+	}
+	// Still a valid catalog; existing translations win.
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "i18n", "es.yaml"), got)
+	cat, err := i18n.Load(dir, "es")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cat.T("theme") != "Tema" || cat.T("text_size") != "Text size" || cat.Times["prep"] != "Preparación" {
+		t.Errorf("catalog: theme=%q text_size=%q", cat.T("theme"), cat.T("text_size"))
+	}
+	if again, n := m.Apply(out); n != 0 || string(again) != got {
+		t.Errorf("not idempotent (%d)", n)
+	}
+	if _, n := m.Apply(i18n.EnglishYAML); n != 0 {
+		t.Errorf("template changed (%d)", n)
+	}
+}

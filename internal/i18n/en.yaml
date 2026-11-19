@@ -38,6 +38,11 @@ ui:
   theme_system: System
   theme_light: Light
   theme_dark: Dark
+  display: Display
+  text_size: Text size
+  text_smaller: Smaller text
+  text_larger: Larger text
+  text_reset: Reset text size
   language: Language
   search: Search recipes or ingredients
   all: All

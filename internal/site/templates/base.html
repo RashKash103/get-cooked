@@ -20,6 +20,7 @@
 <link rel="manifest" href="{{.Root}}manifest.webmanifest">
 <link rel="stylesheet" href="{{.Root}}{{.Assets.CSS}}">
 <style>:root{--gc-accent:{{.Accent}}}</style>
+<script>(function(){try{var z=JSON.parse(localStorage.getItem("gc:text")||"null");if(typeof z==="number"&&z>=50&&z<=200)document.documentElement.style.setProperty("--gc-zoom",String(z/100))}catch(e){}})()</script>
 <script>(function(){try{var t=localStorage.getItem("gc:theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})()</script>
 <script type="application/json" id="i18n">{{.I18n}}</script>
 <script type="module" src="{{.Root}}{{.Assets.JS}}"></script>
@@ -36,11 +37,23 @@
   {{if .Alternates}}<label class="lang-picker"><span class="sr-only">{{.T "language"}}</span>
     <select id="lang-picker">{{range .Alternates}}<option value="{{.URL}}" data-lang="{{.Code}}"{{if .Current}} selected{{end}}>{{.Name}}</option>{{end}}</select>
   </label>{{end}}
-  <button type="button" class="icon-btn" id="theme-toggle" aria-label="{{.T "theme"}}: {{.T "theme_system"}}" title="{{.T "theme"}}">
-    <svg class="icon theme-system" aria-hidden="true"><use href="#i-monitor"></use></svg>
-    <svg class="icon theme-light" aria-hidden="true"><use href="#i-sun"></use></svg>
-    <svg class="icon theme-dark" aria-hidden="true"><use href="#i-moon"></use></svg>
-  </button>
+  <details class="menu display-menu" id="display-menu">
+    <summary class="icon-btn" aria-label="{{.T "display"}}" title="{{.T "display"}}"><span class="aa" aria-hidden="true">Aa</span></summary>
+    <div class="menu-items display-items">
+      <p class="menu-label">{{.T "theme"}}</p>
+      <div class="seg seg-buttons" role="group" aria-label="{{.T "theme"}}">
+        <button type="button" data-theme-set="system" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-monitor"></use></svg>{{.T "theme_system"}}</button>
+        <button type="button" data-theme-set="light" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg>{{.T "theme_light"}}</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-moon"></use></svg>{{.T "theme_dark"}}</button>
+      </div>
+      <p class="menu-label">{{.T "text_size"}}</p>
+      <div class="text-size">
+        <button type="button" class="icon-btn" data-text-size="-1" aria-label="{{.T "text_smaller"}}" title="{{.T "text_smaller"}}"><span class="aa-sm" aria-hidden="true">A</span><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button>
+        <button type="button" class="text-size-value" data-text-size="0" id="text-size-value" title="{{.T "text_reset"}}">100%</button>
+        <button type="button" class="icon-btn" data-text-size="1" aria-label="{{.T "text_larger"}}" title="{{.T "text_larger"}}"><span class="aa-lg" aria-hidden="true">A</span><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>
+      </div>
+    </div>
+  </details>
   </div>
 </header>
 <main id="main">

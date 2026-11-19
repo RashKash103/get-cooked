@@ -115,6 +115,12 @@ ui:
   step_of: "Step {n} of {total}"
   exit_cook: Exit cook mode
   all_done: All done. Enjoy!
+  # Added by `get-cooked migrate` (English defaults; translate as needed):
+  display: Display
+  text_size: Text size
+  text_smaller: Smaller text
+  text_larger: Larger text
+  text_reset: Reset text size
 
 # Labels for keys under a recipe's `times:`. Unknown keys are title-cased.
 times:

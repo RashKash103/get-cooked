@@ -61,6 +61,10 @@ users can run `get-cooked migrate` instead of editing files by hand:
 - New settings that `get-cooked i18n init` writes into catalogs get a
   migration too (`migrate.AddTemplateKeys`), adding them with their default
   values only where a catalog doesn't define them.
+  New keys in the `ui`, `times`, `duration`, `servings` and `categories`
+  sections of `internal/i18n/en.yaml` are covered automatically by the
+  `0.5.0-i18n-strings` migration, which compares catalogs with the current
+  template; new top-level settings need their own entry.
 - Add a test in `internal/migrate` that migrates an old-format site and
   checks that it then validates and that a second run changes nothing.
 

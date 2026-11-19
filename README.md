@@ -84,6 +84,9 @@ notes:
   0.125 cup → 2 tbsp, 0.875 cup → ¾ cup + 2 tbsp, eggs stay whole.
 
 **Site**
+- An "Aa" menu for theme (system, light, dark) and text size (87.5–150%),
+  remembered on the device; only the reading content grows, so controls
+  never clip on small screens.
 - Mobile first, uncrowded, light and dark mode, prints cleanly, works without
   JavaScript, and works offline once visited (PWA).
 - Cook mode keeps the screen awake and turns the bottom bar into

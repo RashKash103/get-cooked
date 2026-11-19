@@ -74,6 +74,17 @@ func init() {
 	})
 }
 
+func init() {
+	All = append(All, Migration{
+		ID:    "0.5.0-i18n-strings",
+		Since: "0.5.0",
+		Description: "i18n/<lang>.yaml: add UI strings, time labels, duration words, servings and shopping " +
+			"categories that `i18n init` now writes, in English and marked for translation",
+		Kinds: []Kind{Catalogs},
+		Apply: AddTemplateSectionKeys(i18n.EnglishYAML, "ui", "times", "duration", "servings", "categories"),
+	})
+}
+
 var gramsPerCupRe = regexp.MustCompile(`\bgrams_per_cup:[ \t]*([0-9]*\.?[0-9]+)`)
 
 // Change is a file a migration changed (or would change).
@@ -280,4 +291,110 @@ func indexOf(list []string, s string) int {
 		}
 	}
 	return -1
+}
+
+// untranslatedNote marks keys a migration copied from the English template.
+const untranslatedNote = "# Added by `get-cooked migrate` (English defaults; translate as needed):"
+
+// AddTemplateSectionKeys returns an Apply function that, for each named
+// top-level mapping section of the template, adds the keys a file's section
+// is missing (with the template's values, after the section's last entry,
+// under a "translate these" comment), and adds whole sections the file
+// lacks. Sections written in flow style ({…}) are left alone.
+func AddTemplateSectionKeys(template []byte, sections ...string) func([]byte) ([]byte, int) {
+	tLines := strings.Split(string(template), "\n")
+	var tRoot yaml.Node
+	_ = yaml.Unmarshal(template, &tRoot)
+	tMap := mappingOf(&tRoot)
+	return func(src []byte) ([]byte, int) {
+		n := 0
+		for _, name := range sections {
+			tKey, tVal := lookup(tMap, name)
+			if tVal == nil || tVal.Kind != yaml.MappingNode {
+				continue
+			}
+			var root yaml.Node
+			if err := yaml.Unmarshal(src, &root); err != nil {
+				return src, n
+			}
+			m := mappingOf(&root)
+			if m == nil {
+				return src, n
+			}
+			lines := strings.Split(string(src), "\n")
+			_, val := lookup(m, name)
+			if val == nil {
+				// Whole section missing: append the template's block (with its comments).
+				start := tKey.Line - 1
+				for start > 0 && strings.HasPrefix(strings.TrimSpace(tLines[start-1]), "#") {
+					start--
+				}
+				end := lastLine(tVal)
+				block := append([]string{""}, tLines[start:end]...)
+				at := len(lines)
+				for at > 0 && strings.TrimSpace(lines[at-1]) == "" {
+					at--
+				}
+				out := append(append(append([]string{}, lines[:at]...), block...), "")
+				src = []byte(strings.Join(out, "\n"))
+				n++
+				continue
+			}
+			if val.Kind != yaml.MappingNode || val.Style&yaml.FlowStyle != 0 || len(val.Content) == 0 {
+				continue
+			}
+			have := map[string]bool{}
+			for i := 0; i+1 < len(val.Content); i += 2 {
+				have[val.Content[i].Value] = true
+			}
+			indent := strings.Repeat(" ", val.Content[0].Column-1)
+			var add []string
+			for i := 0; i+1 < len(tVal.Content); i += 2 {
+				k := tVal.Content[i]
+				if have[k.Value] || tVal.Content[i+1].Line != k.Line {
+					continue
+				}
+				add = append(add, indent+strings.TrimSpace(tLines[k.Line-1]))
+			}
+			if len(add) == 0 {
+				continue
+			}
+			at := lastLine(val) // insert after the section's last line
+			block := append([]string{indent + untranslatedNote}, add...)
+			out := append(append(append([]string{}, lines[:at]...), block...), lines[at:]...)
+			src = []byte(strings.Join(out, "\n"))
+			n += len(add)
+		}
+		return src, n
+	}
+}
+
+func mappingOf(root *yaml.Node) *yaml.Node {
+	if len(root.Content) == 0 || root.Content[0].Kind != yaml.MappingNode {
+		return nil
+	}
+	return root.Content[0]
+}
+
+func lookup(m *yaml.Node, key string) (*yaml.Node, *yaml.Node) {
+	if m == nil {
+		return nil, nil
+	}
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			return m.Content[i], m.Content[i+1]
+		}
+	}
+	return nil, nil
+}
+
+// lastLine returns the last (1-based) line used by a node's entries.
+func lastLine(n *yaml.Node) int {
+	last := n.Line
+	for _, c := range n.Content {
+		if l := lastLine(c); l > last {
+			last = l
+		}
+	}
+	return last
 }

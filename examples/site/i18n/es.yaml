@@ -30,6 +30,11 @@ ui:
   theme_system: Sistema
   theme_light: Claro
   theme_dark: Oscuro
+  display: Pantalla
+  text_size: Tamaño del texto
+  text_smaller: Texto más pequeño
+  text_larger: Texto más grande
+  text_reset: Restablecer tamaño del texto
   language: Idioma
   search: Buscar recetas o ingredientes
   all: Todas
