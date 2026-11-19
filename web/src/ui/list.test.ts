@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Ing, Table } from "../runtime/types";
-import { type ListRecipe, mergeLines } from "./list";
+import { decodeList, encodeList, type ListRecipe, mergeLines, mergeShared } from "./list";
 
 // A small table: tsp, tbsp, cup ladder plus grams and sticks.
 const table: Table = {
@@ -79,5 +79,40 @@ describe("shopping list merge", () => {
   it("converts to metric when asked", () => {
     const m = Object.fromEntries(mergeLines(recipes, table, "metric").map((l) => [l.k, l]));
     expect(m.flour?.text).toBe("250 g");
+  });
+});
+
+describe("sharing a list", () => {
+  const state = {
+    recipes: [
+      {
+        slug: "toast",
+        title: "Toast",
+        url: "/recipes/toast/",
+        yield: "2 servings",
+        items: [{ k: "milk", n: "milk", c: "dairy", u: "cup", v: 1 }],
+      },
+    ],
+    checked: ["milk"],
+  };
+  it("round-trips through a compact link", async () => {
+    const code = await encodeList(state);
+    expect(code).toMatch(/^z[\w-]+$/);
+    expect(await decodeList(code)).toEqual(state);
+  });
+  it("merges a shared list, replacing recipes already on it", () => {
+    const mine = {
+      recipes: [
+        { ...state.recipes[0], yield: "4 servings" } as ListRecipe,
+        { ...state.recipes[0], slug: "soup" } as ListRecipe,
+      ],
+      checked: ["eggs"],
+    };
+    const merged = mergeShared(mine, state);
+    expect(merged.recipes.map((r) => `${r.slug} ${r.yield}`)).toEqual(["soup 2 servings", "toast 2 servings"]);
+    expect(merged.checked).toEqual(["eggs", "milk"]);
+  });
+  it("rejects links that aren't lists", async () => {
+    await expect(decodeList(`j${btoa("{}")}`)).rejects.toThrow();
   });
 });

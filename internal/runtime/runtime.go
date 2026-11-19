@@ -75,6 +75,7 @@ type IngM struct {
 	Optional bool       `json:"optional"`
 	Link     *LinkM     `json:"link"`
 	Uses     []UseM     `json:"uses"`
+	Swap     string     `json:"swap,omitempty"` // the swap_<id> option when it has substitutes
 }
 
 // UseM is the amount of an ingredient used by one step, listed when an
@@ -113,6 +114,7 @@ type Seg struct {
 	Q    string  `json:"q"`
 	J    string  `json:"j"` // text between quantity and name (ing)
 	Min  float64 `json:"min"`
+	Max  float64 `json:"max"` // timer: upper end of a range (0 when not a range)
 	Link *LinkM  `json:"link"`
 }
 
@@ -370,7 +372,7 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 	for _, ps := range pending {
 		sec := IngSectionM{Title: ps.title, Items: []IngM{}}
 		for _, a := range ps.items {
-			im := IngM{ID: a.ic.ID, Optional: a.ic.Optional, Uses: []UseM{}}
+			im := IngM{ID: a.ic.ID, Optional: a.ic.Optional, Uses: []UseM{}, Swap: a.ic.Swap}
 			if a.has {
 				q := r.qtyRange(a.ic, a.value, a.hi)
 				im.Q = &q
@@ -672,6 +674,17 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 			}
 			if v <= 0 {
 				return nil, fail(l, "timer must be positive, got %s", expr.FormatNumber(v))
+			}
+			if s.Hi != nil {
+				h, err := s.Hi.EvalNum(env)
+				if err != nil {
+					return nil, fail(l, "timer: %v", err)
+				}
+				if h <= v {
+					return nil, fail(l, "timer range must go up: ~{%s, %s}", expr.FormatNumber(v), expr.FormatNumber(h))
+				}
+				out = append(out, Seg{T: "timer", V: r.c.Units.DurationRange(v, h), Min: expr.RoundTo(v, 2), Max: expr.RoundTo(h, 2)})
+				continue
 			}
 			out = append(out, Seg{T: "timer", V: r.c.Units.Duration(v), Min: expr.RoundTo(v, 2)})
 		case tmpl.KIf:

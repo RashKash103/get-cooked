@@ -215,6 +215,15 @@ class Renderer {
       } else if ("timer" in s) {
         const v = this.num(s.timer, "timer");
         if (v <= 0) throw new RenderError(`timer must be positive, got ${formatNumber(v)}`);
+        if (s.hi) {
+          const h = this.num(s.hi, "timer");
+          if (h <= v) throw new RenderError("timer range must go up");
+          const g = seg("timer", this.units.durationRange(v, h));
+          g.min = roundTo(v, 2);
+          g.max = roundTo(h, 2);
+          out.push(g);
+          continue;
+        }
         const g = seg("timer", this.units.duration(v));
         g.min = roundTo(v, 2);
         out.push(g);
@@ -247,7 +256,7 @@ class Renderer {
 }
 
 function seg(t: Seg["t"], v: string): Seg {
-  return { t, v, id: "", q: "", j: "", min: 0, link: null };
+  return { t, v, id: "", q: "", j: "", min: 0, max: 0, link: null };
 }
 
 function merge(segs: Seg[]): Seg[] {
@@ -344,6 +353,7 @@ export function render(c: Compiled, st: State): Model {
         link: null,
         uses: [],
       };
+      if (a.ic.swap) im.swap = a.ic.swap;
       if (a.has) {
         im.q = r.qtyRange(a.ic, a.value, a.hi);
         im.link = r.link(a.ic, a.value);

@@ -270,8 +270,51 @@ type IngItem struct {
 	Recipe    string             `yaml:"recipe"`
 	Split     yaml.Node          `yaml:"split"`
 	With      yaml.Node          `yaml:"with"`
-	Line      Src                `yaml:"-"` // shorthand text, e.g. "2 cups flour, sifted"
-	Pos       int                `yaml:"-"`
+	// Substitutes the reader can swap in ("or use…"). Each one shares this
+	// ingredient's id, and inherits its amount and unit unless it gives its own.
+	Subs  []Sub   `yaml:"subs"`
+	Ratio float64 `yaml:"ratio"` // substitutes: multiply the inherited amount
+	Line  Src     `yaml:"-"`     // shorthand text, e.g. "2 cups flour, sifted"
+	Pos   int     `yaml:"-"`
+}
+
+// Sub is a substitute for an ingredient: a mapping like an ingredient
+// (`{ ingredient: milk, ratio: 0.9 }`), shorthand text (`1 cup kefir`), or a
+// combination of several ingredients that replace it together: a list, or
+// `{ label: Milk + lemon, items: [...] }`.
+type Sub struct {
+	IngItem
+	Parts []Sub  // a combination; the first part takes the ingredient's place
+	Label string // a combination's name in the swap menu
+}
+
+// UnmarshalYAML accepts shorthand text, an ingredient mapping or a combination.
+func (s *Sub) UnmarshalYAML(n *yaml.Node) error {
+	s.Pos = n.Line
+	switch {
+	case n.Kind == yaml.ScalarNode:
+		return s.Line.UnmarshalYAML(n)
+	case n.Kind == yaml.SequenceNode:
+		return n.Decode(&s.Parts)
+	case n.Kind == yaml.MappingNode && hasKey(n, "items"):
+		var c struct {
+			Label string `yaml:"label"`
+			Items []Sub  `yaml:"items"`
+		}
+		if err := n.Decode(&c); err != nil {
+			return err
+		}
+		s.Label, s.Parts = c.Label, c.Items
+		return nil
+	}
+	type plain IngItem
+	var p plain
+	if err := n.Decode(&p); err != nil {
+		return err
+	}
+	p.Pos = n.Line
+	s.IngItem = IngItem(p)
+	return nil
 }
 
 // UnmarshalYAML accepts shorthand text, a section, or an ingredient mapping.

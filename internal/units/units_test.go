@@ -154,6 +154,23 @@ func TestFraction(t *testing.T) {
 	}
 }
 
+func TestDurationRange(t *testing.T) {
+	tb := Default()
+	for _, c := range []struct {
+		lo, hi float64
+		want   string
+	}{
+		{4, 5, "4–5 min"},
+		{35, 40, "35–40 min"},
+		{2.5, 3, "2 min 30 sec – 3 min"},
+		{50, 75, "50 min – 1 hr 15 min"},
+	} {
+		if got := tb.DurationRange(c.lo, c.hi); got != c.want {
+			t.Errorf("DurationRange(%v, %v) = %q want %q", c.lo, c.hi, got, c.want)
+		}
+	}
+}
+
 func TestTempLengthDuration(t *testing.T) {
 	cases := []struct{ got, want string }{
 		{Temp(350, false, Original), "350°F"},

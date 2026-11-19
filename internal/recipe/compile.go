@@ -59,6 +59,30 @@ type cctx struct {
 	optWhen   map[string]Src
 	parts     map[string]map[string]bool // ingredient id → split names
 	overrides map[string]*units.Ing      // per-recipe ingredient overrides
+	swaps     []*swapGroup               // ingredients with substitutes
+	combos    map[string][]comboPart     // ingredient id → extra parts of its combination substitutes
+}
+
+// comboPart is an extra ingredient of a combination substitute, named along
+// with the original's id wherever the text references it.
+type comboPart struct {
+	opt, id string
+}
+
+// swapGroup is an ingredient and its substitutes, chosen with a choice
+// option named swap_<id>.
+type swapGroup struct {
+	opt     string
+	orig    *ingDraft
+	choices []*swapChoice // the original first
+}
+
+// swapChoice is one entry of the swap menu: a single ingredient, or a
+// combination whose first part takes the original's id.
+type swapChoice struct {
+	pick  string
+	label string
+	parts []*ingDraft
 }
 
 // tr translates user-visible text.
@@ -77,7 +101,7 @@ func (cc *cctx) loc(line, col int) Loc { return Loc{cc.file, line, col} }
 
 // Compile compiles recipe source. path is used for diagnostics and the slug.
 func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
-	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}, parts: map[string]map[string]bool{}, overrides: map[string]*units.Ing{}}
+	cc := &cctx{Compiler: c, file: path, db: c.DB, symbols: map[string]bool{}, ingIDs: map[string]bool{}, eqIDs: map[string]bool{}, usedDB: map[string]bool{}, optWhen: map[string]Src{}, parts: map[string]map[string]bool{}, overrides: map[string]*units.Ing{}, combos: map[string][]comboPart{}}
 	if cc.db == nil {
 		cc.db = NewDB()
 	}
@@ -285,6 +309,8 @@ type ingDraft struct {
 	amt   *AmountC
 	loc   Loc
 	short ingline.Line
+	swap  *swapGroup // set for an ingredient with substitutes and for each substitute
+	pick  string     // the swap choice that selects this draft
 }
 
 type sectionDraft struct {
@@ -299,6 +325,9 @@ func (cc *cctx) collectIngredients(f *File) []*sectionDraft {
 		d := cc.draftIngredient(it)
 		if d != nil {
 			sd.items = append(sd.items, d)
+			if len(it.Subs) > 0 {
+				sd.items = append(sd.items, cc.substitutes(d)...)
+			}
 		}
 	}
 	for _, e := range f.Ingredients {
@@ -325,7 +354,7 @@ func (cc *cctx) collectIngredients(f *File) []*sectionDraft {
 	seen := map[string]*ingDraft{}
 	for _, sd := range sections {
 		for _, d := range sd.items {
-			if prev, ok := seen[d.id]; ok && (!d.item.When.Set || !prev.item.When.Set) && !d.item.Optional && !prev.item.Optional {
+			if prev, ok := seen[d.id]; ok && (!d.item.When.Set || !prev.item.When.Set) && !d.item.Optional && !prev.item.Optional && (d.swap == nil || d.swap != prev.swap) {
 				cc.errAt(d.loc, "duplicate ingredient id %q (first at line %d); give each variant a `when:` condition or a distinct `id:`", d.id, prev.loc.Line)
 			}
 			seen[d.id] = d
@@ -339,6 +368,133 @@ func (cc *cctx) collectIngredients(f *File) []*sectionDraft {
 		}
 	}
 	return sections
+}
+
+// substitutes drafts an ingredient's `subs:` as variants, each selected by
+// one choice of the swap_<id> option. A single substitute shares the
+// ingredient's id; a combination's first part does, and its other parts get
+// ids of their own (dairy_lemon_juice), with @dairy in the text expanded to
+// name them all.
+func (cc *cctx) substitutes(d *ingDraft) []*ingDraft {
+	it := d.item
+	if it.Recipe != "" || it.Split.Kind != 0 {
+		cc.errAt(d.loc, "substitutes (`subs:`) can't be used with `recipe:` or `split:`")
+		return nil
+	}
+	g := &swapGroup{opt: "swap_" + d.id, orig: d, choices: []*swapChoice{{parts: []*ingDraft{d}}}}
+	var out []*ingDraft
+	for i := range it.Subs {
+		sub := &it.Subs[i]
+		parts := []Sub{*sub}
+		if len(sub.Parts) > 0 {
+			parts = sub.Parts
+		}
+		ch := &swapChoice{label: cc.tr(sub.Label)}
+		for j := range parts {
+			if len(parts[j].Parts) > 0 {
+				cc.errAt(cc.loc(parts[j].Pos, 0), "a combination of substitutes can't contain another combination")
+				continue
+			}
+			if sd := cc.substitute(d, &parts[j].IngItem, j > 0); sd != nil {
+				sd.swap = g
+				ch.parts = append(ch.parts, sd)
+				out = append(out, sd)
+			}
+		}
+		if len(ch.parts) > 0 {
+			g.choices = append(g.choices, ch)
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	// Choice ids come from the ingredient keys or names: swap_dairy == 'milk'.
+	used := map[string]bool{}
+	for _, ch := range g.choices {
+		var ids, names []string
+		for _, x := range ch.parts {
+			id := x.ref
+			if id == "" {
+				id = x.name
+			}
+			ids = append(ids, identFrom(id))
+			names = append(names, x.name)
+		}
+		id := strings.Join(ids, "_")
+		if id == "" || used[id] {
+			id = fmt.Sprintf("%s%d", id, len(used)+1)
+		}
+		used[id] = true
+		ch.pick = id
+		if ch.label == "" {
+			ch.label = strings.Join(names, " + ")
+		}
+		for _, x := range ch.parts {
+			x.pick = id
+		}
+	}
+	d.swap = g
+	cc.swaps = append(cc.swaps, g)
+	return out
+}
+
+// substitute drafts one substitute (or one part of a combination). The first
+// part takes the ingredient's id and, without an amount of its own, its
+// amount and unit; an extra part gets its own id and inherits the amount only
+// when it gives a `ratio:`.
+func (cc *cctx) substitute(d *ingDraft, src *IngItem, extra bool) *ingDraft {
+	it := d.item
+	s := new(IngItem)
+	*s = *src
+	l := cc.loc(s.Pos, 0)
+	switch {
+	case s.ID != "" && s.ID != d.id && !extra:
+		cc.errAt(l, "a substitute always shares the id of the ingredient it replaces (%q); remove `id:`", d.id)
+	case s.When.Set:
+		cc.errAt(l, "a substitute can't have its own `when:`; it's shown when the reader picks it")
+	case len(s.Subs) > 0:
+		cc.errAt(l, "substitutes can't have their own substitutes")
+	case s.Recipe != "" || s.Split.Kind != 0:
+		cc.errAt(l, "a substitute can't use `recipe:` or `split:`")
+	case s.Optional:
+		cc.errAt(l, "a substitute can't be optional on its own; mark the ingredient it replaces optional instead")
+	}
+	own := s.ID
+	s.ID, s.When, s.Optional, s.Default, s.OptionLabel = d.id, it.When, it.Optional, it.Default, it.OptionLabel
+	if s.Scale == nil {
+		s.Scale = it.Scale
+	}
+	sd := cc.draftIngredient(s)
+	if sd == nil {
+		return nil
+	}
+	sd.id = d.id
+	if extra {
+		if own == "" {
+			key := sd.ref
+			if key == "" {
+				key = sd.name
+			}
+			own = d.id + "_" + identFrom(key)
+		}
+		sd.id, s.ID = own, own
+	}
+	if sd.amt == nil && !s.Amount.Set && (!extra || s.Ratio > 0) {
+		// Same amount and unit as the ingredient it replaces.
+		sd.amt, s.Amount = d.amt, it.Amount
+		if s.Unit == "" && sd.unit == "" {
+			sd.unit, s.FixedUnit = d.unit, it.FixedUnit
+		}
+	} else if s.Ratio != 0 {
+		cc.errAt(l, "`ratio:` scales the inherited amount; use it without `amount:`")
+	}
+	if s.Ratio < 0 {
+		cc.errAt(l, "`ratio:` must be positive")
+	}
+	if extra {
+		cc.combos[d.id] = append(cc.combos[d.id], comboPart{opt: "swap_" + d.id, id: sd.id})
+	}
+	return sd
 }
 
 func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
@@ -557,6 +713,32 @@ func (cc *cctx) options(f *File, comp *Compiled, sections []*sectionDraft) {
 			comp.Options = append(comp.Options, OptionC{ID: d.id, Type: "toggle", Label: label, Default: d.item.Default, L: d.loc})
 		}
 	}
+	// Ingredients with substitutes create choices: swap_<id>.
+	for _, g := range cc.swaps {
+		if ids[g.opt] {
+			cc.errAt(g.orig.loc, "option %q clashes with the substitutes of ingredient %q", g.opt, g.orig.id)
+			continue
+		}
+		ids[g.opt] = true
+		cc.symbols[g.opt] = true
+		oc := OptionC{ID: g.opt, Type: "choice", Default: g.orig.pick, Swap: g.orig.id, L: g.orig.loc,
+			Label: cc.Catalog.T("swap_ingredient", "name", g.orig.name)}
+		for _, ch := range g.choices {
+			oc.Choices = append(oc.Choices, ChoiceC{ID: ch.pick, Label: ch.label})
+		}
+		// Shown only while the ingredient is in the recipe.
+		if w, it := g.orig.item.When, g.orig.item; w.Set || it.Optional {
+			cond := []string{}
+			if w.Set {
+				cond = append(cond, "("+w.Text+")")
+			}
+			if it.Optional {
+				cond = append(cond, g.orig.id)
+			}
+			cc.optWhen[g.opt] = Src{Text: strings.Join(cond, " && "), Set: true, Line: g.orig.loc.Line}
+		}
+		comp.Options = append(comp.Options, oc)
+	}
 	// Option `when` conditions are compiled once vars are declared (see vars).
 }
 
@@ -744,6 +926,15 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 				}
 			}
 			ic.When = cc.when(it.When)
+			if d.swap != nil {
+				pick := &expr.Node{Op: "==", Args: []*expr.Node{{Op: expr.OpVar, Name: d.swap.opt, Pos: -1}, {Op: expr.OpStr, Str: d.pick, Pos: -1}}, Pos: -1}
+				if ic.When != nil {
+					ic.When = &expr.Expr{Root: &expr.Node{Op: "&&", Args: []*expr.Node{pick, ic.When.Root}, Pos: -1}}
+				} else {
+					ic.When = &expr.Expr{Root: pick}
+				}
+				ic.Swap = d.swap.opt
+			}
 			if it.Optional {
 				opt := &expr.Node{Op: expr.OpVar, Name: d.id, Pos: -1}
 				if ic.When != nil {
@@ -781,6 +972,9 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 						cc.errAt(d.loc, "a recipe reference can't use a range amount")
 					}
 				}
+			}
+			if it.Ratio > 0 && ic.Amount != nil {
+				ic.Amount = scaleAmount(ic.Amount, it.Ratio)
 			}
 			if ic.Amount != nil && ic.Amount.Hi != nil && it.Split.Kind != 0 {
 				cc.errAt(d.loc, "a split ingredient can't also use a range amount")
@@ -976,12 +1170,78 @@ func (cc *cctx) template(s Src) tmpl.Template {
 			}
 		}
 		check(seg.Expr)
+		check(seg.Hi)
 		for _, b := range seg.Branches {
 			check(b.Cond)
 		}
 		return nil
 	})
-	return t
+	return cc.expandCombos(t)
+}
+
+// expandCombos rewrites @dairy, when a combination substitute can replace
+// dairy, as {if swap_dairy == 'milk_lemon_juice'}@dairy and @dairy_lemon_juice{else}@dairy{end}.
+func (cc *cctx) expandCombos(t tmpl.Template) tmpl.Template {
+	if len(cc.combos) == 0 {
+		return t
+	}
+	var out tmpl.Template
+	for _, seg := range t {
+		if seg.Kind == tmpl.KIf {
+			for i := range seg.Branches {
+				seg.Branches[i].Body = cc.expandCombos(seg.Branches[i].Body)
+			}
+			seg.Else = cc.expandCombos(seg.Else)
+		}
+		parts := cc.combos[seg.ID]
+		if seg.Kind != tmpl.KIng || len(parts) == 0 || seg.Part != "" {
+			out = append(out, seg)
+			continue
+		}
+		// Group the extra parts by the choice that includes them.
+		byPick := map[string][]string{}
+		var picks []string
+		for _, p := range parts {
+			pick := cc.pickOf(p.id)
+			if _, ok := byPick[pick]; !ok {
+				picks = append(picks, pick)
+			}
+			byPick[pick] = append(byPick[pick], p.id)
+		}
+		and := " " + cc.Catalog.T("and") + " "
+		ifSeg := tmpl.Segment{Kind: tmpl.KIf, Pos: seg.Pos, Else: tmpl.Template{seg}}
+		for _, pick := range picks {
+			body := tmpl.Template{seg}
+			ids := byPick[pick]
+			for i, id := range ids {
+				sep := and
+				if i < len(ids)-1 {
+					sep = ", "
+				}
+				part := seg
+				part.ID = id
+				body = append(body, tmpl.Segment{Kind: tmpl.KText, Text: sep}, part)
+			}
+			cond := &expr.Expr{Root: &expr.Node{Op: "==", Args: []*expr.Node{{Op: expr.OpVar, Name: parts[0].opt, Pos: -1}, {Op: expr.OpStr, Str: pick, Pos: -1}}, Pos: -1}}
+			ifSeg.Branches = append(ifSeg.Branches, tmpl.Branch{Cond: cond, Body: body})
+		}
+		out = append(out, ifSeg)
+	}
+	return out
+}
+
+// pickOf finds the swap choice that includes the ingredient draft with this id.
+func (cc *cctx) pickOf(id string) string {
+	for _, g := range cc.swaps {
+		for _, ch := range g.choices {
+			for _, x := range ch.parts {
+				if x.id == id {
+					return ch.pick
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func keys(m map[string]bool) []string {
@@ -1004,4 +1264,20 @@ func contains(list []string, s string) bool {
 
 func (it *IngItem) hasOverrides() bool {
 	return it.Measure != "" || it.Density != nil || it.GramsEach > 0 || len(it.UnitGrams) > 0 || it.Round != nil || it.Category != ""
+}
+
+// scaleAmount returns a copy of a multiplied by r (a substitute's ratio).
+func scaleAmount(a *AmountC, r float64) *AmountC {
+	out := &AmountC{S: a.S}
+	if a.N != nil {
+		v := *a.N * r
+		out.N = &v
+	}
+	if a.E != nil {
+		out.E = &expr.Expr{Src: a.E.Src, Root: &expr.Node{Op: "*", Args: []*expr.Node{a.E.Root, {Op: expr.OpNum, Num: r, Pos: -1}}, Pos: -1}}
+	}
+	if a.Hi != nil {
+		out.Hi = scaleAmount(a.Hi, r)
+	}
+	return out
 }

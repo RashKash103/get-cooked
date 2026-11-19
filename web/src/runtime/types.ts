@@ -7,7 +7,7 @@ export type Segment =
   | { e: IR; f?: string; a?: string[] }
   | { ing: string; p?: IR; n?: boolean; pt?: string }
   | { eq: string }
-  | { timer: IR }
+  | { timer: IR; hi?: IR }
   | { if: { c: IR; t: Template }[]; else?: Template };
 
 export type Template = Segment[];
@@ -83,6 +83,7 @@ export interface OptionC {
   step?: number;
   unit?: string;
   when?: IR;
+  swap?: string;
 }
 
 export interface RecipeRef {
@@ -109,6 +110,7 @@ export interface IngC {
   optional?: boolean;
   recipe?: RecipeRef;
   split?: { id: string; a: Amount }[];
+  swap?: string;
 }
 
 export interface Amount {
@@ -156,6 +158,7 @@ export interface Seg {
   q: string;
   j: string;
   min: number;
+  max: number;
   link: LinkM | null;
 }
 
@@ -168,6 +171,7 @@ export interface IngM {
   optional: boolean;
   link: LinkM | null;
   uses: { n: number; q: string }[];
+  swap?: string;
 }
 
 export interface Model {

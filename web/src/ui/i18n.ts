@@ -22,6 +22,14 @@ export function num(n: number | string): string {
   return localDigits(String(n), dict?._digits);
 }
 
+/** Turns the page language's digits (৩, ٣, …) back into 0–9, e.g. in typed amounts. */
+export function asciiDigits(s: string): string {
+  t("_digits");
+  const d = [...(dict?._digits ?? "")];
+  if (d.length !== 10) return s;
+  return [...s].map((c) => (d.includes(c) ? String(d.indexOf(c)) : c === "٫" ? "." : c)).join("");
+}
+
 /** Sets the dictionary directly (tests). */
 export function setDict(d: Record<string, string>): void {
   dict = d;

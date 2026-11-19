@@ -51,6 +51,7 @@ type OptionC struct {
 	Step    *float64   `json:"step,omitempty"`
 	Unit    string     `json:"unit,omitempty"`
 	When    *expr.Expr `json:"when,omitempty"`
+	Swap    string     `json:"swap,omitempty"` // a substitutes choice: the ingredient id it swaps
 	L       Loc        `json:"-"`
 }
 
@@ -107,6 +108,7 @@ type IngC struct {
 	Optional bool          `json:"optional,omitempty"`
 	Recipe   *RecipeRef    `json:"recipe,omitempty"`
 	Split    []SplitC      `json:"split,omitempty"`
+	Swap     string        `json:"swap,omitempty"` // the swap_<id> option when it has substitutes
 	L        Loc           `json:"-"`
 }
 

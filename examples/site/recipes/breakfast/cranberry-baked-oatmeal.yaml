@@ -74,6 +74,8 @@ ingredients:
         unit: cup
         note: roughly chopped
         optional: true
+        # Substitutes get a "Swap" button; pecans keep the same amount.
+        subs: [{ ingredient: pecans }]
 
 steps:
   - Heat the oven to {375 | temp} and butter the &dish.

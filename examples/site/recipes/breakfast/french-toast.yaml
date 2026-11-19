@@ -33,7 +33,14 @@ ingredients:
     with:
       wheat: "wheat_bread ? 25 : 0"
   - { id: eggs, ingredient: egg, amount: 4 }
-  - { id: milk, ingredient: milk, amount: 1, unit: cup }
+  - id: milk
+    ingredient: milk
+    amount: 1
+    unit: cup
+    subs:
+      - { ingredient: coconut-milk, note: for dairy-free }
+      # A combination: two ingredients replace the milk together.
+      - [{ ingredient: heavy-cream, ratio: 0.5 }, { ingredient: water, ratio: 0.5 }]
   - { id: sugar, ingredient: granulated-sugar, amount: 2, unit: tbsp }
   - { id: vanilla, ingredient: vanilla-extract, amount: 1, unit: tsp }
   - { id: cinnamon, ingredient: cinnamon, amount: 0.5, unit: tsp }

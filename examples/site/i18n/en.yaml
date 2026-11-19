@@ -105,7 +105,7 @@ ui:
   list_remove: "Remove {name}"
   list_make: make it
   scale_prompt: "How much {name} do you have? (now {q})"
-  scale_hint: Tap an amount to scale the recipe to what you have
+  scale_hint: Tap an amount to see it in other units or scale the recipe to what you have
   save: Save recipe
   saved: Saved
   my_notes: Your notes
@@ -124,6 +124,27 @@ ui:
   # Added by `get-cooked migrate` (English defaults; translate as needed):
   offline: You're offline
   offline_body: This page hasn't been saved for offline use yet. Recipes you've opened before still work.
+  # Added by `get-cooked migrate` (English defaults; translate as needed):
+  timer_pick: How long?
+  timer_start: Start timer
+  start_over: Start over
+  progress_cleared: Progress cleared
+  in_progress: In progress
+  swap: Swap
+  and: and
+  swap_ingredient: "Swap {name}"
+  timers_more: "+{n} more"
+  timers_less: Show less
+  timer_go_to_step: Go to step
+  list_share: Share list
+  list_import: "Add {n} recipe(s) from a shared shopping list?"
+  list_imported: Shared list added
+  convert: Other units
+  by_weight: by weight
+  by_volume: by volume
+  scale_to: Scale to what I have
+  scale_amount: "Amount of {name}"
+  scale_go: Scale
 
 # Labels for keys under a recipe's `times:`. Unknown keys are title-cased.
 times:

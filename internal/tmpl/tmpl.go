@@ -39,6 +39,7 @@ type Segment struct {
 	Kind     string
 	Text     string     // KText
 	Expr     *expr.Expr // KExpr value, KIng portion (nil = full), KTimer minutes
+	Hi       *expr.Expr // KTimer: upper end of a time range (~{4, 5})
 	Fmt      string     // KExpr formatter
 	Args     []string   // formatter args
 	ID       string     // KIng / KEquip
@@ -192,12 +193,28 @@ func Parse(src string) (Template, error) {
 			if err != nil {
 				return nil, err
 			}
-			e, err := parseExpr(src[i+2:end], i+2)
-			if err != nil {
-				return nil, err
+			inner := src[i+2 : end]
+			seg := Segment{Kind: KTimer, Pos: i}
+			if c := topLevelComma(inner); c >= 0 {
+				// A time range: ~{4, 5} or ~{bake, bake + 5}.
+				lo, err := parseExpr(inner[:c], i+2)
+				if err != nil {
+					return nil, err
+				}
+				hi, err := parseExpr(inner[c+1:], i+3+c)
+				if err != nil {
+					return nil, err
+				}
+				seg.Expr, seg.Hi = lo, hi
+			} else {
+				e, err := parseExpr(inner, i+2)
+				if err != nil {
+					return nil, err
+				}
+				seg.Expr = e
 			}
 			flush()
-			*cur = append(*cur, Segment{Kind: KTimer, Expr: e, Pos: i})
+			*cur = append(*cur, seg)
 			i = end + 1
 		case (c == '@' || c == '&') && i+1 < len(src) && isIDStart(src[i+1]):
 			j := i + 1
@@ -263,6 +280,32 @@ func isKeywordBrace(s string) bool {
 	}
 	inner := strings.TrimSpace(s[1:end])
 	return inner == "end" || inner == "else" || strings.HasPrefix(inner, "elif ") || strings.HasPrefix(inner, "if ")
+}
+
+// topLevelComma finds a comma outside parentheses and quotes, or -1.
+func topLevelComma(s string) int {
+	depth := 0
+	var quote byte
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case quote != 0:
+			if c == '\\' {
+				i++
+			} else if c == quote {
+				quote = 0
+			}
+		case c == '\'' || c == '"':
+			quote = c
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+		case c == ',' && depth == 0:
+			return i
+		}
+	}
+	return -1
 }
 
 func isIDStart(b byte) bool { return b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b == '_' }
@@ -394,6 +437,9 @@ func (t Template) Exprs() []*expr.Expr {
 		if s.Expr != nil {
 			out = append(out, s.Expr)
 		}
+		if s.Hi != nil {
+			out = append(out, s.Hi)
+		}
 		for _, b := range s.Branches {
 			out = append(out, b.Cond)
 		}
@@ -434,7 +480,11 @@ func (t Template) MarshalJSON() ([]byte, error) {
 		case KEquip:
 			out = append(out, map[string]any{"eq": s.ID})
 		case KTimer:
-			out = append(out, map[string]any{"timer": s.Expr})
+			m := map[string]any{"timer": s.Expr}
+			if s.Hi != nil {
+				m["hi"] = s.Hi
+			}
+			out = append(out, m)
 		case KIf:
 			m := map[string]any{"if": s.Branches}
 			if len(s.Else) > 0 {
@@ -469,6 +519,7 @@ func (t *Template) UnmarshalJSON(b []byte) error {
 			Pt    string     `json:"pt"`
 			Eq    *string    `json:"eq"`
 			Timer *expr.Expr `json:"timer"`
+			Hi    *expr.Expr `json:"hi"`
 			If    []Branch   `json:"if"`
 			Else  Template   `json:"else"`
 		}
@@ -481,7 +532,7 @@ func (t *Template) UnmarshalJSON(b []byte) error {
 		case m.Eq != nil:
 			*t = append(*t, Segment{Kind: KEquip, ID: *m.Eq})
 		case m.Timer != nil:
-			*t = append(*t, Segment{Kind: KTimer, Expr: m.Timer})
+			*t = append(*t, Segment{Kind: KTimer, Expr: m.Timer, Hi: m.Hi})
 		case m.If != nil:
 			*t = append(*t, Segment{Kind: KIf, Branches: m.If, Else: m.Else})
 		case m.E != nil:

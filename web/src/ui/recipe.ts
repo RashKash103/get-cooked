@@ -1,12 +1,23 @@
 import { render } from "../runtime/render";
 import type { Compiled, Model, State, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
-import { fr, recipeURL, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
+import {
+  esc,
+  fr,
+  recipeURL,
+  renderEquipment,
+  renderIngredients,
+  renderNotes,
+  renderSteps,
+  renderTimes,
+} from "./blocks";
+import { conversions } from "./convert";
 import { download, type Meta, summary, toMarkdown } from "./export";
-import { num, t } from "./i18n";
+import { asciiDigits, num, t } from "./i18n";
 import { addRecipe, inList, itemsFrom } from "./list";
+import { openSheet } from "./sheet";
 import { load, save } from "./storage";
-import { startTimer } from "./timers";
+import { pickTimer, startTimer } from "./timers";
 import { toast } from "./toast";
 import { keepAwake } from "./wakelock";
 
@@ -17,6 +28,7 @@ interface PageData extends Meta {
 
 /** Parses "3", "1 1/2", "1½", "0,5" or "3/4". */
 export function parseAmount(s: string): number {
+  s = asciiDigits(s);
   const vulgar: Record<string, number> = { "½": 0.5, "⅓": 1 / 3, "⅔": 2 / 3, "¼": 0.25, "¾": 0.75, "⅛": 0.125 };
   let total = 0;
   for (const part of s.trim().replace(",", ".").split(/\s+/)) {
@@ -127,9 +139,7 @@ export function initRecipe(): void {
     for (const el of document.querySelectorAll<HTMLElement>("[data-opt]")) {
       el.hidden = !m.options.includes(el.dataset.opt ?? "");
     }
-    for (const box of document.querySelectorAll<HTMLInputElement>(".ing-check")) {
-      box.checked = checked.has(box.dataset.id ?? "");
-    }
+    paintChecked();
     paintSteps();
     syncSheet();
     paintMeta();
@@ -150,10 +160,99 @@ export function initRecipe(): void {
       s.classList.toggle("done", done.has(n));
       s.classList.toggle("current", cooking && n === current);
     }
+    paintProgress();
     const of = $("step-of");
     if (of)
       of.textContent =
         current > steps.length ? t("all_done") : t("step_of", { n: num(current), total: num(steps.length) });
+  }
+
+  // Ticked ingredients, in the list and wherever a step mentions them.
+  function paintChecked(): void {
+    for (const box of document.querySelectorAll<HTMLInputElement>(".ing-check")) {
+      box.checked = checked.has(box.dataset.id ?? "");
+    }
+    for (const ref of document.querySelectorAll<HTMLElement>(".ref[data-ing]")) {
+      const got = checked.has(ref.dataset.ing ?? "");
+      ref.classList.toggle("got", got);
+      // A toggle once scripts run: tap (or Enter/Space) to tick it off.
+      ref.setAttribute("role", "button");
+      ref.tabIndex = 0;
+      ref.setAttribute("aria-pressed", String(got));
+    }
+  }
+
+  function toggleChecked(id: string): void {
+    if (checked.has(id)) checked.delete(id);
+    else checked.add(id);
+    save(keyChecked, checked.size ? [...checked] : undefined);
+    paintChecked();
+    paintProgress();
+  }
+
+  /** The compiled ingredient behind a rendered one (variants share an id). */
+  function compiledIng(id: string, name: string) {
+    const all = c.ingredients.flatMap((s) => s.items);
+    const ic = all.find((x) => x.id === id && (x.name === name || x.plural === name)) ?? all.find((x) => x.id === id);
+    return { ic, info: ic?.ref ? c.ings?.[ic.ref] : undefined };
+  }
+
+  // Tapping an amount: the same amount in other units, and scaling the
+  // recipe to how much the reader has.
+  function openConvert(id: string): void {
+    const it = model?.ingredients.flatMap((s) => s.items).find((x) => x.id === id);
+    if (!it?.q || it.q.v <= 0) return;
+    const { info } = compiledIng(it.id, it.name);
+    const rows = conversions(it.q, info, c.units);
+    const label = (sys: string, dim: string) =>
+      `${t(`units_${sys}`)}${dim === "mass" ? ` · ${t("by_weight")}` : dim === "volume" ? ` · ${t("by_volume")}` : ""}`;
+    const body = `<p class="convert-now"><span class="qty">${esc(fr(qtyString(it.q)))}</span>${esc(it.j)}${esc(it.name)}</p>
+  ${rows.length ? `<h3 class="opt-label">${esc(t("convert"))}</h3><dl class="convert-list">${rows.map((r) => `<div><dt>${esc(label(r.sys, r.dim))}</dt><dd>${fr(esc(r.text))}</dd></div>`).join("")}</dl>` : ""}
+  <h3 class="opt-label">${esc(t("scale_to"))}</h3>
+  <div class="convert-scale"><input type="text" inputmode="decimal" id="scale-have" class="field" aria-label="${esc(t("scale_amount", { name: it.name }))}" placeholder="${esc(qtyString(it.q))}" autocomplete="off">
+    <button type="button" class="pill" id="scale-go">${esc(t("scale_go"))}</button></div>`;
+    const d = openSheet("convert-sheet", it.name, body);
+    const input = d.querySelector<HTMLInputElement>("#scale-have") as HTMLInputElement;
+    const go = () => {
+      const want = parseAmount(input.value);
+      if (!(want > 0) || !it.q) return;
+      const s = state.servings ?? c.servings.default;
+      state.servings = Math.round(((s * want) / it.q.v) * 100) / 100;
+      d.close();
+      paint();
+    };
+    d.querySelector("#scale-go")?.addEventListener("click", go);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        go();
+      }
+    });
+  }
+
+  // The "Swap" button on an ingredient with substitutes.
+  function openSwap(optID: string): void {
+    const o = c.options?.find((x) => x.id === optID);
+    if (!o?.choices) return;
+    const v = state.options?.[o.id] ?? o.default;
+    const body = `<div class="swap-list" role="radiogroup">${o.choices
+      .map(
+        (ch) =>
+          `<label class="swap-choice"><input type="radio" name="swap-pick" value="${esc(ch.id)}"${ch.id === v ? " checked" : ""}><span>${esc(ch.label)}</span></label>`,
+      )
+      .join("")}</div>`;
+    const d = openSheet("swap-sheet", o.label, body);
+    d.querySelector(".swap-list")?.addEventListener("change", (e) => {
+      (state.options as Record<string, Value>)[o.id] = (e.target as HTMLInputElement).value;
+      d.close();
+      paint();
+    });
+  }
+
+  // "Start over": clear ticked ingredients and finished steps.
+  function paintProgress(): void {
+    const btn = $("start-over");
+    if (btn) btn.hidden = checked.size === 0 && done.size === 0;
   }
 
   function goStep(delta: number): void {
@@ -237,24 +336,25 @@ export function initRecipe(): void {
     if (sv) return changeServings(Number(sv.dataset.servings));
     const chip = el.closest<HTMLElement>(".timer-chip");
     if (chip) {
-      const label = `${data.title} · ${chip.dataset.label ?? ""}`;
-      return startTimer(Number(chip.dataset.min), label);
+      // The step first: it's what gets cut off on a narrow screen otherwise.
+      const label = `${chip.dataset.label ?? ""} · ${data.title}`;
+      const from = {
+        url: location.pathname + location.search,
+        step: Number(chip.closest<HTMLElement>(".step")?.dataset.n) || 0,
+      };
+      if (chip.dataset.max) return pickTimer(Number(chip.dataset.min), Number(chip.dataset.max), label, from);
+      return startTimer(Number(chip.dataset.min), label, from);
     }
     const qty = el.closest<HTMLElement>(".ing .qty");
     if (qty && model) {
-      // Scale the recipe to the amount the reader has.
       e.preventDefault();
-      const id = qty.closest<HTMLElement>(".ing")?.dataset.id;
-      const it = model.ingredients.flatMap((s) => s.items).find((x) => x.id === id);
-      if (!it?.q || it.q.v <= 0) return;
-      const answer = prompt(t("scale_prompt", { name: it.name, q: qtyString(it.q) }), "");
-      if (answer === null) return;
-      const want = parseAmount(answer);
-      if (!(want > 0)) return;
-      const s = state.servings ?? c.servings.default;
-      state.servings = Math.round(((s * want) / it.q.v) * 100) / 100;
-      return paint();
+      return openConvert(qty.closest<HTMLElement>(".ing")?.dataset.id ?? "");
     }
+    const swap = el.closest<HTMLElement>(".swap-btn");
+    if (swap) return openSwap(swap.dataset.swap ?? "");
+    // Tapping an ingredient in a step ticks it off.
+    const ref = el.closest<HTMLElement>(".step .ref[data-ing]");
+    if (ref) return toggleChecked(ref.dataset.ing ?? "");
     const num = el.closest<HTMLElement>(".step-num");
     const step = el.closest<HTMLElement>(".step");
     if (step && !el.closest("a, button:not(.step-num)")) {
@@ -275,9 +375,7 @@ export function initRecipe(): void {
     const t = e.target as HTMLInputElement;
     if (t.classList.contains("ing-check")) {
       const id = t.dataset.id ?? "";
-      if (t.checked) checked.add(id);
-      else checked.delete(id);
-      save(keyChecked, checked.size ? [...checked] : undefined);
+      if (t.checked !== checked.has(id)) toggleChecked(id);
     }
   });
 
@@ -306,6 +404,39 @@ export function initRecipe(): void {
     paint();
   });
   $("cook-mode")?.addEventListener("click", () => void setCooking(!cooking));
+  $("start-over")?.addEventListener("click", () => {
+    checked.clear();
+    done.clear();
+    save(keyChecked, undefined);
+    save(keyDone, undefined);
+    paintChecked();
+    current = cooking ? 1 : 0;
+    paintSteps();
+    toast(t("progress_cleared"));
+    if (cooking) document.querySelector(".step.current")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  // Swipe left/right on the steps in cook mode to move between steps.
+  let touch: { x: number; y: number } | null = null;
+  $("steps")?.addEventListener(
+    "touchstart",
+    (e) => {
+      const p = e.touches[0];
+      touch = cooking && p ? { x: p.clientX, y: p.clientY } : null;
+    },
+    { passive: true },
+  );
+  $("steps")?.addEventListener(
+    "touchend",
+    (e) => {
+      const p = e.changedTouches[0];
+      if (!touch || !p) return;
+      const dx = p.clientX - touch.x;
+      const dy = p.clientY - touch.y;
+      touch = null;
+      if (Math.abs(dx) > 60 && Math.abs(dy) < 40) goStep(dx < 0 ? 1 : -1);
+    },
+    { passive: true },
+  );
   $("exit-cook")?.addEventListener("click", () => void setCooking(false));
   $("next-step")?.addEventListener("click", () => goStep(1));
   $("prev-step")?.addEventListener("click", () => goStep(-1));
@@ -378,6 +509,10 @@ export function initRecipe(): void {
   });
   document.addEventListener("keydown", (e) => {
     const t = e.target as HTMLElement;
+    if (t.matches?.(".step .ref[data-ing]") && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      return toggleChecked(t.dataset.ing ?? "");
+    }
     if (e.metaKey || e.ctrlKey || e.altKey || t.matches("input, textarea, select") || sheet?.open) return;
     if (cooking && (e.key === "ArrowRight" || e.key === " ")) {
       e.preventDefault();
@@ -393,10 +528,12 @@ export function initRecipe(): void {
   else {
     // Server-rendered markup already matches the default state.
     model = render(c, state);
+    paintChecked();
     paintSteps();
     syncSheet();
     paintMeta();
-    for (const box of document.querySelectorAll<HTMLInputElement>(".ing-check"))
-      box.checked = checked.has(box.dataset.id ?? "");
   }
+  // Opened from a timer: show the step it was started from.
+  const fromStep = location.hash.match(/^#step-(\d+)$/);
+  if (fromStep) document.querySelector(`.step[data-n="${fromStep[1]}"]`)?.scrollIntoView({ block: "center" });
 }

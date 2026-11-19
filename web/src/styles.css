@@ -322,7 +322,19 @@
     @apply divide-y divide-stone-200/70 dark:divide-stone-800;
   }
   .ing-label {
-    @apply flex cursor-pointer items-start gap-3 py-2.5;
+    @apply flex min-w-0 flex-1 cursor-pointer items-start gap-3 py-2.5;
+  }
+  .ing:has(.swap-btn) {
+    @apply flex items-start gap-2;
+  }
+  .swap-btn {
+    @apply mt-1.5 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-accent-ink transition hover:bg-accent/10;
+  }
+  .swap-btn .icon {
+    @apply size-3.5;
+  }
+  #ingredients .qty {
+    @apply cursor-pointer underline decoration-stone-300 decoration-dotted underline-offset-4 dark:decoration-stone-600;
   }
   .ing-check {
     @apply mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-stone-300 transition checked:border-accent checked:bg-accent dark:border-stone-600;
@@ -443,6 +455,57 @@
   .chip .icon {
     @apply size-[0.95em];
   }
+  .card-badge {
+    @apply rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent-ink;
+  }
+  .timer-picker-label {
+    @apply -mt-2 text-sm text-stone-500 dark:text-stone-400;
+  }
+  .timer-choices {
+    @apply flex flex-wrap gap-2;
+  }
+  .convert-now {
+    @apply -mt-2 text-lg;
+  }
+  .convert-list {
+    @apply divide-y divide-stone-200/70 dark:divide-stone-800;
+  }
+  .convert-list div {
+    @apply flex items-baseline justify-between gap-4 py-2;
+  }
+  .convert-list dt {
+    @apply text-sm text-stone-500 dark:text-stone-400;
+  }
+  .convert-list dd {
+    @apply font-semibold tabular-nums;
+  }
+  .convert-scale {
+    @apply flex gap-2;
+  }
+  .convert-scale .pill {
+    @apply h-11 bg-accent px-5 text-white hover:bg-accent dark:text-white dark:hover:bg-accent;
+  }
+  .convert-scale input {
+    @apply h-11 min-w-0 flex-1 rounded-full border border-stone-200 bg-white px-4 text-base outline-none placeholder:text-stone-400 focus:border-accent dark:border-stone-800 dark:bg-stone-900;
+  }
+  .swap-list {
+    @apply flex flex-col gap-2;
+  }
+  .swap-choice {
+    @apply flex cursor-pointer items-center gap-3 rounded-2xl border border-stone-200 px-4 py-3 transition has-checked:border-accent has-checked:bg-accent/10 dark:border-stone-800;
+  }
+  .swap-choice input {
+    @apply size-4 accent-accent;
+  }
+  .timers-more {
+    @apply self-end rounded-full bg-stone-900/80 px-3 py-1 text-xs font-medium text-white shadow backdrop-blur dark:bg-stone-100/80 dark:text-stone-900;
+  }
+  .timer-info[data-act="go"] {
+    @apply cursor-pointer;
+  }
+  .start-btn {
+    @apply flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-white transition active:scale-[0.98];
+  }
   .link-btn {
     @apply inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-accent-ink dark:text-stone-400;
   }
@@ -454,7 +517,11 @@
     @apply space-y-1;
   }
   .step {
-    @apply -mx-3 flex gap-3 rounded-2xl px-3 py-3 transition;
+    @apply flex gap-3 rounded-2xl py-3 transition;
+    /* Bleeds 12px into the page gutter; divided by the text-size zoom so a
+       larger text size doesn't push it past the screen edge. */
+    margin-inline: calc(-0.75rem / var(--gc-zoom, 1));
+    padding-inline: calc(0.75rem / var(--gc-zoom, 1));
   }
   .step-num {
     @apply flex size-7 shrink-0 items-center justify-center rounded-full bg-stone-200 text-sm font-semibold tabular-nums transition dark:bg-stone-800;
@@ -482,6 +549,16 @@
   }
   .ref {
     @apply font-medium;
+  }
+  .ref[data-ing] {
+    @apply cursor-pointer rounded transition;
+  }
+  .ref.got,
+  .ref.got .ref-q {
+    @apply text-stone-400 line-through decoration-stone-300 dark:text-stone-500 dark:decoration-stone-600;
+  }
+  .step.flash {
+    @apply ring-2 ring-accent;
   }
   .ref-q {
     @apply rounded bg-accent/10 px-1 font-semibold text-accent-ink tabular-nums;

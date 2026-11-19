@@ -32,7 +32,7 @@ Empty values fall back to the original language, so partial work is safe.
      translate the text *between* the tags and move whole tags to fit the
      grammar, but each `{if …}` needs its matching `{else}`/`{end}`.
    - Keep references exactly: `@id`, `@id{1/2}`, `@id.part`, `@id{-}`, `&id`,
-     `~{minutes}`. They render the ingredient amount and name, equipment or a
+     `~{minutes}` (or `~{lo, hi}` for a range). They render the ingredient amount and name, equipment or a
      timer, already in the target language, so don't add the ingredient name
      next to them. If the language puts a connector between amount and name,
      the site config handles it.

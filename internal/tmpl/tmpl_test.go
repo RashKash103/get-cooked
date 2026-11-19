@@ -30,6 +30,8 @@ func TestParse(t *testing.T) {
 		{"line a &pan.", `["line a ",{"eq":"pan"},"."]`},
 		{"salt & pepper", `["salt & pepper"]`},
 		{"bake ~{bake + 2}", `["bake ",{"timer":["+",["v","bake"],["n",2]]}]`},
+		{"boil ~{4, 5}.", `["boil ",{"hi":["n",5],"timer":["n",4]},"."]`},
+		{"~{min(a, b), max(a, b) + 1}", `[{"hi":["+",["call","max",["v","a"],["v","b"]],["n",1]],"timer":["call","min",["v","a"],["v","b"]]}]`},
 		{"email me@ 3 & 2 ~ x #1", `["email me@ 3 & 2 ~ x #1"]`},
 		{`literal \{braces\} \@x \&y \~\{z\}`, `["literal {braces} @x &y ~{z}"]`},
 		{"oats{if c}, @c{end}.", `["oats",{"if":[{"c":["v","c"],"t":[", ",{"ing":"c"}]}]},"."]`},

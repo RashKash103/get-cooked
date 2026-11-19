@@ -649,6 +649,19 @@ func (t *Table) Duration(min float64) string {
 	return t.L(durationWords(min, t.Words))
 }
 
+// DurationRange formats a time range: "4–5 min" when both ends are whole
+// minutes under an hour, otherwise both durations in full ("1 hr – 1 hr 15 min").
+func (t *Table) DurationRange(lo, hi float64) string {
+	w := t.Words["min"]
+	if w == "" {
+		w = "min"
+	}
+	if lo >= 1 && hi < 60 && lo == math.Round(lo) && hi == math.Round(hi) {
+		return t.L(fmt.Sprintf("%d–%d %s", int(lo), int(hi), w))
+	}
+	return t.Duration(lo) + " – " + t.Duration(hi)
+}
+
 // Duration formats minutes as "1 hr 5 min", "45 min" or "30 sec".
 func Duration(min float64) string { return durationWords(min, nil) }
 

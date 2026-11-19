@@ -104,7 +104,7 @@ type indexView struct {
 
 // jsKeys are the UI strings the browser needs.
 var jsKeys = []string{
-	"back", "all_recipes", "text_size", "notes", "ingredients", "equipment", "steps", "source", "units", "units_us", "units_metric", "units_original", "uses",
+	"back", "all_recipes", "text_size", "timer_pick", "timer_start", "swap", "swap_ingredient", "timers_more", "timers_less", "timer_go_to_step", "list_share", "list_import", "list_imported", "convert", "by_weight", "by_volume", "close", "scale_to", "scale_amount", "scale_go", "progress_cleared", "in_progress", "notes", "ingredients", "equipment", "steps", "source", "units", "units_us", "units_metric", "units_original", "uses",
 	"list", "list_add", "list_update", "list_added", "list_remove", "list_make", "list_confirm_clear", "list_items",
 	"scale_prompt", "step_of", "all_done", "save", "saved", "copied", "exit_cook", "cook",
 	"step", "uses", "unsupported", "cook_on", "cook_on_unsupported", "copied", "copy_failed", "link_copied",

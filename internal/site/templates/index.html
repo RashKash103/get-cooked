@@ -10,6 +10,7 @@
   </div>
   <nav class="chips">
     <button type="button" class="chip" data-cat="" aria-pressed="true">{{.T "all"}}</button>
+    <button type="button" class="chip" data-cat="__progress" aria-pressed="false" hidden>{{.T "in_progress"}}</button>
     <button type="button" class="chip" data-cat="__saved" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg> {{.T "saved"}}</button>
     {{if gt (len .Index.Categories) 1}}{{range .Index.Categories}}<button type="button" class="chip" data-cat="{{.}}" aria-pressed="false">{{.}}</button>{{end}}{{end}}
   </nav>

@@ -47,7 +47,7 @@ ingredients:
 steps:
   - Warm @fat in the &pot over medium heat. Add @onion and cook, stirring, until soft, ~{8}.
   - Add @garlic and @flakes and cook until fragrant, ~{1}.
-  - Pour in @tomatoes and @broth, add @salt, and simmer ~{20}, stirring now and then.
+  - Pour in @tomatoes and @broth, add @salt, and simmer ~{20, 25}, stirring now and then.
   - "{if blend == 'smooth'}Turn off the heat, add @basil{-} and blend with the &blender until silky.{else}Stir in @basil{-} and mash a little with a spoon for a rustic soup.{end}"
   - Stir in @cream and warm through without boiling. Taste and add @sugar if needed.
 

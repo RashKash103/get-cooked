@@ -65,9 +65,13 @@ notes:
   rewrite ingredients and steps. `optional: true` ingredients get a checkbox
   automatically.
 - Variants: `butter` *or* `olive oil` under one id, so steps don't care.
+- Substitutes: `subs:` gives an ingredient a Swap button. A substitute can
+  be another ingredient, a different amount (`ratio: 0.75`), or a
+  combination like milk + lemon juice for buttermilk, and steps name
+  whatever was picked.
 - Inline conditionals `{if}…{elif}…{else}…{end}`, ingredient references with
   live amounts (`@flour`, `@sugar{1/2}`, `@salt.topping`), equipment
-  references (`&pan`) and tap-to-start timers (`~{25}`).
+  references (`&pan`) and tap-to-start timers (`~{25}`, or `~{4, 5}` for a range with a picker).
 - Divided ingredients: one total in the list, each step's share underneath.
 - Ranges: `amount: [2, 3]` → "2–3 cloves", scaled and converted.
 - Per-recipe overrides of any ingredient database setting, inline: e.g.
@@ -94,14 +98,23 @@ notes:
   icons (or `icon: my-icon.png` in get-cooked.yaml for your own), and a
   service worker that keeps visited recipes available offline.
 - Cook mode keeps the screen awake and turns the bottom bar into
-  ‹ Step 3 of 7 › navigation (arrow keys and space work too). Timers survive
-  reloads and ring with sound, vibration and notifications.
+  ‹ Step 3 of 7 › navigation (arrow keys, space and swiping work too).
+- Timers survive reloads and ring with sound, vibration and notifications.
+  A range like "4–5 min" opens a picker (start, 25/50/75%, end, or a
+  slider). Several timers collapse to the next one due, and tapping a timer
+  jumps back to its step, even from another page.
+- Tap an ingredient in a step to tick it off; **Start over** clears ticks and
+  finished steps, and the index marks recipes that are in progress.
 - Shopping list: add recipes as configured; the list merges the same
   ingredient across recipes (converting units), groups it by aisle and
-  remembers what you've ticked off. Everything stays on the device.
+  remembers what you've ticked off. Everything stays on the device until you
+  share it: **Share list** makes a link that carries the whole list in its
+  `#fragment` (never sent to the server).
 - Export the recipe exactly as configured: print or save as PDF (a clean
   cookbook-style layout), download Markdown, or copy as text.
-- Tap any amount to scale the recipe to what you have ("I have 3 eggs").
+- Tap any amount to see it in other units (US and metric, by volume and by
+  weight when the density is known) or to scale the recipe to what you have
+  ("I have 3 eggs").
 - Saved recipes (♥) with an index filter, and private per-recipe notes.
 - Instant search, category filters, shareable links that keep servings and
   options, schema.org structured data, sitemaps, Atom feed and responsive

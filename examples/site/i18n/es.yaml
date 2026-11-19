@@ -85,6 +85,26 @@ ui:
   timer_cancel: Cancelar temporizador
   timer_dismiss: Descartar temporizador
   timer_clock_app: Abrir en la app Reloj
+  timer_pick: ¿Cuánto tiempo?
+  timer_start: Iniciar temporizador
+  start_over: Empezar de nuevo
+  progress_cleared: Progreso borrado
+  in_progress: En curso
+  swap: Cambiar
+  and: "y"
+  swap_ingredient: "Cambiar {name}"
+  timers_more: "+{n} más"
+  timers_less: Mostrar menos
+  timer_go_to_step: Ir al paso
+  list_share: Compartir lista
+  list_import: "¿Añadir {n} receta(s) de una lista de compras compartida?"
+  list_imported: Lista compartida añadida
+  convert: Otras unidades
+  by_weight: por peso
+  by_volume: por volumen
+  scale_to: Ajustar a lo que tengo
+  scale_amount: "Cantidad de {name}"
+  scale_go: Ajustar
   notes: Notas
   export: Exportar
   export_markdown: Descargar Markdown
@@ -104,7 +124,7 @@ ui:
   list_remove: "Quitar {name}"
   list_make: prepárala
   scale_prompt: "¿Cuánto {name} tienes? (ahora {q})"
-  scale_hint: Toca una cantidad para ajustar la receta a lo que tienes
+  scale_hint: Toca una cantidad para verla en otras unidades o ajustar la receta a lo que tienes
   save: Guardar receta
   saved: Guardadas
   my_notes: Tus notas

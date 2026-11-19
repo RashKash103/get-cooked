@@ -47,7 +47,8 @@ title, category folder matching existing ones; look at `recipes/`).
 4. **Steps**: rewrite into clear, short steps that reference ingredients with
    `@id` (amount + name) the first time each is used, `@id{-}` for later
    mentions, equipment with `&id`, temperatures with `{350 | temp}` (or
-   `temp_c` if written in Celsius), and every time with a timer `~{minutes}`.
+   `temp_c` if written in Celsius), and every time with a timer `~{minutes}`. Write a range like "4 to 5 minutes"
+   as one timer, `~{4, 5}`, not `{4}–~{5}`.
    If an ingredient is used in parts across steps, use `split:` with
    `@id.part`, or portions like `@sugar{1/2}`.
 5. **Think about scaling**: this is what makes get-cooked worth it. Look for:
@@ -62,6 +63,10 @@ title, category folder matching existing ones; look at `recipes/`).
    (substitutions, optional add-ins with `optional: true`, method choices like
    oven vs. air fryer, spice level). Each option must change ingredients
    and/or steps. Don't add options for their own sake.
+   When the source says "or use X" for an ingredient, write it as `subs:` on
+   that ingredient (`subs: [kefir]`, `{ ingredient: x, ratio: 0.75 }`, or a
+   combination like `[{ ingredient: milk, ratio: 0.875 }, 2 tbsp lemon juice]`)
+   instead of a separate option; see the recipe format's "Substitutes".
 7. **Notes**: storage, make-ahead or serving tips from the source, kept short.
 8. Put any text that readers see inside templates (`{if}…{end}`), not inside
    expression strings, so it can be translated.

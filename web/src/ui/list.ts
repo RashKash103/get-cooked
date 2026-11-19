@@ -197,6 +197,47 @@ export function mergeLines(recipes: ListRecipe[], table: Table, system: string):
   return lines;
 }
 
+// ── Sharing: the list travels in the link's #fragment (never sent to the
+// server), deflated when the browser can, as base64url.
+const b64 = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+const unb64 = (s: string) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+
+async function pipe(
+  bytes: Uint8Array<ArrayBuffer>,
+  stream: CompressionStream | DecompressionStream,
+): Promise<Uint8Array<ArrayBuffer>> {
+  const out = new Blob([bytes]).stream().pipeThrough(stream);
+  return new Uint8Array(await new Response(out).arrayBuffer());
+}
+
+/** Encodes a list for a share link: "z" + deflated, or "j" + plain JSON. */
+export async function encodeList(s: ListState): Promise<string> {
+  const json = new TextEncoder().encode(JSON.stringify({ r: s.recipes, c: s.checked }));
+  if (typeof CompressionStream === "undefined") return `j${b64(json)}`;
+  return `z${b64(await pipe(json, new CompressionStream("deflate-raw")))}`;
+}
+
+export async function decodeList(code: string): Promise<ListState> {
+  let bytes: Uint8Array<ArrayBuffer> = unb64(code.slice(1));
+  if (code[0] === "z") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
+  const v = JSON.parse(new TextDecoder().decode(bytes)) as { r?: ListRecipe[]; c?: string[] };
+  if (!Array.isArray(v.r)) throw new Error("not a shopping list");
+  return { recipes: v.r, checked: Array.isArray(v.c) ? v.c : [] };
+}
+
+/** Adds a shared list to this one; shared recipes replace ones already here. */
+export function mergeShared(mine: ListState, shared: ListState): ListState {
+  const slugs = new Set(shared.recipes.map((r) => r.slug));
+  return {
+    recipes: [...mine.recipes.filter((r) => !slugs.has(r.slug)), ...shared.recipes],
+    checked: [...new Set([...mine.checked, ...shared.checked])],
+  };
+}
+
 export function initListPage(): void {
   const page = document.getElementById("list-page");
   const dataEl = document.getElementById("list-data");
@@ -273,6 +314,32 @@ export function initListPage(): void {
     write(s);
     paint();
   });
+  document.getElementById("list-share")?.addEventListener("click", async () => {
+    const url = new URL(location.pathname, location.href);
+    url.hash = `l=${await encodeList(read())}`;
+    try {
+      if (navigator.share) await navigator.share({ title: t("list"), url: url.href });
+      else {
+        await navigator.clipboard.writeText(url.href);
+        toast(t("link_copied"));
+      }
+    } catch {
+      // cancelled
+    }
+  });
+  // Opened from a share link.
+  const shared = location.hash.match(/^#l=([zj][\w-]+)$/);
+  if (shared?.[1]) {
+    history.replaceState(null, "", location.pathname + location.search);
+    void decodeList(shared[1])
+      .then((s) => {
+        if (s.recipes.length === 0 || !confirm(t("list_import", { n: num(s.recipes.length) }))) return;
+        write(mergeShared(read(), s));
+        paint();
+        toast(t("list_imported"));
+      })
+      .catch(() => toast(t("unsupported")));
+  }
   document.getElementById("list-copy")?.addEventListener("click", async () => {
     const s = read();
     const lines = mergeLines(s.recipes, data.units, system).filter((l) => !s.checked.includes(l.k));

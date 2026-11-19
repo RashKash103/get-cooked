@@ -159,6 +159,12 @@ export class Units {
     return this.l(duration(min, this.t.words));
   }
 
+  durationRange(lo: number, hi: number): string {
+    const w = this.t.words?.min || "min";
+    if (lo >= 1 && hi < 60 && lo === round(lo) && hi === round(hi)) return this.l(`${lo}–${hi} ${w}`);
+    return `${this.duration(lo)} – ${this.duration(hi)}`;
+  }
+
   private text(r: Rule, v: number): string {
     return r.tiers && r.tiers.length > 0 ? this.num(v) : this.frac(v);
   }

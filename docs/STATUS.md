@@ -38,14 +38,20 @@ Everything in `docs/design.md` is implemented, tested and committed:
   adds missing i18n strings.
 - v0.5.1 (2026-11-19): full PWA (PNG/maskable/Apple icons, complete manifest,
   `icon:` option, offline page), nginx/Docker docs.
+- Unreleased (0.6.0): time ranges `~{4, 5}` with a picker, migration
+  `0.6.0-timer-ranges`; Start over; In progress badge + filter; swipe in cook
+  mode; collapsed timer stack + tap a timer to go to its step; tap a step
+  ingredient to tick it; Share list links (#l= deflate-raw base64url);
+  conversions sheet on tapping an amount (replaces the scale prompt; accepts
+  localized digits); `subs:` substitutes incl. combinations (compile-time
+  expansion of @id into {if}, extra parts get ids like dairy_lemon_juice);
+  fixed 150% text overflow from `.step` negative margins.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
 
 - Static PDFs per recipe at build time (needs typst in the build).
 - Share the shopping list as a link (encode it in the URL).
-
 - Nutrition per serving from the ingredient database.
 - WebP image variants.
 - Native wrapper app using the `window.GetCookedNative` bridge.
-- `i18n sync` to add newly introduced UI keys to existing catalogs.

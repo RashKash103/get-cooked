@@ -14,6 +14,13 @@ interface Timer {
   left: number; // ms remaining, when paused
   paused: boolean;
   done: boolean;
+  from?: TimerFrom;
+}
+
+/** Where a timer was started: the recipe page (with its settings) and step. */
+export interface TimerFrom {
+  url: string;
+  step: number;
 }
 
 const KEY = "gc:timers";
@@ -67,21 +74,52 @@ function clockAppURL(t: Timer): string | null {
   return null;
 }
 
+let expanded = false;
+
+/** The timer to show when several are collapsed: a finished one, else the next to finish. */
+export function leadTimer<T extends { done: boolean; paused: boolean; endsAt: number; left: number }>(
+  ts: T[],
+  now: number,
+): T | undefined {
+  const left = (t: T) => (t.paused ? t.left : t.endsAt - now);
+  return ts.find((t) => t.done) ?? [...ts].sort((a, b) => Number(a.paused) - Number(b.paused) || left(a) - left(b))[0];
+}
+
 function render(): void {
   const root = document.getElementById("timers");
   if (!root) return;
-  root.innerHTML = timers
-    .map((t) => {
-      const app = clockAppURL(t);
-      return `<div class="timer${t.done ? " done" : ""}" data-timer="${t.id}" role="timer">
-  <div class="timer-info"><div class="timer-left">${t.done ? tr("timer_done_short") : clock(remaining(t))}</div><div class="timer-label">${t.label.replace(/[<>&]/g, "")}</div></div>
+  // More than one timer collapses to the most urgent, so they don't cover the recipe.
+  if (timers.length < 2) expanded = false;
+  const lead = leadTimer(timers, Date.now());
+  const shown = timers.length > 1 && !expanded && lead ? [lead] : timers;
+  const more =
+    timers.length > 1
+      ? `<button type="button" class="timers-more" data-act="expand" aria-expanded="${expanded}">${expanded ? tr("timers_less") : tr("timers_more", { n: num(timers.length - 1) })}</button>`
+      : "";
+  root.innerHTML =
+    shown
+      .map((t) => {
+        const app = clockAppURL(t);
+        return `<div class="timer${t.done ? " done" : ""}" data-timer="${t.id}" role="timer">
+  <div class="timer-info"${t.from?.step ? ` data-act="go" role="link" tabindex="0" title="${tr("timer_go_to_step")}"` : ""}><div class="timer-left">${t.done ? tr("timer_done_short") : clock(remaining(t))}</div><div class="timer-label">${t.label.replace(/[<>&]/g, "")}</div></div>
   ${app && !t.done ? `<a class="icon-btn" href="${app}" aria-label="${tr("timer_clock_app")}" title="${tr("timer_clock_app")}"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg></a>` : ""}
   ${t.done ? "" : `<button type="button" class="icon-btn" data-act="add" aria-label="${tr("timer_add")}" title="${tr("timer_add")}"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>`}
   ${t.done ? "" : `<button type="button" class="icon-btn" data-act="toggle" aria-label="${t.paused ? tr("timer_resume") : tr("timer_pause")}"><svg class="icon" aria-hidden="true"><use href="#i-${t.paused ? "play" : "pause"}"></use></svg></button>`}
   <button type="button" class="icon-btn" data-act="close" aria-label="${t.done ? tr("timer_dismiss") : tr("timer_cancel")}"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>`;
-    })
-    .join("");
+      })
+      .join("") + more;
+}
+
+function goToStep(f: TimerFrom): void {
+  const step = document.querySelector<HTMLElement>(`.step[data-n="${f.step}"]`);
+  if (step && location.pathname === new URL(f.url, location.href).pathname) {
+    step.scrollIntoView({ behavior: "smooth", block: "center" });
+    step.classList.add("flash");
+    setTimeout(() => step.classList.remove("flash"), 1200);
+  } else {
+    location.href = `${f.url}#step-${f.step}`;
+  }
 }
 
 function beep(): void {
@@ -162,7 +200,7 @@ function ensureTicking(): void {
   tick();
 }
 
-export function startTimer(minutes: number, label: string): void {
+export function startTimer(minutes: number, label: string, from?: TimerFrom): void {
   const seconds = Math.round(minutes * 60);
   const n = native();
   if (n) {
@@ -190,6 +228,7 @@ export function startTimer(minutes: number, label: string): void {
     left: total,
     paused: false,
     done: false,
+    from,
   });
   persist();
   ensureTicking();
@@ -199,10 +238,18 @@ export function startTimer(minutes: number, label: string): void {
 export function initTimers(): void {
   document.getElementById("timers")?.addEventListener("click", (e) => {
     const btn = (e.target as Element).closest<HTMLElement>("[data-act]");
+    if (btn?.dataset.act === "expand") {
+      expanded = !expanded;
+      render();
+      return;
+    }
     const el = btn?.closest<HTMLElement>("[data-timer]");
     const t = timers.find((x) => x.id === el?.dataset.timer);
     if (!btn || !t) return;
     switch (btn.dataset.act) {
+      case "go":
+        if (t.from) goToStep(t.from);
+        return;
       case "close":
         timers = timers.filter((x) => x !== t);
         break;
@@ -225,8 +272,98 @@ export function initTimers(): void {
     ensureTicking();
   });
   // Catch up immediately when returning to the tab.
+  document.getElementById("timers")?.addEventListener("keydown", (e) => {
+    const el = (e.target as Element).closest<HTMLElement>('[data-act="go"]');
+    if (el && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      el.click();
+    }
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && timers.length) ensureTicking();
   });
   if (timers.length) ensureTicking();
+}
+
+/**
+ * Picker steps for a time range: 15 s for short timers (under 10 min, where
+ * durations show seconds), 1 min for spans up to an hour, else 5 min.
+ */
+export function rangeStep(loMin: number, hiMin: number): number {
+  const span = (hiMin - loMin) * 60;
+  if (hiMin <= 10 && span <= 600) return 15;
+  if (span <= 3600) return 60;
+  return 300;
+}
+
+/** Quick choices for a range: start, 25%, 50%, 75% and end (in seconds, deduped). */
+export function rangeChoices(loMin: number, hiMin: number): number[] {
+  const step = rangeStep(loMin, hiMin);
+  const lo = Math.round(loMin * 60);
+  const hi = Math.round(hiMin * 60);
+  const out: number[] = [];
+  for (const f of [0, 0.25, 0.5, 0.75, 1]) {
+    const s = f === 0 ? lo : f === 1 ? hi : Math.round((lo + (hi - lo) * f) / step) * step;
+    if (!out.includes(s)) out.push(s);
+  }
+  return out;
+}
+
+let picker: HTMLDialogElement | null = null;
+
+/** Opens the range picker for a "4–5 min" timer and starts the chosen time. */
+export function pickTimer(loMin: number, hiMin: number, label: string, from?: TimerFrom): void {
+  const fmt = (sec: number) => num(duration(sec / 60, words()));
+  const choices = rangeChoices(loMin, hiMin);
+  const step = rangeStep(loMin, hiMin);
+  const lo = Math.round(loMin * 60);
+  const hi = Math.round(hiMin * 60);
+  let value = choices[Math.floor(choices.length / 2)] as number;
+  if (!picker) {
+    picker = document.createElement("dialog");
+    picker.className = "sheet timer-picker";
+    picker.setAttribute("aria-labelledby", "timer-picker-title");
+    document.body.append(picker);
+    picker.addEventListener("click", (e) => {
+      if (e.target === picker) picker?.close();
+    });
+  }
+  const p = picker;
+  p.innerHTML = `<form method="dialog" class="sheet-inner">
+  <div class="sheet-head"><h2 id="timer-picker-title">${tr("timer_pick")}</h2>
+    <button class="icon-btn" value="close" aria-label="${tr("timer_cancel")}"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button></div>
+  <p class="timer-picker-label">${label.replace(/[<>&]/g, "")}</p>
+  <div class="timer-choices">${choices
+    .map((s) => `<button type="button" class="chip" data-sec="${s}" aria-pressed="false">${fmt(s)}</button>`)
+    .join("")}</div>
+  <label class="opt-number"><span class="opt-label"><output id="timer-picker-value"></output></span>
+    <input type="range" id="timer-picker-range" min="${lo}" max="${hi}" step="${step}" aria-label="${tr("timer_pick")}"></label>
+  <button type="button" class="start-btn" id="timer-picker-start"><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>${tr("timer_start")}</button>
+</form>`;
+  const range = p.querySelector<HTMLInputElement>("#timer-picker-range") as HTMLInputElement;
+  const out = p.querySelector("#timer-picker-value") as HTMLOutputElement;
+  const paint = () => {
+    range.value = String(value);
+    out.textContent = fmt(value);
+    for (const b of p.querySelectorAll<HTMLElement>("[data-sec]")) {
+      b.setAttribute("aria-pressed", String(Number(b.dataset.sec) === value));
+    }
+  };
+  p.querySelector(".timer-choices")?.addEventListener("click", (e) => {
+    const b = (e.target as Element).closest<HTMLElement>("[data-sec]");
+    if (b) {
+      value = Number(b.dataset.sec);
+      paint();
+    }
+  });
+  range.addEventListener("input", () => {
+    value = Number(range.value);
+    paint();
+  });
+  p.querySelector("#timer-picker-start")?.addEventListener("click", () => {
+    p.close();
+    startTimer(value / 60, label, from);
+  });
+  paint();
+  p.showModal();
 }

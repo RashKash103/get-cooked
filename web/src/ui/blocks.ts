@@ -78,7 +78,11 @@ export function renderIngredients(m: Model, base: string): string {
       if (it.uses.length > 0) {
         s += `<span class="ing-uses">${it.uses.map((u) => esc(t("uses", { q: u.q, n: num(u.n) }))).join(" · ")}</span>`;
       }
-      s += `</span></label></li>`;
+      s += `</span></label>`;
+      if (it.swap) {
+        s += `<button type="button" class="swap-btn" data-swap="${esc(it.swap)}" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-swap"></use></svg>${esc(t("swap"))}</button>`;
+      }
+      s += `</li>`;
     }
     s += `</ul></section>`;
   }
@@ -100,7 +104,7 @@ export function renderSegs(segs: Seg[], base: string, label: string): string {
         s += `<span class="ref-eq">${esc(g.v)}</span>`;
         break;
       case "timer":
-        s += `<button type="button" class="timer-chip" data-min="${formatNumber(g.min)}" data-label="${esc(label)}"><svg class="icon" aria-hidden="true"><use href="#i-timer"></use></svg>${esc(g.v)}</button>`;
+        s += `<button type="button" class="timer-chip" data-min="${formatNumber(g.min)}"${g.max > 0 ? ` data-max="${formatNumber(g.max)}"` : ""} data-label="${esc(label)}"><svg class="icon" aria-hidden="true"><use href="#i-timer"></use></svg>${esc(g.v)}</button>`;
         break;
       default:
         s += esc(g.v);

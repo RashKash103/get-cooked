@@ -375,3 +375,126 @@ func exampleDB(t *testing.T) *recipe.DB {
 	}
 	return db
 }
+
+func TestSubstitutes(t *testing.T) {
+	base := compileExample(t, "breakfast/buttermilk-pancakes.yaml")
+	c := &recipe.Compiler{Units: base.C.Units, DB: exampleDB(t), System: "original"}
+	r, ds := c.Compile("t.yaml", []byte(`title: T
+servings: 4
+ingredients:
+  - id: dairy
+    ingredient: buttermilk
+    amount: [1.5, 2]
+    unit: cup
+    subs:
+      - { ingredient: milk, note: plus 2 tbsp lemon juice }
+      - { ingredient: heavy-cream, ratio: 0.5 }
+      - 3 tbsp maple syrup
+  - 1 egg
+steps: ["Add @dairy{if swap_dairy == 'milk'} with the lemon{end}."]
+`))
+	if ds.HasErrors() {
+		t.Fatal(ds)
+	}
+	var opt *recipe.OptionC
+	for i := range r.C.Options {
+		if r.C.Options[i].ID == "swap_dairy" {
+			opt = &r.C.Options[i]
+		}
+	}
+	if opt == nil || opt.Type != "choice" || opt.Default != "buttermilk" || opt.Swap != "dairy" || opt.Label != "Swap buttermilk" || len(opt.Choices) != 4 {
+		t.Fatalf("swap option: %+v", opt)
+	}
+	if ids := []string{opt.Choices[1].ID, opt.Choices[2].ID, opt.Choices[3].ID}; ids[0] != "milk" || ids[1] != "heavy_cream" || ids[2] != "maple_syrup" {
+		t.Errorf("choice ids %v", ids)
+	}
+	for _, c := range []struct {
+		pick, ing, step string
+	}{
+		{"buttermilk", "1 ½–2 cups buttermilk", "Add 1 ½–2 cups buttermilk."},
+		{"milk", "1 ½–2 cups milk", "Add 1 ½–2 cups milk with the lemon."},
+		{"heavy_cream", "¾–1 cup heavy cream", "Add ¾–1 cup heavy cream."},
+		{"maple_syrup", "3 tbsp maple syrup", "Add 3 tbsp maple syrup."},
+	} {
+		m := render(t, r, State{Options: map[string]any{"swap_dairy": c.pick}})
+		it := ingredient(m, "dairy")
+		if got := it.Q.String() + it.J + it.Name; got != c.ing {
+			t.Errorf("%s: ingredient %q want %q", c.pick, got, c.ing)
+		}
+		if it.Swap != "swap_dairy" {
+			t.Errorf("%s: swap %q", c.pick, it.Swap)
+		}
+		if got := stepText(m); got != c.step {
+			t.Errorf("%s: step %q want %q", c.pick, got, c.step)
+		}
+	}
+	if it := ingredient(render(t, r, State{}), "egg"); it.Swap != "" {
+		t.Error("an ingredient without substitutes has no swap")
+	}
+
+	for src, want := range map[string]string{
+		"subs: [{ id: other, ingredient: milk }]":           "shares the id",
+		"subs: [{ ingredient: milk, when: 'true' }]":        "can't have its own `when:`",
+		"subs: [{ ingredient: milk, amount: 1, ratio: 2 }]": "use it without `amount:`",
+		"subs: [{ ingredient: milk, optional: true }]":      "can't be optional",
+	} {
+		_, ds := c.Compile("t.yaml", []byte("title: T\nservings: 4\ningredients:\n  - { id: dairy, ingredient: buttermilk, amount: 2, unit: cup, "+src+" }\nsteps: [Add @dairy.]\n"))
+		if !strings.Contains(ds.Error(), want) {
+			t.Errorf("%s: want error containing %q, got %v", src, want, ds)
+		}
+	}
+}
+
+func TestCombinationSubstitutes(t *testing.T) {
+	base := compileExample(t, "breakfast/buttermilk-pancakes.yaml")
+	c := &recipe.Compiler{Units: base.C.Units, DB: exampleDB(t), System: "original"}
+	r, ds := c.Compile("t.yaml", []byte(`title: T
+servings: 4
+ingredients:
+  - id: dairy
+    ingredient: buttermilk
+    amount: 2
+    unit: cup
+    subs:
+      - [{ ingredient: milk, ratio: 0.875 }, { ingredient: lemon-juice, amount: 2, unit: tbsp }]
+      - label: Yogurt, thinned
+        items: [{ ingredient: heavy-cream, ratio: 0.5 }, { ingredient: water, ratio: 0.5 }, { id: tang, ingredient: lemon-juice, amount: 1, unit: tsp }]
+steps: [Whisk in @dairy., "Use @dairy{1/2} now, the rest later; then the @dairy{-}."]
+`))
+	if ds.HasErrors() {
+		t.Fatal(ds)
+	}
+	var opt recipe.OptionC
+	for _, o := range r.C.Options {
+		if o.ID == "swap_dairy" {
+			opt = o
+		}
+	}
+	if len(opt.Choices) != 3 || opt.Choices[1].ID != "milk_lemon_juice" || opt.Choices[1].Label != "milk + lemon juice" || opt.Choices[2].Label != "Yogurt, thinned" {
+		t.Fatalf("choices %+v", opt.Choices)
+	}
+	ids := func(m *Model) string {
+		var out []string
+		for _, s := range m.Ingredients {
+			for _, it := range s.Items {
+				out = append(out, it.ID+"="+it.Q.String()+it.J+it.Name)
+			}
+		}
+		return strings.Join(out, "; ")
+	}
+	for _, c := range []struct{ pick, ings, steps string }{
+		{"buttermilk", "dairy=2 cups buttermilk", "Whisk in 2 cups buttermilk.\nUse 1 cup buttermilk now, the rest later; then the buttermilk."},
+		{"milk_lemon_juice", "dairy=1 ¾ cups milk; dairy_lemon_juice=2 tbsp lemon juice",
+			"Whisk in 1 ¾ cups milk and 2 tbsp lemon juice.\nUse ¾ cup + 2 tbsp milk and 1 tbsp lemon juice now, the rest later; then the milk and lemon juice."},
+		{opt.Choices[2].ID, "dairy=1 cup heavy cream; dairy_water=1 cup water; tang=1 tsp lemon juice",
+			"Whisk in 1 cup heavy cream, 1 cup water and 1 tsp lemon juice.\nUse ½ cup heavy cream, ½ cup water and ½ tsp lemon juice now, the rest later; then the heavy cream, water and lemon juice."},
+	} {
+		m := render(t, r, State{Options: map[string]any{"swap_dairy": c.pick}})
+		if got := ids(m); got != c.ings {
+			t.Errorf("%s ingredients:\n got %s\nwant %s", c.pick, got, c.ings)
+		}
+		if got := stepText(m); got != c.steps {
+			t.Errorf("%s steps:\n got %s\nwant %s", c.pick, got, c.steps)
+		}
+	}
+}

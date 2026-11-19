@@ -46,6 +46,9 @@ func Summary(d Doc) string {
 				parts = append(parts, o.Label)
 			}
 		case "choice":
+			if o.Swap != "" && v == o.Default {
+				continue // nothing swapped
+			}
 			for _, c := range o.Choices {
 				if c.ID == v {
 					parts = append(parts, o.Label+": "+c.Label)

@@ -119,7 +119,11 @@ func renderIngredients(m *runtime.Model, base string, cat *i18n.Catalog) string 
 				}
 				sb.WriteString(`<span class="ing-uses">` + strings.Join(parts, " · ") + `</span>`)
 			}
-			sb.WriteString(`</span></label></li>`)
+			sb.WriteString(`</span></label>`)
+			if it.Swap != "" {
+				fmt.Fprintf(&sb, `<button type="button" class="swap-btn" data-swap="%s" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-swap"></use></svg>%s</button>`, esc(it.Swap), esc(cat.T("swap")))
+			}
+			sb.WriteString(`</li>`)
 		}
 		sb.WriteString(`</ul></section>`)
 	}
@@ -144,8 +148,12 @@ func renderSegs(segs []runtime.Seg, base string, label string) string {
 		case "eq":
 			sb.WriteString(`<span class="ref-eq">` + esc(s.V) + `</span>`)
 		case "timer":
-			fmt.Fprintf(&sb, `<button type="button" class="timer-chip" data-min="%s" data-label="%s"><svg class="icon" aria-hidden="true"><use href="#i-timer"></use></svg>%s</button>`,
-				expr.FormatNumber(s.Min), esc(label), esc(s.V))
+			max := ""
+			if s.Max > 0 {
+				max = fmt.Sprintf(` data-max="%s"`, expr.FormatNumber(s.Max))
+			}
+			fmt.Fprintf(&sb, `<button type="button" class="timer-chip" data-min="%s"%s data-label="%s"><svg class="icon" aria-hidden="true"><use href="#i-timer"></use></svg>%s</button>`,
+				expr.FormatNumber(s.Min), max, esc(label), esc(s.V))
 		default:
 			sb.WriteString(esc(s.V))
 		}

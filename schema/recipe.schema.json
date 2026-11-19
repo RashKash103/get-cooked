@@ -483,6 +483,19 @@
             },
             "category": {
               "$ref": "ingredients.schema.json#/$defs/entry/properties/category"
+            },
+            "subs": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Substitutes the reader can swap in with the Swap button (option swap_<id>, whose choices are the ingredient keys or names). Each shares this ingredient's id and uses its amount and unit unless it gives its own; `ratio` multiplies the inherited amount. A list (or {label, items}) is a combination of several ingredients, e.g. milk + lemon juice for buttermilk.",
+              "items": {
+                "$ref": "#/$defs/substitute"
+              }
+            },
+            "ratio": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Substitutes only: multiply the inherited amount, e.g. 0.5."
             }
           },
           "anyOf": [
@@ -604,6 +617,41 @@
                 "tip",
                 "warning"
               ]
+            }
+          }
+        }
+      ]
+    },
+    "substitute": {
+      "description": "A substitute: an ingredient (shorthand or mapping), or a combination of ingredients that replace it together, as a list or {label, items}. A combination's first part takes the ingredient's place; the others get ids like <id>_<ingredient> and are named wherever the text says @<id>.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ingredient"
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/ingredient"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "items"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "description": "Name in the swap menu (default: the parts' names joined with +)."
+            },
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "$ref": "#/$defs/ingredient"
+              }
             }
           }
         }

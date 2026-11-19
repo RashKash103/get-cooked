@@ -183,6 +183,43 @@ steps:
 Portions like `@sugar{1/2}` used in two or more steps show the same breakdown
 under the ingredient ("¾ cup for step 2 · ¾ cup for step 4").
 
+### Substitutes
+
+`subs:` lists what the reader can use instead. The ingredient gets a **Swap**
+button, and a choice option named `swap_<id>` appears in Customize; steps,
+scaling, unit conversion, the shopping list and exports all follow the pick.
+
+```yaml
+  - id: dairy
+    ingredient: buttermilk
+    amount: 2
+    unit: cup
+    subs:
+      - kefir                                   # same amount and unit
+      - { ingredient: plain-yogurt, ratio: 0.75, note: thinned with water }
+      - 1 3/4 cups whole milk                   # an amount of its own
+      # Several ingredients together: a list, or { label:, items: [...] }.
+      - [{ ingredient: milk, ratio: 0.875 }, { ingredient: lemon-juice, amount: 2, unit: tbsp }]
+steps:
+  - Whisk in @dairy{if swap_dairy == 'milk_lemon_juice'}, then rest 5 minutes{end}.
+```
+
+- A substitute without an amount uses the original's amount and unit;
+  `ratio:` multiplies it. Each one can be shorthand text or a mapping with
+  any ingredient field (`note`, `measure`, `density`, …), except `id`,
+  `when`, `optional`, `recipe` and `split`.
+- A **combination** replaces one ingredient with several. Its first part takes
+  the ingredient's id; the others get ids like `dairy_lemon_juice` (or the
+  `id:` you give them) and their own lines in the list, and they only inherit
+  an amount when they give a `ratio:`. Wherever the text says `@dairy`, every
+  part is named: "1 ¾ cups milk and 2 tbsp lemon juice". Portions
+  (`@dairy{1/2}`) apply to each part.
+- Choice ids come from the ingredient keys or names, joined with `_` for a
+  combination (`buttermilk`, `kefir`, `plain_yogurt`, `milk_lemon_juice`), so
+  text can depend on the pick with `{if swap_dairy == 'kefir'}…{end}`.
+- The swap is offered only while the ingredient is in the recipe (its
+  `when:` holds and, for an optional one, it's ticked).
+
 ### Recipe references (prerequisites)
 
 ```yaml
@@ -222,6 +259,7 @@ Steps, notes, equipment names and ingredient notes are **text templates**:
 | `@id{-}` | the name only |
 | `&id` | equipment name (current variant) |
 | `~{minutes}` | a tappable timer, e.g. `~{bake}` or `~{2.5}` |
+| `~{lo, hi}` | a time range shown as "4–5 min", e.g. `~{4, 5}` or `~{bake, bake + 5}`. Tapping it opens a picker with the start, 25%, 50%, 75% and end times, plus a slider for anything in between |
 | `\{ \} \@ \& \~ \\` | literal characters |
 
 ```yaml

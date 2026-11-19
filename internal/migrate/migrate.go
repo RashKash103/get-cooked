@@ -85,6 +85,33 @@ func init() {
 	})
 }
 
+func init() {
+	All = append(All, Migration{
+		ID:          "0.6.0-timer-ranges",
+		Since:       "0.6.0",
+		Description: "{4}–~{5} → ~{4, 5}: a time range becomes one timer with a picker (recipes and their translations)",
+		Kinds:       []Kind{Recipes},
+		Apply: func(src []byte) ([]byte, int) {
+			n := 0
+			out := timerRangeRe.ReplaceAllFunc(src, func(m []byte) []byte {
+				g := timerRangeRe.FindSubmatch(m)
+				lo := strings.TrimSpace(string(g[1]))
+				for _, kw := range []string{"if ", "elif ", "else", "end"} {
+					if strings.HasPrefix(lo, kw) {
+						return m
+					}
+				}
+				n++
+				return []byte("~{" + lo + ", " + strings.TrimSpace(string(g[2])) + "}")
+			})
+			return out, n
+		},
+	})
+}
+
+// {4}–~{5}, {4} - ~{5}, {4} to ~{5} (but not formatted values like {x | int}).
+var timerRangeRe = regexp.MustCompile(`\{([^{}|]+)\}\s*(?:–|—|-|to)\s*~\{([^{}]+)\}`)
+
 var gramsPerCupRe = regexp.MustCompile(`\bgrams_per_cup:[ \t]*([0-9]*\.?[0-9]+)`)
 
 // Change is a file a migration changed (or would change).

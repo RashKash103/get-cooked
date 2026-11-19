@@ -18,6 +18,7 @@ export function summary(c: Compiled, m: Model, opts: Record<string, Value>): str
     if (o.type === "toggle") {
       if (v === true) parts.push(o.label);
     } else if (o.type === "choice") {
+      if (o.swap && v === o.default) continue; // nothing swapped
       const ch = o.choices?.find((x) => x.id === v);
       if (ch) parts.push(`${o.label}: ${ch.label}`);
     } else {

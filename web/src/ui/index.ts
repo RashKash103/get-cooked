@@ -1,4 +1,5 @@
 // Index page: instant client-side search and category filter.
+import { t } from "./i18n";
 import { load } from "./storage";
 export function initIndex(): void {
   const input = document.getElementById("search") as HTMLInputElement | null;
@@ -10,6 +11,21 @@ export function initIndex(): void {
   input.value = params.get("q") ?? "";
   let cat = params.get("c") ?? "";
   const saved = new Set(load<string[]>("gc:saved", []));
+  // Recipes with ticked ingredients or finished steps.
+  const progress = new Set(
+    cards
+      .map((c) => c.dataset.slug ?? "")
+      .filter((s) => load<unknown[]>(`gc:c:${s}`, []).length > 0 || load<unknown[]>(`gc:d:${s}`, []).length > 0),
+  );
+  for (const c of cards) {
+    if (!progress.has(c.dataset.slug ?? "")) continue;
+    c.querySelector(".card-meta")?.insertAdjacentHTML(
+      "afterbegin",
+      `<span class="card-badge">${t("in_progress")}</span>`,
+    );
+  }
+  const progressChip = chips.find((c) => c.dataset.cat === "__progress");
+  if (progressChip) progressChip.hidden = progress.size === 0;
   const savedChip = chips.find((c) => c.dataset.cat === "__saved");
   if (savedChip) savedChip.hidden = saved.size === 0;
 
@@ -18,7 +34,9 @@ export function initIndex(): void {
     let shown = 0;
     for (const c of cards) {
       const hay = c.dataset.search ?? "";
-      const inCat = cat === "__saved" ? saved.has(c.dataset.slug ?? "") : !cat || c.dataset.cat === cat;
+      const slug = c.dataset.slug ?? "";
+      const inCat =
+        cat === "__saved" ? saved.has(slug) : cat === "__progress" ? progress.has(slug) : !cat || c.dataset.cat === cat;
       const ok = inCat && terms.every((t) => hay.includes(t));
       c.hidden = !ok;
       if (ok) shown++;

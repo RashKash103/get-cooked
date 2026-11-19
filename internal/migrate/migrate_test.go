@@ -223,3 +223,32 @@ func TestI18nStringsMigration(t *testing.T) {
 		t.Errorf("template changed (%d)", n)
 	}
 }
+
+func TestTimerRangeMigration(t *testing.T) {
+	var m Migration
+	for _, x := range All {
+		if x.ID == "0.6.0-timer-ranges" {
+			m = x
+		}
+	}
+	in := "steps:\n  - Boil for {4}–~{5}, until done.\n  - Bake {35} - ~{40} or {bake} to ~{bake + 5}.\n  - Keep {if a}x{end}–~{5} and {x | int}–~{5} as they are.\n"
+	out, n := m.Apply([]byte(in))
+	got := string(out)
+	if n != 3 {
+		t.Errorf("changes = %d:\n%s", n, got)
+	}
+	for _, want := range []string{"Boil for ~{4, 5}, until done.", "Bake ~{35, 40} or ~{bake, bake + 5}.", "{if a}x{end}–~{5}", "{x | int}–~{5}"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	// Translation files are migrated the same way, keys and values together.
+	tr := "strings:\n  \"Boil for {4}–~{5}.\": \"ফোটান {4}–~{5}।\"\n"
+	out, _ = m.Apply([]byte(tr))
+	if string(out) != "strings:\n  \"Boil for ~{4, 5}.\": \"ফোটান ~{4, 5}।\"\n" {
+		t.Errorf("translation:\n%s", out)
+	}
+	if again, n := m.Apply([]byte(got)); n != 0 || string(again) != got {
+		t.Error("not idempotent")
+	}
+}

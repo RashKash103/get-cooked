@@ -93,6 +93,26 @@ ui:
   timer_cancel: Cancel timer
   timer_dismiss: Dismiss timer
   timer_clock_app: Open in Clock app
+  timer_pick: How long?
+  timer_start: Start timer
+  start_over: Start over
+  progress_cleared: Progress cleared
+  in_progress: In progress
+  swap: Swap
+  and: and
+  swap_ingredient: "Swap {name}"
+  timers_more: "+{n} more"
+  timers_less: Show less
+  timer_go_to_step: Go to step
+  list_share: Share list
+  list_import: "Add {n} recipe(s) from a shared shopping list?"
+  list_imported: Shared list added
+  convert: Other units
+  by_weight: by weight
+  by_volume: by volume
+  scale_to: Scale to what I have
+  scale_amount: "Amount of {name}"
+  scale_go: Scale
   notes: Notes
   export: Export
   export_markdown: Download Markdown
@@ -112,7 +132,7 @@ ui:
   list_remove: "Remove {name}"
   list_make: make it
   scale_prompt: "How much {name} do you have? (now {q})"
-  scale_hint: Tap an amount to scale the recipe to what you have
+  scale_hint: Tap an amount to see it in other units or scale the recipe to what you have
   save: Save recipe
   saved: Saved
   my_notes: Your notes
