@@ -150,6 +150,10 @@
         "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
       },
       "description": "Site languages. The first is the language recipes are written in; others are served under /<lang>/ and get a language picker. UI strings come from i18n/<lang>.yaml; recipe translations from <recipe>.<lang>.yaml."
+    },
+    "icon": {
+      "type": "string",
+      "description": "Square PNG or JPEG (at least 512×512), relative to the site root, used for the installable app's icons (resized to 192, 512, a maskable 512 and a 180 Apple icon). Default: the built-in icon."
     }
   },
   "$defs": {

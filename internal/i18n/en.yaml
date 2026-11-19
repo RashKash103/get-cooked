@@ -79,6 +79,8 @@ ui:
   not_translated: This recipe hasn't been translated yet.
   not_found: Page not found
   not_found_body: That recipe may have moved.
+  offline: You're offline
+  offline_body: This page hasn't been saved for offline use yet. Recipes you've opened before still work.
   back_home: Back to all recipes
   made_with: Made with
   timer_started: "{time} timer started"

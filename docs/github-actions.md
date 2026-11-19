@@ -47,3 +47,43 @@ set it to the final public URL (the path matters for project pages such as
 
 `validate` exits non-zero on errors. Warnings (untranslated strings, YAML
 comments that swallowed text) are reported but don't fail the build.
+
+## Serving with nginx or Docker
+
+Any static file server works. For the site to install as an app (PWA) it
+must be served over HTTPS (a TLS-terminating proxy is fine), and the service
+worker and manifest should not be cached for long so updates arrive
+promptly. A minimal nginx config:
+
+```nginx
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+    absolute_redirect off;
+
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+    }
+    # Fingerprinted assets never change.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    # Always revalidate pages, the service worker and the manifest.
+    location ~* (\.html|/sw\.js|\.webmanifest)$ {
+        add_header Cache-Control "no-cache";
+    }
+    error_page 404 /404.html;
+}
+```
+
+A Docker image only needs to copy the built site:
+
+```dockerfile
+FROM nginx:alpine-slim
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY public/ /usr/share/nginx/html/
+```
+
+Build `public/` in CI with the action (or the CLI) before building the image.

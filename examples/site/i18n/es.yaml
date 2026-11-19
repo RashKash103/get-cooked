@@ -71,6 +71,8 @@ ui:
   not_translated: Esta receta aún no está traducida.
   not_found: Página no encontrada
   not_found_body: Puede que esa receta se haya movido.
+  offline: Sin conexión
+  offline_body: Esta página aún no está guardada para usarla sin conexión. Las recetas que ya abriste siguen funcionando.
   back_home: Volver a todas las recetas
   made_with: Hecho con
   timer_started: "Temporizador de {time} iniciado"

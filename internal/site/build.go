@@ -118,7 +118,7 @@ type builder struct {
 	out, root, absolute     string
 	as                      Assets
 	recipeTpl, indexTpl, nf *template.Template
-	listTpl                 *template.Template
+	listTpl, offlineTpl     *template.Template
 	imgs                    *imageProcessor
 	sitemap                 []string
 }
@@ -167,6 +167,9 @@ func Build(s *Site, opts BuildOptions) error {
 	if b.nf, err = parse("404.html"); err != nil {
 		return err
 	}
+	if b.offlineTpl, err = parse("offline.html"); err != nil {
+		return err
+	}
 	if b.listTpl, err = parse("list.html"); err != nil {
 		return err
 	}
@@ -181,7 +184,16 @@ func Build(s *Site, opts BuildOptions) error {
 			return err
 		}
 	}
-	return writeMeta(b.out, cfg.Title, b.root, b.absolute, b.sitemap, b.as)
+	if err := b.writeIcons(); err != nil {
+		return err
+	}
+	if err := b.writeManifest(); err != nil {
+		return err
+	}
+	if err := b.writeOffline(); err != nil {
+		return err
+	}
+	return writeMeta(b.out, b.root, b.absolute, b.sitemap, b.as)
 }
 
 func (b *builder) abs(p string) string {
@@ -463,7 +475,7 @@ func writeAssets(customCSS string, hasCustom bool, out string, live bool) (Asset
 	return a, nil
 }
 
-func writeMeta(out, title, base, absolute string, urls []string, as Assets) error {
+func writeMeta(out, base, absolute string, urls []string, as Assets) error {
 	fsys := assets.FS()
 	// Service worker: must live at the base so its scope covers the site.
 	sw, err := fs.ReadFile(fsys, "sw.js")
@@ -471,26 +483,15 @@ func writeMeta(out, title, base, absolute string, urls []string, as Assets) erro
 		return err
 	}
 	version := hash([]byte(as.JS + as.CSS + time.Now().UTC().Format(time.RFC3339)))
-	prelude, _ := json.Marshal(map[string]any{"version": version, "base": base, "precache": []string{base + as.JS, base + as.CSS, base}})
+	prelude, _ := json.Marshal(map[string]any{
+		"version":  version,
+		"base":     base,
+		"offline":  base + "offline.html",
+		"precache": []string{base + as.JS, base + as.CSS, base, base + "offline.html", base + "icon-192.png"},
+	})
 	sw = append([]byte("self.__GC="+string(prelude)+";\n"), sw...)
 	if err := os.WriteFile(filepath.Join(out, "sw.js"), sw, 0o644); err != nil {
 		return err
-	}
-	manifest, _ := json.MarshalIndent(map[string]any{
-		"name": title, "short_name": title, "start_url": base, "scope": base, "display": "standalone",
-		"background_color": "#fafaf9", "theme_color": "#ea580c",
-		"icons": []map[string]string{{"src": base + "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}},
-	}, "", "  ")
-	if err := os.WriteFile(filepath.Join(out, "manifest.webmanifest"), manifest, 0o644); err != nil {
-		return err
-	}
-	if _, err := os.Stat(filepath.Join(out, "icon.svg")); errors.Is(err, os.ErrNotExist) {
-		icon, err := fs.ReadFile(fsys, "icon.svg")
-		if err == nil {
-			if err := os.WriteFile(filepath.Join(out, "icon.svg"), icon, 0o644); err != nil {
-				return err
-			}
-		}
 	}
 	robots := "User-agent: *\nAllow: /\n"
 	if absolute != "" {
@@ -577,4 +578,13 @@ func writeFeed(path, absolute, base, title string, l *Lang) error {
 	sb.WriteString(entries.String())
 	sb.WriteString("</feed>\n")
 	return os.WriteFile(path, []byte(sb.String()), 0o644)
+}
+
+// writeOffline writes the page the service worker shows when the reader is
+// offline and opens a page that isn't cached yet (source language).
+func (b *builder) writeOffline() error {
+	l := b.s.Langs[0]
+	p := b.newPage(l, b.root, l.Catalog.T("offline")+" · "+b.s.Config.Title, "", "", "")
+	p.BodyClass = "page-offline"
+	return writeTemplate(b.offlineTpl, filepath.Join(b.out, "offline.html"), p)
 }

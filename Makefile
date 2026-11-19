@@ -3,7 +3,7 @@ BIN := bin/get-cooked
 VERSION ?= dev
 LDFLAGS := -s -w -X github.com/RashKash103/get-cooked/internal/cli.Version=$(VERSION)
 
-.PHONY: all deps web build test test-go test-web e2e lint fmt golden serve example screenshots clean
+.PHONY: all deps web build test test-go test-web e2e lint fmt golden serve example screenshots icons clean
 
 all: lint test build
 
@@ -39,6 +39,10 @@ fmt:
 # Regenerate golden files after intentional runtime or markup changes.
 golden:
 	go test ./internal/expr ./internal/runtime ./internal/site -update
+
+# Re-render the built-in PWA icon PNGs from web/public/icon.svg.
+icons:
+	cd e2e && node icons.mjs
 
 # Regenerate the README screenshots (light and dark).
 screenshots: build

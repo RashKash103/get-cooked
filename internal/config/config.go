@@ -34,6 +34,9 @@ type Config struct {
 	Units       Units    `yaml:"units" json:"-"`
 	Timers      Timers   `yaml:"timers" json:"timers"`
 	Images      Images   `yaml:"images" json:"-"`
+	// Icon is a square PNG or JPEG (at least 512×512) used for the app
+	// icons when the site is installed; default: the built-in icon.
+	Icon string `yaml:"icon" json:"-"`
 
 	// Dir is the site root directory (not from YAML).
 	Dir string `yaml:"-" json:"-"`

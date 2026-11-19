@@ -16,8 +16,9 @@
 <meta property="og:type" content="{{if .Recipe}}article{{else}}website{{end}}">
 {{with .Description}}<meta property="og:description" content="{{.}}">{{end}}
 {{with .OGImage}}<meta property="og:image" content="{{.}}">{{end}}
-<link rel="icon" href="{{.Root}}icon.svg" type="image/svg+xml">
+{{if .Site.Icon}}<link rel="icon" href="{{.Root}}icon-192.png" type="image/png">{{else}}<link rel="icon" href="{{.Root}}icon.svg" type="image/svg+xml">{{end}}
 <link rel="manifest" href="{{.Root}}manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{.Root}}apple-touch-icon.png">
 <link rel="stylesheet" href="{{.Root}}{{.Assets.CSS}}">
 <style>:root{--gc-accent:{{.Accent}}}</style>
 <script>(function(){try{var z=JSON.parse(localStorage.getItem("gc:text")||"null");if(typeof z==="number"&&z>=50&&z<=200)document.documentElement.style.setProperty("--gc-zoom",String(z/100))}catch(e){}})()</script>

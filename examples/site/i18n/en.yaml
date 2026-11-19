@@ -121,6 +121,9 @@ ui:
   text_smaller: Smaller text
   text_larger: Larger text
   text_reset: Reset text size
+  # Added by `get-cooked migrate` (English defaults; translate as needed):
+  offline: You're offline
+  offline_body: This page hasn't been saved for offline use yet. Recipes you've opened before still work.
 
 # Labels for keys under a recipe's `times:`. Unknown keys are title-cased.
 times:

@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -214,11 +219,107 @@ func TestBuildMultilingual(t *testing.T) {
 		{read("recipes/crispy-chicken-thighs/index.html"), `data-default-src="/kitchen/recipes/crispy-chicken-thighs/crispy-chicken-thighs.svg"`},
 		{read("es/recipes/crispy-chicken-thighs/crispy-chicken-thighs-air-fryer.svg"), "<svg"},
 		{read("index.html"), `src="/kitchen/recipes/buttermilk-pancakes/buttermilk-pancakes.svg"`},
-		{read("sw.js"), `self.__GC={"base":"/kitchen/","precache":["/kitchen/assets/app.`},
+		{read("sw.js"), `self.__GC={"base":"/kitchen/","offline":"/kitchen/offline.html","precache":["/kitchen/assets/app.`},
 	}
 	for _, c := range checks {
 		if !strings.Contains(c.page, c.want) {
 			t.Errorf("missing %q", c.want)
 		}
+	}
+}
+
+func TestPWA(t *testing.T) {
+	if !assets.Built() {
+		t.Skip("frontend bundle not built")
+	}
+	s := loadExample(t)
+	out := t.TempDir()
+	if err := Build(s, BuildOptions{Out: out, BaseURL: "/kitchen/"}); err != nil {
+		t.Fatal(err)
+	}
+	var m struct {
+		ID, Name, StartURL, Scope, Display, ThemeColor, Lang string
+		Icons                                                []struct{ Src, Sizes, Type, Purpose string }
+	}
+	b, err := os.ReadFile(filepath.Join(out, "manifest.webmanifest"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var raw map[string]any
+	_ = json.Unmarshal(b, &raw)
+	m.ID, _ = raw["id"].(string)
+	m.StartURL, _ = raw["start_url"].(string)
+	m.Display, _ = raw["display"].(string)
+	m.ThemeColor, _ = raw["theme_color"].(string)
+	m.Lang, _ = raw["lang"].(string)
+	if m.ID != "/kitchen/" || m.StartURL != "/kitchen/" || m.Display != "standalone" || m.ThemeColor != s.Config.Theme.Accent || m.Lang != "en" {
+		t.Errorf("manifest = %s", b)
+	}
+	icons, _ := raw["icons"].([]any)
+	want := map[string]bool{"192x192 any": false, "512x512 any": false, "512x512 maskable": false}
+	for _, i := range icons {
+		ic := i.(map[string]any)
+		key := fmt.Sprintf("%v %v", ic["sizes"], ic["purpose"])
+		if _, ok := want[key]; ok {
+			want[key] = true
+			src := strings.TrimPrefix(ic["src"].(string), "/kitchen/")
+			f, err := os.Open(filepath.Join(out, src))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := png.DecodeConfig(f)
+			_ = f.Close()
+			if err != nil || fmt.Sprintf("%dx%d", cfg.Width, cfg.Height) != ic["sizes"] {
+				t.Errorf("%s: %v %+v", src, err, cfg)
+			}
+		}
+	}
+	for k, ok := range want {
+		if !ok {
+			t.Errorf("manifest missing %s icon", k)
+		}
+	}
+	for _, f := range []string{"apple-touch-icon.png", "offline.html"} {
+		if _, err := os.Stat(filepath.Join(out, f)); err != nil {
+			t.Errorf("missing %s", f)
+		}
+	}
+	sw, _ := os.ReadFile(filepath.Join(out, "sw.js"))
+	if !strings.Contains(string(sw), `"offline":"/kitchen/offline.html"`) {
+		t.Error("service worker should know the offline page")
+	}
+
+	// A custom icon is resized to every size.
+	src := image.NewRGBA(image.Rect(0, 0, 600, 600))
+	draw.Draw(src, src.Bounds(), &image.Uniform{C: color.RGBA{0x10, 0x80, 0x40, 0xff}}, image.Point{}, draw.Src)
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, src)
+	dir := t.TempDir()
+	if err := copyDir(exampleSite, dir); err != nil {
+		t.Fatal(err)
+	}
+	_ = os.WriteFile(filepath.Join(dir, "my-icon.png"), buf.Bytes(), 0o644)
+	cfgFile := filepath.Join(dir, "get-cooked.yaml")
+	cb, _ := os.ReadFile(cfgFile)
+	_ = os.WriteFile(cfgFile, append(cb, []byte("icon: my-icon.png\n")...), 0o644)
+	s2, err := Load(dir, LoadOptions{})
+	if err != nil || s2.Diags.HasErrors() {
+		t.Fatal(err, s2.Diags)
+	}
+	out2 := t.TempDir()
+	if err := Build(s2, BuildOptions{Out: out2}); err != nil {
+		t.Fatal(err)
+	}
+	f, _ := os.Open(filepath.Join(out2, "icon-maskable-512.png"))
+	img, err := png.Decode(f)
+	_ = f.Close()
+	if err != nil || img.Bounds().Dx() != 512 {
+		t.Fatalf("custom maskable icon: %v", err)
+	}
+	if r, g, _, _ := img.At(2, 2).RGBA(); r>>8 != 0x10 || g>>8 != 0x80 {
+		t.Error("maskable background should use the icon's corner colour")
+	}
+	if _, err := os.Stat(filepath.Join(out2, "icon.svg")); err == nil {
+		t.Error("custom icon: the default SVG icon should not be written")
 	}
 }

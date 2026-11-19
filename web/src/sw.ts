@@ -4,6 +4,7 @@ const sw = self as unknown as ServiceWorkerGlobalScope & {
   __GC?: { version: string; base: string; precache: string[] };
 };
 const cfg = sw.__GC ?? { version: "dev", base: "/", precache: [] };
+const OFFLINE = (sw.__GC as { offline?: string } | undefined)?.offline ?? "";
 const VERSION = cfg.version;
 const BASE = cfg.base;
 const PRECACHE = cfg.precache;
@@ -59,7 +60,10 @@ sw.addEventListener("fetch", (e: FetchEvent) => {
         return res;
       })
       .catch(
-        async () => (await caches.match(req, { ignoreSearch: true })) ?? (await caches.match(BASE)) ?? Response.error(),
+        async () =>
+          (await caches.match(req, { ignoreSearch: true })) ??
+          (req.mode === "navigate" && OFFLINE ? await caches.match(OFFLINE) : undefined) ??
+          Response.error(),
       ),
   );
 });

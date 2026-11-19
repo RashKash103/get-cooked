@@ -88,7 +88,11 @@ notes:
   remembered on the device; only the reading content grows, so controls
   never clip on small screens.
 - Mobile first, uncrowded, light and dark mode, prints cleanly, works without
-  JavaScript, and works offline once visited (PWA).
+  JavaScript.
+- Installable as an app (PWA) in Chrome, Edge and Firefox on Android and on
+  desktop, and to the home screen on iOS: web app manifest, PNG and maskable
+  icons (or `icon: my-icon.png` in get-cooked.yaml for your own), and a
+  service worker that keeps visited recipes available offline.
 - Cook mode keeps the screen awake and turns the bottom bar into
   ‹ Step 3 of 7 › navigation (arrow keys and space work too). Timers survive
   reloads and ring with sound, vibration and notifications.
