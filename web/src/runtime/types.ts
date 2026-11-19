@@ -48,6 +48,7 @@ export interface Table {
   dec?: string;
   words?: Record<string, string>;
   of?: string;
+  digits?: string;
 }
 
 export interface Ing {

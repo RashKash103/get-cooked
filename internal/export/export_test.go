@@ -103,3 +103,23 @@ func TestTypst(t *testing.T) {
 		t.Error("not a PDF")
 	}
 }
+
+func TestLocalDigits(t *testing.T) {
+	d := doc(t, "cranberry-baked-oatmeal", "es", runtime.State{Servings: 3})
+	cat := *d.Cat
+	cat.Digits = "٠١٢٣٤٥٦٧٨٩"
+	d.Cat = &cat
+	md := export.Markdown(d)
+	if !strings.Contains(md, "\n١. ") {
+		t.Errorf("step numbers should use Arabic-Indic digits:\n%s", md)
+	}
+	src := export.Typst(d, "a4")
+	if !strings.Contains(src, `#let digits = ("٠", "١"`) {
+		t.Error("typst digits array missing")
+	}
+	if _, err := exec.LookPath("typst"); err == nil {
+		if _, err := export.PDF(context.Background(), src); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

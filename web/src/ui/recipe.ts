@@ -3,7 +3,7 @@ import type { Compiled, Model, State, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
 import { recipeURL, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
 import { download, type Meta, summary, toMarkdown } from "./export";
-import { t } from "./i18n";
+import { num, t } from "./i18n";
 import { addRecipe, inList, itemsFrom } from "./list";
 import { load, save } from "./storage";
 import { startTimer } from "./timers";
@@ -151,7 +151,9 @@ export function initRecipe(): void {
       s.classList.toggle("current", cooking && n === current);
     }
     const of = $("step-of");
-    if (of) of.textContent = current > steps.length ? t("all_done") : t("step_of", { n: current, total: steps.length });
+    if (of)
+      of.textContent =
+        current > steps.length ? t("all_done") : t("step_of", { n: num(current), total: num(steps.length) });
   }
 
   function goStep(delta: number): void {
@@ -200,7 +202,7 @@ export function initRecipe(): void {
       else if (input.type === "range") {
         input.value = String(v);
         const out = document.querySelector(`output[data-for="${input.name}"]`);
-        if (out) out.textContent = String(v);
+        if (out) out.textContent = num(String(v));
       }
     }
   }

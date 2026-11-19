@@ -5,7 +5,7 @@
 import type { Compiled, Ing, LinkM, Model, Table } from "../runtime/types";
 import { qtyString, Units } from "../runtime/units";
 import { esc } from "./blocks";
-import { t } from "./i18n";
+import { num, t } from "./i18n";
 import { load, save } from "./storage";
 import { toast } from "./toast";
 
@@ -45,7 +45,7 @@ export function updateCount(): void {
   const el = document.getElementById("list-count");
   if (!el) return;
   const n = read().recipes.length;
-  el.textContent = String(n);
+  el.textContent = num(n);
   el.hidden = n === 0;
 }
 

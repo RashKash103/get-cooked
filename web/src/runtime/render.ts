@@ -146,23 +146,23 @@ class Renderer {
   }
 
   format(v: Value, f: string | undefined, args: string[] | undefined): string {
-    if (!f) return str(v);
+    if (!f) return typeof v === "number" ? this.units.l(str(v)) : str(v);
     if (typeof v !== "number") throw new RenderError(`formatter "${f}" needs a number, got ${kind(v)} "${str(v)}"`);
     switch (f) {
       case "frac":
         return this.units.frac(roundRule(fracRule, v));
       case "int":
-        return formatNumber(round(v));
+        return this.units.l(formatNumber(round(v)));
       case "duration":
         return this.units.duration(v);
       case "temp":
-        return temp(v, false, this.system);
+        return this.units.l(temp(v, false, this.system));
       case "temp_c":
-        return temp(v, true, this.system);
+        return this.units.l(temp(v, true, this.system));
       case "len":
-        return length(v, false, this.system);
+        return this.units.l(length(v, false, this.system));
       case "len_cm":
-        return length(v, true, this.system);
+        return this.units.l(length(v, true, this.system));
       case "qty":
         return qtyString(this.units.format(v, (args?.[0] ?? "") as string, this.system, undefined, false));
     }

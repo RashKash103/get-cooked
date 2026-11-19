@@ -103,7 +103,7 @@ func renderIngredients(m *runtime.Model, base string, cat *i18n.Catalog) string 
 			if len(it.Uses) > 0 {
 				parts := make([]string, len(it.Uses))
 				for i, u := range it.Uses {
-					parts[i] = esc(cat.T("uses", "q", u.Q, "n", fmt.Sprint(u.N)))
+					parts[i] = esc(cat.T("uses", "q", u.Q, "n", cat.Num(fmt.Sprint(u.N))))
 				}
 				sb.WriteString(`<span class="ing-uses">` + strings.Join(parts, " · ") + `</span>`)
 			}
@@ -150,10 +150,10 @@ func renderSteps(m *runtime.Model, base string, cat *i18n.Catalog) string {
 		}
 		sb.WriteString(`<ol class="step-list">`)
 		for _, st := range s.Items {
-			n := fmt.Sprint(st.N)
+			n := cat.Num(fmt.Sprint(st.N))
 			label := cat.T("step", "n", n)
-			fmt.Fprintf(&sb, `<li class="step" data-n="%d"><button type="button" class="step-num" aria-label="%s">%d</button><div class="step-body"><p class="step-text">%s</p>`,
-				st.N, esc(cat.T("mark_done", "n", n)), st.N, renderSegs(st.Segs, base, label))
+			fmt.Fprintf(&sb, `<li class="step" data-n="%d"><button type="button" class="step-num" aria-label="%s">%s</button><div class="step-body"><p class="step-text">%s</p>`,
+				st.N, esc(cat.T("mark_done", "n", n)), n, renderSegs(st.Segs, base, label))
 			if st.Note != "" {
 				sb.WriteString(`<p class="step-note">` + esc(st.Note) + `</p>`)
 			}

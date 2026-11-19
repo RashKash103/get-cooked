@@ -44,6 +44,8 @@ type Catalog struct {
 	Decimal     string             `yaml:"decimal"`
 	Of          string             `yaml:"of"`
 	System      string             `yaml:"system"`
+	Digits      string             `yaml:"digits"`
+	Fractions   string             `yaml:"fractions"`
 	UI          map[string]string  `yaml:"ui"`
 	Times       map[string]string  `yaml:"times"`
 	Servings    Label              `yaml:"servings"`
@@ -102,6 +104,19 @@ func Load(siteDir, lang string) (*Catalog, error) {
 		c.Decimal = o.Decimal
 	}
 	c.Of = o.Of
+	if o.Digits != "" {
+		d, err := ResolveDigits(o.Digits)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", Path(siteDir, lang), err)
+		}
+		c.Digits = d
+	}
+	switch o.Fractions {
+	case "", "unicode", "ascii", "decimal":
+		c.Fractions = o.Fractions
+	default:
+		return nil, fmt.Errorf("%s: fractions must be unicode, ascii or decimal", Path(siteDir, lang))
+	}
 	switch o.System {
 	case "", "original", "us", "metric":
 		c.System = o.System
@@ -196,11 +211,62 @@ func (c *Catalog) Localize(t *units.Table) *units.Table {
 	}
 	cp.Decimal = c.Decimal
 	cp.Of = c.Of
+	cp.Digits = c.Digits
+	if c.Fractions != "" {
+		cp.Fractions = c.Fractions
+	}
 	cp.Words = map[string]string{}
 	for k, v := range c.Duration {
 		cp.Words[k] = v
 	}
 	return &cp
+}
+
+// NumberingSystems maps CLDR numbering system names to their digits.
+var NumberingSystems = map[string]string{
+	"latn":     "0123456789",
+	"arab":     "٠١٢٣٤٥٦٧٨٩",
+	"arabext":  "۰۱۲۳۴۵۶۷۸۹",
+	"beng":     "০১২৩৪৫৬৭৮৯",
+	"deva":     "०१२३४५६७८९",
+	"fullwide": "０１２３４５６７８９",
+	"gujr":     "૦૧૨૩૪૫૬૭૮૯",
+	"guru":     "੦੧੨੩੪੫੬੭੮੯",
+	"khmr":     "០១២៣៤៥៦៧៨៩",
+	"knda":     "೦೧೨೩೪೫೬೭೮೯",
+	"laoo":     "໐໑໒໓໔໕໖໗໘໙",
+	"mlym":     "൦൧൨൩൪൫൬൭൮൯",
+	"mymr":     "၀၁၂၃၄၅၆၇၈၉",
+	"orya":     "୦୧୨୩୪୫୬୭୮୯",
+	"tamldec":  "௦௧௨௩௪௫௬௭௮௯",
+	"telu":     "౦౧౨౩౪౫౬౭౮౯",
+	"thai":     "๐๑๒๓๔๕๖๗๘๙",
+	"tibt":     "༠༡༢༣༤༥༦༧༨༩",
+}
+
+// ResolveDigits accepts a numbering system name or ten digit characters.
+func ResolveDigits(s string) (string, error) {
+	if d, ok := NumberingSystems[s]; ok {
+		if s == "latn" {
+			return "", nil
+		}
+		return d, nil
+	}
+	if len([]rune(s)) == 10 {
+		return s, nil
+	}
+	names := make([]string, 0, len(NumberingSystems))
+	for k := range NumberingSystems {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return "", fmt.Errorf("digits must be a numbering system (%s) or ten characters for 0–9", strings.Join(names, ", "))
+}
+
+// Num replaces ASCII digits in s with the language's digits.
+func (c *Catalog) Num(s string) string {
+	t := units.Table{Digits: c.Digits}
+	return t.L(s)
 }
 
 // UIKeys returns the UI keys in sorted order.

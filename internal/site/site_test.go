@@ -51,14 +51,33 @@ func TestBlocksGolden(t *testing.T) {
 		{Servings: 9, System: "us", Options: map[string]any{"cranberries": false, "walnuts": true, "sweetener": "brown_sugar", "method": "air_fryer", "heat": 3.0, "wheat_bread": true}},
 	}
 	var cases []tc
-	for _, l := range s.Langs {
+	// A synthetic language with Arabic-Indic digits, ASCII fractions and an
+	// Arabic decimal separator, derived from Spanish, so localized digits are
+	// covered by the Go↔TS parity check.
+	es := s.Langs[1]
+	arCat := *es.Catalog
+	arCat.Lang, arCat.Digits, arCat.Fractions, arCat.Decimal = "ar-test", "٠١٢٣٤٥٦٧٨٩", "ascii", "٫"
+	ar := &Lang{Code: "ar-test", Catalog: &arCat, Units: arCat.Localize(s.Units), Translated: es.Translated}
+	for _, r := range es.Recipes {
+		if r.Slug != "cranberry-baked-oatmeal" && r.Slug != "crispy-chicken-thighs" {
+			continue
+		}
+		rc := *r
+		c := *r.C
+		c.Units = ar.Units
+		rc.C = &c
+		ar.Recipes = append(ar.Recipes, &rc)
+	}
+	langs := append(append([]*Lang{}, s.Langs...), ar)
+	for _, l := range langs {
 		dict := map[string]string{}
 		for _, k := range jsKeys {
 			dict[k] = l.Catalog.T(k)
 		}
+		dict["_digits"] = l.Catalog.Digits
 		base := "/" + l.Prefix(s.Langs[0].Code)
 		for _, r := range l.Recipes {
-			if l.Code != s.Langs[0].Code && !l.Translated[r.Slug] && r.Slug != "crispy-chicken-thighs" {
+			if l.Code != s.Langs[0].Code && l.Code != "ar-test" && !l.Translated[r.Slug] && r.Slug != "crispy-chicken-thighs" {
 				continue
 			}
 			for _, st := range states {

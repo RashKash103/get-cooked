@@ -13,6 +13,13 @@ decimal: "."
 # Word placed between a measured amount and the ingredient ("2 cups of flour").
 # Leave empty for English; e.g. "de" for Spanish ("2 tazas de harina").
 of: ""
+# Digits for numbers: a numbering system such as arab, arabext, deva, beng,
+# thai or fullwide, or ten characters for 0–9. Empty keeps 0–9.
+digits: ""
+# Fraction style for this language (unicode ½, ascii 1/2, decimal 0.5). Empty
+# uses units.fractions from get-cooked.yaml. With non-Latin digits, ascii
+# keeps fractions in the same script ("١/٢").
+fractions: ""
 # Default unit system for readers of this language: original, us or metric.
 # Empty uses units.default_system from get-cooked.yaml.
 system: ""

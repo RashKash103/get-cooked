@@ -64,12 +64,13 @@ type Table struct {
 	Units     map[string]*Unit  `json:"units"`
 	Ladders   map[string][]Rung `json:"ladders"` // key: "<system>.<dim>", rungs ascending
 	Tolerance float64           `json:"tol"`
-	Fractions string            `json:"fractions"`       // unicode | ascii | decimal
-	Count     Rule              `json:"count"`           // default rounding for count units
-	Fallback  Rule              `json:"fallback"`        // rounding for units outside any ladder
-	Decimal   string            `json:"dec,omitempty"`   // decimal separator ("." when empty)
-	Words     map[string]string `json:"words,omitempty"` // duration words: hr, min, sec
-	Of        string            `json:"of,omitempty"`    // word between a measured amount and a name ("de")
+	Fractions string            `json:"fractions"`        // unicode | ascii | decimal
+	Count     Rule              `json:"count"`            // default rounding for count units
+	Fallback  Rule              `json:"fallback"`         // rounding for units outside any ladder
+	Decimal   string            `json:"dec,omitempty"`    // decimal separator ("." when empty)
+	Words     map[string]string `json:"words,omitempty"`  // duration words: hr, min, sec
+	Of        string            `json:"of,omitempty"`     // word between a measured amount and a name ("de")
+	Digits    string            `json:"digits,omitempty"` // ten digits replacing 0–9 ("٠١٢٣٤٥٦٧٨٩")
 	aliases   map[string]string
 }
 
@@ -298,13 +299,33 @@ var unicodeFractions = map[[2]int]string{
 
 // FormatFraction prints x as a mixed fraction when it is (very close to) a
 // fraction with denominator ≤ 8, otherwise as a decimal.
-// Num formats a number with the table's decimal separator.
+// L replaces ASCII digits with the table's digits (if any).
+func (t *Table) L(s string) string {
+	if t.Digits == "" {
+		return s
+	}
+	d := []rune(t.Digits)
+	if len(d) != 10 {
+		return s
+	}
+	var sb strings.Builder
+	for _, r := range s {
+		if r >= '0' && r <= '9' {
+			sb.WriteRune(d[r-'0'])
+		} else {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
+// Num formats a number with the table's decimal separator and digits.
 func (t *Table) Num(x float64) string {
 	s := expr.FormatNumber(x)
 	if t.Decimal != "" && t.Decimal != "." {
 		s = strings.Replace(s, ".", t.Decimal, 1)
 	}
-	return s
+	return t.L(s)
 }
 
 func (t *Table) FormatFraction(x float64) string {
@@ -327,7 +348,7 @@ func (t *Table) FormatFraction(x float64) string {
 		num, den := int(n)/g, d/g
 		var s string
 		if t.Fractions == "ascii" {
-			s = fmt.Sprintf("%d/%d", num, den)
+			s = t.L(fmt.Sprintf("%d/%d", num, den))
 			if whole > 0 {
 				s = t.Num(whole) + " " + s
 			}
@@ -579,7 +600,7 @@ var plainFrac = &Table{Fractions: "unicode"}
 
 // Duration formats minutes using the table's duration words.
 func (t *Table) Duration(min float64) string {
-	return durationWords(min, t.Words)
+	return t.L(durationWords(min, t.Words))
 }
 
 // Duration formats minutes as "1 hr 5 min", "45 min" or "30 sec".

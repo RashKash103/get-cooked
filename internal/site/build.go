@@ -209,6 +209,7 @@ func (b *builder) newPage(l *Lang, base, title, desc, canonical, path string) pa
 	for _, k := range jsKeys {
 		js[k] = cat.T(k)
 	}
+	js["_digits"] = cat.Digits
 	j, _ := json.Marshal(js)
 	dir := cat.Dir
 	if dir == "" {

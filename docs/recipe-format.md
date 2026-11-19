@@ -251,6 +251,11 @@ strings:
   "Heat the oven to {375 | temp} and butter the &dish.": "Precalienta el horno a {375 | temp} y engrasa la &dish."
 ```
 
+Numbers are written in the language's digits when its `i18n/<lang>.yaml`
+sets `digits:` (for example `arab` or `deva`), so keep numbers in templates
+as expressions or formatters (`{servings}`, `{350 | temp}`) rather than typed
+digits when they should be localized.
+
 Generate or refresh it with `get-cooked i18n extract --lang <lang>`. Empty
 values fall back to the original. Keep `{…}`, `@…`, `&…` and `~{…}` intact.
 Put display text in `{if}` blocks rather than inside expression strings

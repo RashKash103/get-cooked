@@ -3,7 +3,7 @@
 import { formatNumber } from "../runtime/expr";
 import type { LinkM, Model, Seg, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
-import { t } from "./i18n";
+import { num, t } from "./i18n";
 
 /** Escapes like Go's html.EscapeString. */
 export function esc(s: string): string {
@@ -59,7 +59,7 @@ export function renderIngredients(m: Model, base: string): string {
         : `<span class="ing-name">${esc(it.name)}</span>`;
       if (it.note) s += `<span class="ing-note">, ${esc(it.note)}</span>`;
       if (it.uses.length > 0) {
-        s += `<span class="ing-uses">${it.uses.map((u) => esc(t("uses", { q: u.q, n: u.n }))).join(" · ")}</span>`;
+        s += `<span class="ing-uses">${it.uses.map((u) => esc(t("uses", { q: u.q, n: num(u.n) }))).join(" · ")}</span>`;
       }
       s += `</span></label></li>`;
     }
@@ -99,8 +99,9 @@ export function renderSteps(m: Model, base: string): string {
     if (sec.title) s += `<h3 class="step-title">${esc(sec.title)}</h3>`;
     s += `<ol class="step-list">`;
     for (const st of sec.items) {
-      const label = t("step", { n: st.n });
-      s += `<li class="step" data-n="${st.n}"><button type="button" class="step-num" aria-label="${esc(t("mark_done", { n: st.n }))}">${st.n}</button><div class="step-body"><p class="step-text">${renderSegs(st.segs, base, label)}</p>`;
+      const n = num(st.n);
+      const label = t("step", { n });
+      s += `<li class="step" data-n="${st.n}"><button type="button" class="step-num" aria-label="${esc(t("mark_done", { n }))}">${n}</button><div class="step-body"><p class="step-text">${renderSegs(st.segs, base, label)}</p>`;
       if (st.note) s += `<p class="step-note">${esc(st.note)}</p>`;
       if (st.image) s += `<img class="step-img" src="${esc(st.image)}" alt="" loading="lazy">`;
       s += `</div></li>`;

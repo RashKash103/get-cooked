@@ -52,7 +52,7 @@ func Summary(d Doc) string {
 			}
 		default:
 			f, _ := v.(float64)
-			parts = append(parts, o.Label+": "+expr.FormatNumber(f)+o.Unit)
+			parts = append(parts, o.Label+": "+d.Cat.Num(expr.FormatNumber(f))+o.Unit)
 		}
 	}
 	if d.M.System != "original" {
@@ -100,7 +100,7 @@ func uses(d Doc, it runtime.IngM) string {
 	}
 	parts := make([]string, len(it.Uses))
 	for i, u := range it.Uses {
-		parts[i] = d.Cat.T("uses", "q", u.Q, "n", fmt.Sprint(u.N))
+		parts[i] = d.Cat.T("uses", "q", u.Q, "n", d.Cat.Num(fmt.Sprint(u.N)))
 	}
 	return strings.Join(parts, " · ")
 }
@@ -161,7 +161,7 @@ func Markdown(d Doc) string {
 			fmt.Fprintf(&b, "### %s\n\n", s.Title)
 		}
 		for _, st := range s.Items {
-			fmt.Fprintf(&b, "%d. %s\n", st.N, StepText(st.Segs))
+			fmt.Fprintf(&b, "%s. %s\n", d.Cat.Num(fmt.Sprint(st.N)), StepText(st.Segs))
 			if st.Note != "" {
 				fmt.Fprintf(&b, "   *%s*\n", st.Note)
 			}
@@ -234,13 +234,15 @@ func Typst(d Doc, paper string) string {
 #set text(font: ("Libertinus Serif", "New Computer Modern"), size: 11pt, lang: %q)
 #set par(leading: 0.62em, justify: false)
 #set list(marker: none, body-indent: 0pt, spacing: 0.85em)
-#set enum(spacing: 1.05em, body-indent: 0.7em, numbering: n => text(weight: "bold", fill: rgb(%q))[#n])
+#let digits = %s
+#let localnum(n) = if digits.len() == 10 { str(n).replace(regex("[0-9]"), m => digits.at(int(m.text))) } else { str(n) }
+#set enum(spacing: 1.05em, body-indent: 0.7em, numbering: n => text(weight: "bold", fill: rgb(%q))[#localnum(n)])
 #let section(t) = block(above: 1.3em, below: 0.7em, text(size: 8.5pt, weight: "bold", tracking: 0.09em, fill: rgb(%q), upper(t)))
 #let sub(t) = block(above: 0.9em, below: 0.45em, text(size: 9.5pt, style: "italic", fill: luma(90), t))
 #let qty(t) = text(weight: "bold", t)
 #let muted(t) = text(fill: luma(105), t)
 
-`, ts(d.R.Title), paper, typ(d.R.Title), d.Cat.Lang, accent, accent)
+`, ts(d.R.Title), paper, typ(d.R.Title), d.Cat.Lang, typstDigits(d.Cat.Digits), accent, accent)
 	fmt.Fprintf(&b, "#block(below: 1em, text(size: 23pt, weight: \"bold\", %s))\n", ts(d.R.Title))
 	if d.R.Description != "" {
 		fmt.Fprintf(&b, "#muted[%s]\n\n", typ(d.R.Description))
@@ -329,6 +331,18 @@ func Typst(d Doc, paper string) string {
 		fmt.Fprintf(&b, "\n#v(1em)\n#text(size: 8.5pt, fill: luma(110))[%s]\n", typ(d.Cat.T("source")+": "+name+" "+src.URL))
 	}
 	return b.String()
+}
+
+// typstDigits renders the digit list as a Typst array ("()" for none).
+func typstDigits(digits string) string {
+	if digits == "" {
+		return "()"
+	}
+	parts := make([]string, 0, 10)
+	for _, r := range digits {
+		parts = append(parts, ts(string(r)))
+	}
+	return "(" + strings.Join(parts, ", ") + ")"
 }
 
 // ErrNoTypst is returned when the typst CLI is not installed.

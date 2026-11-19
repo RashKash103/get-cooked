@@ -197,6 +197,10 @@ languages: [en, es]   # first = the language recipes are written in
 - `get-cooked i18n init es` creates `i18n/es.yaml` with every UI string,
   unit name and ingredient name to translate (plus decimal separator, the
   "de" in "2 tazas de harina", and a default unit system).
+- Numbers can use the language's own digits (`digits: arab` → ٢ ١/٢,
+  `deva` → २, `arabext`, `thai`, `beng`, … or any ten characters), with an
+  optional per-language fraction style (`fractions: ascii`). Quantities, times,
+  temperatures, step numbers, timers and exports all follow it.
 - `get-cooked i18n extract --lang es` creates `<recipe>.es.yaml` files mapping
   each original sentence to its translation. Logic stays in the original
   recipe; untranslated strings fall back to the original language, and

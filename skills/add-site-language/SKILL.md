@@ -29,6 +29,11 @@ original language with the UI translated.
    - `dir`: `rtl` for Arabic, Hebrew, Persian or Urdu; otherwise `ltr`.
    - `decimal`: `","` where that is the convention (most of Europe and Latin
      America).
+   - `digits`: the numbering system readers expect, if not 0–9 (`arab` for
+     Arabic, `arabext` for Persian/Urdu, `deva` for Hindi/Marathi, `beng`,
+     `thai`, …; ask the user, since many Arabic-speaking regions use 0–9).
+     With non-Latin digits, set `fractions: ascii` so fractions use the same
+     script ("١/٢" rather than "½").
    - `of`: the word that joins an amount and an ingredient if the language
      needs one ("de" in Spanish and French: "2 tazas de harina"), else `""`.
    - `system`: `metric` for languages whose readers use metric, else leave

@@ -704,7 +704,11 @@ func (r *rctx) segs(t tmpl.Template, l recipe.Loc, out []Seg) ([]Seg, error) {
 var fracRule = units.Rule{Denoms: []int{2, 3, 4, 8}}
 
 func (r *rctx) format(v expr.Value, f string, args []string) (string, error) {
+	u := r.c.Units
 	if f == "" {
+		if v.Kind == expr.KNum {
+			return u.L(v.String()), nil
+		}
 		return v.String(), nil
 	}
 	if v.Kind != expr.KNum {
@@ -715,17 +719,17 @@ func (r *rctx) format(v expr.Value, f string, args []string) (string, error) {
 	case "frac":
 		return r.c.Units.FormatFraction(fracRule.Round(x)), nil
 	case "int":
-		return expr.FormatNumber(math.Round(x)), nil
+		return u.L(expr.FormatNumber(math.Round(x))), nil
 	case "duration":
 		return r.c.Units.Duration(x), nil
 	case "temp":
-		return units.Temp(x, false, r.system), nil
+		return u.L(units.Temp(x, false, r.system)), nil
 	case "temp_c":
-		return units.Temp(x, true, r.system), nil
+		return u.L(units.Temp(x, true, r.system)), nil
 	case "len":
-		return units.Length(x, false, r.system), nil
+		return u.L(units.Length(x, false, r.system)), nil
 	case "len_cm":
-		return units.Length(x, true, r.system), nil
+		return u.L(units.Length(x, true, r.system)), nil
 	case "qty":
 		return r.c.Units.Format(x, args[0], r.system, nil, false).String(), nil
 	}

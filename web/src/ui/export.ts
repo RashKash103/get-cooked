@@ -2,7 +2,7 @@
 // matches `get-cooked export -f md` byte for byte (tested via goldens).
 import type { Compiled, IngM, Model, Seg, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
-import { t } from "./i18n";
+import { num, t } from "./i18n";
 
 export interface Meta {
   title: string;
@@ -21,7 +21,7 @@ export function summary(c: Compiled, m: Model, opts: Record<string, Value>): str
       const ch = o.choices?.find((x) => x.id === v);
       if (ch) parts.push(`${o.label}: ${ch.label}`);
     } else {
-      parts.push(`${o.label}: ${String(Math.round(Number(v) * 100) / 100)}${o.unit ?? ""}`);
+      parts.push(`${o.label}: ${num(String(Math.round(Number(v) * 100) / 100))}${o.unit ?? ""}`);
     }
   }
   if (m.system !== "original") parts.push(`${t("units")}: ${t(`units_${m.system}`)}`);
@@ -40,7 +40,7 @@ function ingLine(it: IngM): string {
 }
 
 function uses(it: IngM): string {
-  return it.uses.map((u) => t("uses", { q: u.q, n: u.n })).join(" · ");
+  return it.uses.map((u) => t("uses", { q: u.q, n: num(u.n) })).join(" · ");
 }
 
 export function toMarkdown(meta: Meta, c: Compiled, m: Model, opts: Record<string, Value>): string {
@@ -68,7 +68,7 @@ export function toMarkdown(meta: Meta, c: Compiled, m: Model, opts: Record<strin
   for (const s of m.steps) {
     if (s.title) b += `### ${s.title}\n\n`;
     for (const st of s.items) {
-      b += `${st.n}. ${stepText(st.segs)}\n`;
+      b += `${num(st.n)}. ${stepText(st.segs)}\n`;
       if (st.note) b += `   *${st.note}*\n`;
     }
     b += "\n";

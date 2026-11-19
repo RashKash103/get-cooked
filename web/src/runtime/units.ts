@@ -61,8 +61,16 @@ function decimal(s: string, dec: string): string {
   return dec && dec !== "." ? s.replace(".", dec) : s;
 }
 
-export function formatFraction(x: number, style = "unicode", dec = "."): string {
-  const fmt = (v: number) => decimal(formatNumber(v), dec);
+/** Replaces ASCII digits with the given ten digits (no-op when empty). */
+export function localDigits(s: string, digits?: string): string {
+  if (!digits) return s;
+  const d = [...digits];
+  if (d.length !== 10) return s;
+  return s.replace(/[0-9]/g, (c) => d[c.charCodeAt(0) - 48] as string);
+}
+
+export function formatFraction(x: number, style = "unicode", dec = ".", digits = ""): string {
+  const fmt = (v: number) => localDigits(decimal(formatNumber(v), dec), digits);
   if (style === "decimal") return fmt(x);
   const neg = x < 0;
   const ax = Math.abs(x);
@@ -77,7 +85,7 @@ export function formatFraction(x: number, style = "unicode", dec = "."): string 
     const den = d / g;
     let s: string;
     if (style === "ascii") {
-      s = `${num}/${den}`;
+      s = localDigits(`${num}/${den}`, digits);
       if (whole > 0) s = `${fmt(whole)} ${s}`;
     } else {
       const f = UNICODE[`${num}/${den}`];
@@ -119,11 +127,15 @@ export class Units {
   constructor(readonly t: Table) {}
 
   frac(x: number): string {
-    return formatFraction(x, this.t.fractions, this.t.dec ?? ".");
+    return formatFraction(x, this.t.fractions, this.t.dec ?? ".", this.t.digits ?? "");
   }
 
   num(x: number): string {
-    return decimal(formatNumber(x), this.t.dec ?? ".");
+    return this.l(decimal(formatNumber(x), this.t.dec ?? "."));
+  }
+
+  l(s: string): string {
+    return localDigits(s, this.t.digits);
   }
 
   join(q: Qty | null): string {
@@ -132,7 +144,7 @@ export class Units {
   }
 
   duration(min: number): string {
-    return duration(min, this.t.words);
+    return this.l(duration(min, this.t.words));
   }
 
   private text(r: Rule, v: number): string {

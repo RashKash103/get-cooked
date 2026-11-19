@@ -1,7 +1,7 @@
 // Kitchen timers: persisted as absolute end times so they survive reloads and
 // backgrounded tabs, with sound, vibration and notifications when they finish.
 import { duration } from "../runtime/units";
-import { t as tr } from "./i18n";
+import { num, t as tr } from "./i18n";
 import { native } from "./native";
 import { load, save } from "./storage";
 import { toast } from "./toast";
@@ -47,7 +47,7 @@ function clock(ms: number): string {
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
   const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
-  return `${h > 0 ? `${h}:` : ""}${mm}:${String(sec).padStart(2, "0")}`;
+  return num(`${h > 0 ? `${h}:` : ""}${mm}:${String(sec).padStart(2, "0")}`);
 }
 
 const isAndroid = /Android/i.test(navigator.userAgent);
@@ -167,7 +167,7 @@ export function startTimer(minutes: number, label: string): void {
   const n = native();
   if (n) {
     n.setTimer(seconds, label);
-    toast(tr("timer_set", { time: duration(minutes, words()) }));
+    toast(tr("timer_set", { time: num(duration(minutes, words())) }));
     return;
   }
   // Ask once, from this user gesture, so finished timers can notify.
@@ -193,7 +193,7 @@ export function startTimer(minutes: number, label: string): void {
   });
   persist();
   ensureTicking();
-  toast(tr("timer_started", { time: duration(minutes, words()) }));
+  toast(tr("timer_started", { time: num(duration(minutes, words())) }));
 }
 
 export function initTimers(): void {

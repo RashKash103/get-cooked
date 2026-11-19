@@ -107,6 +107,19 @@
         "type": "string"
       },
       "description": "Shopping list aisle names for ingredient categories."
+    },
+    "digits": {
+      "type": "string",
+      "description": "Digits for numbers: a CLDR numbering system (arab, arabext, beng, deva, fullwide, gujr, guru, khmr, knda, laoo, mlym, mymr, orya, tamldec, telu, thai, tibt, latn) or ten characters for 0–9."
+    },
+    "fractions": {
+      "enum": [
+        "",
+        "unicode",
+        "ascii",
+        "decimal"
+      ],
+      "description": "Fraction style for this language; overrides units.fractions."
     }
   }
 }
