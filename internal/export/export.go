@@ -265,8 +265,10 @@ func Typst(d Doc, paper string) string {
 #let digits = %s
 #let localnum(n) = if digits.len() == 10 { str(n).replace(regex("[0-9]"), m => digits.at(int(m.text))) } else { str(n) }
 #set enum(spacing: 1.05em, body-indent: 0.7em, numbering: n => text(weight: "bold", fill: rgb(%q))[#localnum(n)])
-#let section(t) = block(above: 1.3em, below: 0.7em, text(size: 8.5pt, weight: "bold", tracking: 0.09em, fill: rgb(%q), upper(t)))
-#let sub(t) = block(above: 0.9em, below: 0.45em, text(size: 9.5pt, style: "italic", fill: luma(90), t))
+#let section(t) = block(above: 1.3em, below: 0.7em, sticky: true, text(size: 8.5pt, weight: "bold", tracking: 0.09em, fill: rgb(%q), upper(t)))
+#let sub(t) = block(above: 1.1em, below: 0.45em, sticky: true, text(size: 9.5pt, style: "italic", fill: luma(90), t))
+#show list.item: it => block(breakable: false, spacing: 0.85em, it)
+#show enum.item: it => block(breakable: false, spacing: 1.05em, it)
 #let qty(t) = text(weight: "bold", t)
 #let muted(t) = text(fill: luma(105), t)
 

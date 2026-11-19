@@ -706,6 +706,8 @@
   .my-notes summary,
   .untranslated,
   .tags,
+  .swap-btn,
+  .cook-nav,
   .sheet {
     display: none !important;
   }
@@ -742,14 +744,61 @@
   .recipe-desc {
     color: #333;
   }
+  /* Two columns from a float, not a grid: grid and flex items fragment
+     unreliably across pages (WebKit and Firefox clip or push them whole). */
   .recipe-grid {
-    display: grid;
-    grid-template-columns: 34% 1fr;
-    gap: 8mm;
+    display: block;
     margin-top: 6mm;
+  }
+  .recipe-grid::after {
+    content: "";
+    display: block;
+    clear: both;
   }
   .col-ingredients {
     position: static;
+    float: inline-start;
+    width: 34%;
+  }
+  .col-steps {
+    margin-inline-start: calc(34% + 8mm);
+  }
+  /* Keep headings with what follows. break-after: avoid isn't honoured
+     everywhere, so each heading also reserves room below itself: if that
+     room doesn't fit, the unbreakable heading moves to the next page. */
+  .h2,
+  .ing-title,
+  .step-title {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .h2::after,
+  .ing-title::after,
+  .step-title::after {
+    content: "";
+    display: block;
+    height: 4.5em;
+    margin-bottom: -4.5em;
+  }
+  .ing,
+  .equip-list > li,
+  .note,
+  .notes > *,
+  .my-notes {
+    break-inside: avoid;
+  }
+  #ingredients .qty {
+    text-decoration: none;
+  }
+  .ing-check:checked + .ing-text,
+  .ing-check:checked + .ing-text .qty {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .recipe-foot {
+    border: 0;
+    margin: 0;
+    padding: 0;
   }
   .ing-label {
     padding: 0.15rem 0;

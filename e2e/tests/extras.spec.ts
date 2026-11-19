@@ -292,3 +292,14 @@ test("the footer names the get-cooked version", async ({ page }) => {
   await expect(v).not.toHaveText("");
   await expect(v).toHaveAttribute("href", "https://github.com/RashKash103/get-cooked/releases");
 });
+
+test("printing keeps headings with their steps and drops controls", async ({ page }) => {
+  await page.goto("/recipes/french-toast/");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".swap-btn").first()).toBeHidden();
+  // Grid items fragment badly across pages in some engines; print uses a float.
+  expect(await page.locator(".recipe-grid").evaluate((el) => getComputedStyle(el).display)).toBe("block");
+  const title = page.locator(".col-steps .h2");
+  expect(await title.evaluate((el) => getComputedStyle(el).breakInside)).toBe("avoid");
+  expect(await title.evaluate((el) => getComputedStyle(el, "::after").height)).not.toBe("auto");
+});
