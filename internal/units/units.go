@@ -7,6 +7,7 @@ package units
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -300,6 +301,8 @@ var unicodeFractions = map[[2]int]string{
 
 // FormatFraction prints x as a mixed fraction when it is (very close to) a
 // fraction with denominator ≤ 8, otherwise as a decimal.
+var digitRunRe = regexp.MustCompile(`[0-9]+(?:[.,٫٬][0-9]+)*`)
+
 // L replaces ASCII digits with the table's digits (if any).
 func (t *Table) L(s string) string {
 	if t.Digits == "" {
@@ -309,6 +312,12 @@ func (t *Table) L(s string) string {
 	if len(d) != 10 {
 		return s
 	}
+	// Non-Latin digits are "Arabic numbers" to the Unicode bidi algorithm: a
+	// space or dash between two of them counts as right-to-left, which would
+	// show "١ ١⁄٢" as "١⁄٢ ١" in a left-to-right page. A left-to-right mark
+	// after each run of digits keeps the logical order in LTR and RTL text.
+	// (Same regexp as localDigits in web/src/runtime/units.ts.)
+	s = digitRunRe.ReplaceAllString(s, "${0}\u200e")
 	var sb strings.Builder
 	for _, r := range s {
 		if r >= '0' && r <= '9' {

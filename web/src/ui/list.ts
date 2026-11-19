@@ -4,7 +4,7 @@
 // and groups lines by aisle.
 import type { Compiled, Ing, LinkM, Model, Table } from "../runtime/types";
 import { qtyString, Units } from "../runtime/units";
-import { esc } from "./blocks";
+import { esc, fr } from "./blocks";
 import { num, t } from "./i18n";
 import { load, save } from "./storage";
 import { toast } from "./toast";
@@ -236,7 +236,7 @@ export function initListPage(): void {
       }
       html += "</ul></section>";
     }
-    (document.getElementById("list-items") as HTMLElement).innerHTML = html;
+    (document.getElementById("list-items") as HTMLElement).innerHTML = fr(html);
   }
 
   page.addEventListener("change", (e) => {

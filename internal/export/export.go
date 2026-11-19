@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/RashKash103/get-cooked/internal/expr"
@@ -213,6 +214,26 @@ func ts(s string) string {
 // nb keeps a quantity on one line ("5 ml", "1 ½ cups").
 func nb(s string) string { return strings.ReplaceAll(s, " ", "\u00a0") }
 
+var fracRe = regexp.MustCompile(`(\p{Nd}+)\x{200E}?\x{2044}(\p{Nd}+)`)
+
+// typFrac is typ, but sets fraction-slash fractions ("١⁄٢") with a small
+// raised numerator and a small lowered denominator.
+func typFrac(s string) string {
+	var b strings.Builder
+	last := 0
+	for _, m := range fracRe.FindAllStringSubmatchIndex(s, -1) {
+		if m[0] > last {
+			b.WriteString(typ(s[last:m[0]]))
+		}
+		fmt.Fprintf(&b, "#box[#text(size: 0.62em, baseline: -0.42em)[%s]\u2044#text(size: 0.62em, baseline: 0.08em)[%s]]", typ(s[m[2]:m[3]]), typ(s[m[4]:m[5]]))
+		last = m[1]
+	}
+	if last < len(s) {
+		b.WriteString(typ(s[last:]))
+	}
+	return b.String()
+}
+
 // typ inserts text in markup mode: #"…" (nothing in it is interpreted).
 func typ(s string) string { return "#" + ts(s) }
 
@@ -226,6 +247,10 @@ func Typst(d Doc, paper string) string {
 		paper = "a4"
 	}
 	m := d.M
+	mk := typ
+	if d.Cat.Diagonal() {
+		mk = typFrac
+	}
 	var b strings.Builder
 	accent := "#c2410c"
 	fmt.Fprintf(&b, `#set document(title: %s)
@@ -247,13 +272,13 @@ func Typst(d Doc, paper string) string {
 	if d.R.Description != "" {
 		fmt.Fprintf(&b, "#muted[%s]\n\n", typ(d.R.Description))
 	}
-	fmt.Fprintf(&b, "#text(size: 9.5pt)[%s]\n\n", typ(metaLine(d)))
+	fmt.Fprintf(&b, "#text(size: 9.5pt)[%s]\n\n", mk(metaLine(d)))
 	if s := Summary(d); s != "" {
 		fmt.Fprintf(&b, "#text(size: 9.5pt, style: \"italic\", fill: luma(90))[%s]\n\n", typ(s))
 	}
 	for _, n := range m.Notes {
 		if n.Kind == "warning" {
-			fmt.Fprintf(&b, "#block(fill: rgb(\"#fef3c7\"), inset: 8pt, radius: 4pt, width: 100%%)[#text(size: 10pt)[%s]]\n\n", typ("⚠ "+n.Text))
+			fmt.Fprintf(&b, "#block(fill: rgb(\"#fef3c7\"), inset: 8pt, radius: 4pt, width: 100%%)[#text(size: 10pt)[%s]]\n\n", mk("⚠ "+n.Text))
 		}
 	}
 	// Left column: ingredients and equipment.
@@ -266,14 +291,14 @@ func Typst(d Doc, paper string) string {
 		for _, it := range s.Items {
 			left.WriteString("- ")
 			if it.Q != nil {
-				fmt.Fprintf(&left, "#qty(%s)%s", ts(nb(it.Q.String())), typ(it.J))
+				fmt.Fprintf(&left, "#qty[%s]%s", mk(nb(it.Q.String())), typ(it.J))
 			}
 			left.WriteString(typ(it.Name))
 			if it.Note != "" {
 				fmt.Fprintf(&left, "#muted(%s)", ts(", "+it.Note))
 			}
 			if u := uses(d, it); u != "" {
-				fmt.Fprintf(&left, "\\ #text(size: 8.5pt, fill: luma(110))[%s]", typ(u))
+				fmt.Fprintf(&left, "\\ #text(size: 8.5pt, fill: luma(110))[%s]", mk(u))
 			}
 			left.WriteString("\n")
 		}
@@ -299,9 +324,9 @@ func Typst(d Doc, paper string) string {
 			fmt.Fprintf(&right, "%d. ", st.N)
 			for _, seg := range st.Segs {
 				if seg.T == "ing" && seg.Q != "" {
-					fmt.Fprintf(&right, "#qty(%s)%s", ts(nb(seg.Q)), typ(seg.J))
+					fmt.Fprintf(&right, "#qty[%s]%s", mk(nb(seg.Q)), typ(seg.J))
 				}
-				right.WriteString(typ(seg.V))
+				right.WriteString(mk(seg.V))
 			}
 			if st.Note != "" {
 				fmt.Fprintf(&right, "\\ #muted(text(size: 9.5pt, style: \"italic\", %s))", ts(st.Note))
@@ -320,7 +345,7 @@ func Typst(d Doc, paper string) string {
 	if len(tips) > 0 {
 		fmt.Fprintf(&b, "#section(%s)\n", ts(d.Cat.T("notes")))
 		for _, t := range tips {
-			fmt.Fprintf(&b, "- %s\n", typ("• "+t))
+			fmt.Fprintf(&b, "- %s\n", mk("• "+t))
 		}
 	}
 	if src := d.R.Source; src != nil && (src.Name != "" || src.URL != "") {

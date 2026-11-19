@@ -66,7 +66,11 @@ export function localDigits(s: string, digits?: string): string {
   if (!digits) return s;
   const d = [...digits];
   if (d.length !== 10) return s;
-  return s.replace(/[0-9]/g, (c) => d[c.charCodeAt(0) - 48] as string);
+  // A left-to-right mark after each run of digits keeps "١ ١⁄٢" and ranges
+  // in logical order (see Table.L in internal/units/units.go).
+  return s
+    .replace(/[0-9]+(?:[.,٫٬][0-9]+)*/g, (run) => `${run}\u200e`)
+    .replace(/[0-9]/g, (c) => d[c.charCodeAt(0) - 48] as string);
 }
 
 export function formatFraction(

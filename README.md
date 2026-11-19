@@ -200,8 +200,9 @@ languages: [en, es]   # first = the language recipes are written in
 - Numbers can use the language's own digits (`digits: arab` → ٢, `deva` →
   २, `arabext`, `thai`, `beng`, … or any ten characters). Fractions follow
   with `fractions: native` (the language's numerals around a fraction slash:
-  ٢ ١⁄٢), and `fraction_glyphs: { "1/2": "½" }` sets your own character for
-  any fraction. Quantities, times, temperatures, step numbers, timers and
+  ٢ ١⁄٢), `fraction_display: diagonal` typesets them like ½ (small raised
+  numerator, small lowered denominator) on the site and in PDFs, and
+  `fraction_glyphs: { "1/2": "½" }` sets your own character for any fraction. Quantities, times, temperatures, step numbers, timers and
   exports all follow it.
 - `get-cooked i18n extract --lang es` creates `<recipe>.es.yaml` files mapping
   each original sentence to its translation. Logic stays in the original

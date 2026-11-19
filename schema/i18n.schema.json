@@ -132,6 +132,14 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "fraction_display": {
+      "enum": [
+        "",
+        "inline",
+        "diagonal"
+      ],
+      "description": "How fractions written with the fraction slash (native style) are shown on the site and in PDFs: inline (١⁄٢) or diagonal (small raised numerator, small lowered denominator)."
     }
   }
 }

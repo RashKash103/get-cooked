@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { render } from "../runtime/render";
 import type { Compiled, State } from "../runtime/types";
-import { renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
+import { fr, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
 import { type Meta, toMarkdown } from "./export";
 import { setDict } from "./i18n";
 
@@ -32,12 +32,12 @@ describe("blocks match Go", () => {
     const opts = Object.fromEntries((c.compiled.options ?? []).map((o) => [o.id, o.default]));
     Object.assign(opts, c.state.options ?? {});
     expect({
-      times: renderTimes(m),
-      equipment: renderEquipment(m),
-      ingredients: renderIngredients(m, c.base),
-      steps: renderSteps(m, c.base),
-      warnings: renderNotes(m, true),
-      tips: renderNotes(m, false),
+      times: fr(renderTimes(m)),
+      equipment: fr(renderEquipment(m)),
+      ingredients: fr(renderIngredients(m, c.base)),
+      steps: fr(renderSteps(m, c.base)),
+      warnings: fr(renderNotes(m, true)),
+      tips: fr(renderNotes(m, false)),
       markdown: toMarkdown(c.meta, c.compiled, m, opts),
     }).toEqual(c.html);
   });

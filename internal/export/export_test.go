@@ -77,7 +77,7 @@ func TestTypst(t *testing.T) {
 		`#set page(paper: "us-letter"`,
 		`#block(below: 1em, text(size: 23pt, weight: "bold", "Crispy Smoked-Paprika Chicken Thighs"))`,
 		`#section("Ingredients")`,
-		"#qty(\"1\u00a0tbsp\")",
+		"#qty[#\"1\u00a0tbsp\"]",
 		`#grid(columns: (36%, 1fr)`,
 		`#"⚠ Spice level 3 is genuinely hot.`,
 	} {
@@ -110,12 +110,32 @@ func TestLocalDigits(t *testing.T) {
 	cat.Digits = "٠١٢٣٤٥٦٧٨٩"
 	d.Cat = &cat
 	md := export.Markdown(d)
-	if !strings.Contains(md, "\n١. ") {
+	if !strings.Contains(md, "\n١\u200e. ") {
 		t.Errorf("step numbers should use Arabic-Indic digits:\n%s", md)
 	}
 	src := export.Typst(d, "a4")
 	if !strings.Contains(src, `#let digits = ("٠", "١"`) {
 		t.Error("typst digits array missing")
+	}
+	if _, err := exec.LookPath("typst"); err == nil {
+		if _, err := export.PDF(context.Background(), src); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Diagonal fractions in the PDF: re-render with native fractions.
+	cat.Fractions, cat.FracDisplay = "native", "diagonal"
+	c := *d.R.C
+	c.Units = cat.Localize(d.R.C.Units)
+	r := *d.R
+	r.C = &c
+	m, err := runtime.Render(&c, runtime.State{Servings: 3, System: "us"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d2 := export.Doc{R: &r, M: m, Cat: &cat, Opts: d.Opts}
+	src = export.Typst(d2, "a4")
+	if !strings.Contains(src, "#text(size: 0.62em, baseline: -0.42em)[#\"١\"]") {
+		t.Errorf("expected diagonal fraction markup:\n%s", src)
 	}
 	if _, err := exec.LookPath("typst"); err == nil {
 		if _, err := export.PDF(context.Background(), src); err != nil {

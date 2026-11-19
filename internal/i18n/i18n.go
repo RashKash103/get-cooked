@@ -47,6 +47,7 @@ type Catalog struct {
 	Digits      string             `yaml:"digits"`
 	Fractions   string             `yaml:"fractions"`
 	FracGlyphs  map[string]string  `yaml:"fraction_glyphs"`
+	FracDisplay string             `yaml:"fraction_display"`
 	UI          map[string]string  `yaml:"ui"`
 	Times       map[string]string  `yaml:"times"`
 	Servings    Label              `yaml:"servings"`
@@ -127,6 +128,12 @@ func Load(siteDir, lang string) (*Catalog, error) {
 		}
 	}
 	c.FracGlyphs = o.FracGlyphs
+	switch o.FracDisplay {
+	case "", "inline", "diagonal":
+		c.FracDisplay = o.FracDisplay
+	default:
+		return nil, fmt.Errorf("%s: fraction_display must be inline or diagonal", Path(siteDir, lang))
+	}
 	switch o.System {
 	case "", "original", "us", "metric":
 		c.System = o.System
@@ -273,6 +280,9 @@ func ResolveDigits(s string) (string, error) {
 	sort.Strings(names)
 	return "", fmt.Errorf("digits must be a numbering system (%s) or ten characters for 0–9", strings.Join(names, ", "))
 }
+
+// Diagonal reports whether fractions are typeset raised/lowered.
+func (c *Catalog) Diagonal() bool { return c.FracDisplay == "diagonal" }
 
 // Num replaces ASCII digits in s with the language's digits.
 func (c *Catalog) Num(s string) string {

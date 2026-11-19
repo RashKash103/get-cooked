@@ -5,6 +5,23 @@ import type { LinkM, Model, Seg, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
 import { num, t } from "./i18n";
 
+/**
+ * Sets fractions written with the fraction slash ("١⁄٢") with a raised
+ * numerator and lowered denominator when the language asks for it
+ * (fraction_display: diagonal). Mirrors diagonalFractions in blocks.go.
+ */
+export function diagonalFractions(html: string): string {
+  return html.replace(
+    /(\p{Nd}+)\u200e?\u2044(\p{Nd}+)(\u200e?)/gu,
+    '<span class="frac"><sup>$1</sup>&#8260;<sub>$2</sub></span>$3',
+  );
+}
+
+/** Applies diagonalFractions when the page's language enables it. */
+export function fr(html: string): string {
+  return t("_fracs") === "diagonal" ? diagonalFractions(html) : html;
+}
+
 /** Escapes like Go's html.EscapeString. */
 export function esc(s: string): string {
   return s.replace(

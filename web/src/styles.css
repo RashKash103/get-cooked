@@ -303,6 +303,21 @@
   .qty {
     @apply font-semibold tabular-nums;
   }
+  /* fraction_display: diagonal — small raised numerator, small lowered denominator. */
+  .frac {
+    white-space: nowrap;
+  }
+  .frac sup,
+  .frac sub {
+    font-size: 0.62em;
+    line-height: 0;
+  }
+  .frac sup {
+    vertical-align: 0.45em;
+  }
+  .frac sub {
+    vertical-align: -0.12em;
+  }
   .ing .qty {
     @apply cursor-pointer decoration-stone-400 decoration-dotted underline-offset-4 hover:underline;
   }

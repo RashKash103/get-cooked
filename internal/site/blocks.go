@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -17,6 +18,17 @@ import (
 // the reader changes servings or options. Keep the markup identical.
 
 func esc(s string) string { return html.EscapeString(s) }
+
+// fracRe matches a fraction built with the fraction slash (U+2044) in any
+// script's digits ("١⁄٢").
+var fracRe = regexp.MustCompile(`(\p{Nd}+)\x{200E}?\x{2044}(\p{Nd}+)(\x{200E}?)`)
+
+// diagonalFractions sets the numerator raised and the denominator lowered so
+// fractions read as fractions in any script, independent of font support.
+// Mirrored by diagonalFractions in web/src/ui/blocks.ts.
+func diagonalFractions(h string) string {
+	return fracRe.ReplaceAllString(h, `<span class="frac"><sup>$1</sup>&#8260;<sub>$2</sub></span>$3`)
+}
 
 // RecipeURL builds the link to a recipe with optional state.
 func RecipeURL(base, slug string, servings float64, options map[string]any) string {

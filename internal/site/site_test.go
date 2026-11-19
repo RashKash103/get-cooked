@@ -58,6 +58,7 @@ func TestBlocksGolden(t *testing.T) {
 	arCat := *es.Catalog
 	arCat.Lang, arCat.Digits, arCat.Fractions, arCat.Decimal = "ar-test", "٠١٢٣٤٥٦٧٨٩", "native", "٫"
 	arCat.FracGlyphs = map[string]string{"1/4": "¼"}
+	arCat.FracDisplay = "diagonal"
 	ar := &Lang{Code: "ar-test", Catalog: &arCat, Units: arCat.Localize(s.Units), Translated: es.Translated}
 	for _, r := range es.Recipes {
 		if r.Slug != "cranberry-baked-oatmeal" && r.Slug != "crispy-chicken-thighs" {
@@ -76,6 +77,11 @@ func TestBlocksGolden(t *testing.T) {
 			dict[k] = l.Catalog.T(k)
 		}
 		dict["_digits"] = l.Catalog.Digits
+		dict["_fracs"] = l.Catalog.FracDisplay
+		fr := func(h string) string { return h }
+		if l.Catalog.Diagonal() {
+			fr = diagonalFractions
+		}
 		base := "/" + l.Prefix(s.Langs[0].Code)
 		for _, r := range l.Recipes {
 			if l.Code != s.Langs[0].Code && l.Code != "ar-test" && !l.Translated[r.Slug] && r.Slug != "crispy-chicken-thighs" {
@@ -98,12 +104,12 @@ func TestBlocksGolden(t *testing.T) {
 					Lang: l.Code, Slug: r.Slug, Base: base, Dict: dict, Compiled: r.C, State: st,
 					Meta: map[string]any{"title": r.Title, "description": r.Description, "source": r.Source},
 					HTML: map[string]string{
-						"times":       renderTimes(m),
-						"equipment":   renderEquipment(m),
-						"ingredients": renderIngredients(m, base, l.Catalog),
-						"steps":       renderSteps(m, base, l.Catalog),
-						"warnings":    renderNotes(m, true),
-						"tips":        renderNotes(m, false),
+						"times":       fr(renderTimes(m)),
+						"equipment":   fr(renderEquipment(m)),
+						"ingredients": fr(renderIngredients(m, base, l.Catalog)),
+						"steps":       fr(renderSteps(m, base, l.Catalog)),
+						"warnings":    fr(renderNotes(m, true)),
+						"tips":        fr(renderNotes(m, false)),
 						"markdown":    md,
 					},
 				})

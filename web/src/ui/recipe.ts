@@ -1,7 +1,7 @@
 import { render } from "../runtime/render";
 import type { Compiled, Model, State, Value } from "../runtime/types";
 import { qtyString } from "../runtime/units";
-import { recipeURL, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
+import { fr, recipeURL, renderEquipment, renderIngredients, renderNotes, renderSteps, renderTimes } from "./blocks";
 import { download, type Meta, summary, toMarkdown } from "./export";
 import { num, t } from "./i18n";
 import { addRecipe, inList, itemsFrom } from "./list";
@@ -113,16 +113,16 @@ export function initRecipe(): void {
       const el = $(id);
       if (el && el.innerHTML !== html) el.innerHTML = html;
     };
-    set("times", renderTimes(m));
+    set("times", fr(renderTimes(m)));
     const y = $("yield");
     if (y) y.textContent = m.yield;
-    set("ingredients", renderIngredients(m, base));
-    set("equipment", renderEquipment(m));
+    set("ingredients", fr(renderIngredients(m, base)));
+    set("equipment", fr(renderEquipment(m)));
     const ew = $("equipment-wrap");
     if (ew) ew.hidden = m.equipment.length === 0;
-    set("steps", renderSteps(m, base));
-    set("warnings", renderNotes(m, true));
-    set("tips", renderNotes(m, false));
+    set("steps", fr(renderSteps(m, base)));
+    set("warnings", fr(renderNotes(m, true)));
+    set("tips", fr(renderNotes(m, false)));
     paintImage(m);
     for (const el of document.querySelectorAll<HTMLElement>("[data-opt]")) {
       el.hidden = !m.options.includes(el.dataset.opt ?? "");

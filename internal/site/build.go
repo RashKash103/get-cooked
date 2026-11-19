@@ -210,6 +210,7 @@ func (b *builder) newPage(l *Lang, base, title, desc, canonical, path string) pa
 		js[k] = cat.T(k)
 	}
 	js["_digits"] = cat.Digits
+	js["_fracs"] = cat.FracDisplay
 	j, _ := json.Marshal(js)
 	dir := cat.Dir
 	if dir == "" {
@@ -235,6 +236,10 @@ func (b *builder) lang(l *Lang) error {
 	out := filepath.Join(b.out, filepath.FromSlash(prefix))
 	idx := &indexView{}
 	cats := map[string]bool{}
+	fr := func(h string) string { return h }
+	if l.Catalog.Diagonal() {
+		fr = diagonalFractions
+	}
 	for _, r := range l.Recipes {
 		dir := filepath.Join(out, "recipes", r.Slug)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -258,12 +263,12 @@ func (b *builder) lang(l *Lang) error {
 		}
 		v := &recipeView{
 			R: r, M: m, ImageAlt: r.ImageAlt,
-			Times:         template.HTML(renderTimes(m)),
-			Equipment:     template.HTML(renderEquipment(m)),
-			Ingredients:   template.HTML(renderIngredients(m, base, l.Catalog)),
-			Steps:         template.HTML(renderSteps(m, base, l.Catalog)),
-			Warnings:      template.HTML(renderNotes(m, true)),
-			Tips:          template.HTML(renderNotes(m, false)),
+			Times:         template.HTML(fr(renderTimes(m))),
+			Equipment:     template.HTML(fr(renderEquipment(m))),
+			Ingredients:   template.HTML(fr(renderIngredients(m, base, l.Catalog))),
+			Steps:         template.HTML(fr(renderSteps(m, base, l.Catalog))),
+			Warnings:      template.HTML(fr(renderNotes(m, true))),
+			Tips:          template.HTML(fr(renderNotes(m, false))),
 			NotTranslated: !l.Translated[r.Slug],
 			SourceLang:    src,
 		}

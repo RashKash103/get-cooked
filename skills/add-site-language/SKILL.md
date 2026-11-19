@@ -33,7 +33,8 @@ original language with the UI translated.
      Arabic, `arabext` for Persian/Urdu, `deva` for Hindi/Marathi, `beng`,
      `thai`, …; ask the user, since many Arabic-speaking regions use 0–9).
      With non-Latin digits, set `fractions: native` so fractions use the same
-     numerals ("١⁄٢" rather than "½"). If the language has conventional
+     numerals ("١⁄٢" rather than "½"), and `fraction_display: diagonal` to
+     typeset them with a small raised numerator and lowered denominator. If the language has conventional
      characters for some fractions, list them in `fraction_glyphs`
      (`{ "1/2": "…" }`); they win over the style.
    - `of`: the word that joins an amount and an ingredient if the language
