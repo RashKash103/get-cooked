@@ -4,136 +4,139 @@
 # (or are matched automatically by name/alias). Densities enable converting
 # between cups and grams; `round` controls how counted items are rounded.
 
+# Densities are { value, unit } with units such as g/cup, g/ml, g/cm3, kg/l,
+# g/tbsp, oz/cup or lb/gal (the schema lists them all).
+
 # ── Baking ────────────────────────────────────────────────────────────────
 all-purpose-flour:
   name: all-purpose flour
   aliases: [flour, ap flour, plain flour]
-  grams_per_cup: 125
+  density: { value: 125, unit: g/cup }
   category: baking
 bread-flour:
   name: bread flour
-  grams_per_cup: 130
+  density: { value: 130, unit: g/cup }
   category: baking
 whole-wheat-flour:
   name: whole wheat flour
-  grams_per_cup: 120
+  density: { value: 120, unit: g/cup }
   category: baking
 granulated-sugar:
   name: sugar
   aliases: [granulated sugar, white sugar]
-  grams_per_cup: 200
+  density: { value: 200, unit: g/cup }
   category: baking
 brown-sugar:
   name: brown sugar
   aliases: [light brown sugar, dark brown sugar]
-  grams_per_cup: 213
+  density: { value: 213, unit: g/cup }
   category: baking
 powdered-sugar:
   name: powdered sugar
   aliases: [icing sugar, confectioners sugar]
-  grams_per_cup: 120
+  density: { value: 120, unit: g/cup }
   category: baking
 baking-soda:
   name: baking soda
-  grams_per_cup: 221
+  density: { value: 221, unit: g/cup }
   category: baking
 baking-powder:
   name: baking powder
-  grams_per_cup: 192
+  density: { value: 192, unit: g/cup }
   category: baking
 instant-yeast:
   name: instant yeast
   aliases: [yeast, rapid rise yeast]
-  grams_per_cup: 150
+  density: { value: 150, unit: g/cup }
   unit_grams: { packet: 7, envelope: 7 }
   category: baking
 vanilla-extract:
   name: vanilla extract
   aliases: [vanilla]
-  grams_per_cup: 202
+  density: { value: 202, unit: g/cup }
   measure: volume
   category: baking
 chocolate-chips:
   name: chocolate chips
   aliases: [semisweet chocolate chips, chocolate chunks]
-  grams_per_cup: 170
+  density: { value: 170, unit: g/cup }
   category: baking
 cocoa-powder:
   name: cocoa powder
-  grams_per_cup: 85
+  density: { value: 85, unit: g/cup }
   category: baking
 cornstarch:
-  grams_per_cup: 128
+  density: { value: 128, unit: g/cup }
   category: baking
 rolled-oats:
   name: rolled oats
   aliases: [oats, old-fashioned oats]
-  grams_per_cup: 90
+  density: { value: 90, unit: g/cup }
   category: pantry
 dried-cranberries:
   name: dried cranberries
   aliases: [craisins]
-  grams_per_cup: 120
+  density: { value: 120, unit: g/cup }
   category: pantry
 walnuts:
   name: walnuts
-  grams_per_cup: 117
+  density: { value: 117, unit: g/cup }
   category: pantry
 pecans:
-  grams_per_cup: 109
+  density: { value: 109, unit: g/cup }
   category: pantry
 
 # ── Seasoning ────────────────────────────────────────────────────────────
 kosher-salt:
   name: kosher salt
   aliases: [salt, diamond crystal kosher salt]
-  grams_per_cup: 137
+  density: { value: 137, unit: g/cup }
   category: pantry
 flaky-salt:
   name: flaky sea salt
   aliases: [maldon salt, sea salt flakes]
-  grams_per_cup: 120
+  density: { value: 120, unit: g/cup }
   category: pantry
 black-pepper:
   name: black pepper
   aliases: [pepper, ground black pepper]
-  grams_per_cup: 110
+  density: { value: 110, unit: g/cup }
   category: pantry
 cinnamon:
   name: ground cinnamon
   aliases: [cinnamon]
-  grams_per_cup: 125
+  density: { value: 125, unit: g/cup }
   category: pantry
 smoked-paprika:
   name: smoked paprika
   aliases: [paprika]
-  grams_per_cup: 110
+  density: { value: 110, unit: g/cup }
   category: pantry
 garlic-powder:
   name: garlic powder
-  grams_per_cup: 150
+  density: { value: 150, unit: g/cup }
   category: pantry
 cayenne:
   name: cayenne pepper
   aliases: [cayenne]
-  grams_per_cup: 85
+  density: { value: 85, unit: g/cup }
   category: pantry
 dried-oregano:
   name: dried oregano
   aliases: [oregano]
-  grams_per_cup: 48
+  density: { value: 48, unit: g/cup }
   category: pantry
 red-pepper-flakes:
   name: red pepper flakes
   aliases: [chili flakes, crushed red pepper]
-  grams_per_cup: 80
+  density: { value: 80, unit: g/cup }
   category: pantry
 
 # ── Dairy & eggs ─────────────────────────────────────────────────────────
 butter:
   name: unsalted butter
   aliases: [butter, salted butter]
-  grams_per_cup: 227
+  density: { value: 227, unit: g/cup }
   unit_grams: { stick: 113 }
   category: dairy
 egg:
@@ -153,65 +156,65 @@ egg-yolk:
 milk:
   name: milk
   aliases: [whole milk]
-  grams_per_cup: 245
+  density: { value: 1.035, unit: g/ml }
   measure: volume
   category: dairy
 buttermilk:
-  grams_per_cup: 245
+  density: { value: 245, unit: g/cup }
   measure: volume
   category: dairy
 heavy-cream:
   name: heavy cream
   aliases: [whipping cream, double cream]
-  grams_per_cup: 238
+  density: { value: 238, unit: g/cup }
   measure: volume
   category: dairy
 parmesan:
   name: grated parmesan
   aliases: [parmesan cheese, parmigiano reggiano]
-  grams_per_cup: 100
+  density: { value: 100, unit: g/cup }
   category: dairy
 
 # ── Liquids & fats ───────────────────────────────────────────────────────
 water:
-  grams_per_cup: 237
+  density: { value: 1, unit: g/cm3 }
   measure: volume
 olive-oil:
   name: olive oil
   aliases: [extra-virgin olive oil, evoo]
-  grams_per_cup: 216
+  density: { value: 0.91, unit: kg/l }
   measure: volume
   category: pantry
 neutral-oil:
   name: neutral oil
   aliases: [vegetable oil, canola oil]
-  grams_per_cup: 218
+  density: { value: 218, unit: g/cup }
   measure: volume
   category: pantry
 coconut-milk:
   name: coconut milk
-  grams_per_cup: 226
+  density: { value: 226, unit: g/cup }
   measure: volume
   unit_grams: { can: 400 }
   category: pantry
 honey:
-  grams_per_cup: 340
+  density: { value: 12, unit: oz/cup }
   measure: volume
   category: pantry
 maple-syrup:
   name: maple syrup
-  grams_per_cup: 315
+  density: { value: 315, unit: g/cup }
   measure: volume
   category: pantry
 lemon-juice:
   name: lemon juice
-  grams_per_cup: 240
+  density: { value: 240, unit: g/cup }
   measure: volume
   category: produce
 vegetable-broth:
   name: vegetable broth
   aliases: [vegetable stock, broth, stock]
-  grams_per_cup: 240
+  density: { value: 240, unit: g/cup }
   measure: volume
   category: pantry
 
@@ -237,13 +240,13 @@ lemon:
 crushed-tomatoes:
   name: crushed tomatoes
   aliases: [canned crushed tomatoes]
-  grams_per_cup: 245
+  density: { value: 245, unit: g/cup }
   unit_grams: { can: 794 }
   category: pantry
 fresh-basil:
   name: fresh basil
   aliases: [basil, basil leaves]
-  grams_per_cup: 24
+  density: { value: 24, unit: g/cup }
   category: produce
 chicken-thighs:
   name: bone-in chicken thighs
@@ -257,7 +260,7 @@ baby-potatoes:
 blueberries:
   name: fresh blueberries
   aliases: [blueberries, blueberry]
-  grams_per_cup: 148
+  density: { value: 148, unit: g/cup }
   category: produce
 banana:
   name: ripe banana

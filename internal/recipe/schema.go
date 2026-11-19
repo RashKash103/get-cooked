@@ -118,6 +118,11 @@ func ValidateSchema(name, file string, root *yaml.Node) Diags {
 		if path := prettyPath(l.InstanceLocation); path != "" {
 			msg = path + ": " + msg
 		}
+		for field, hint := range removedFields {
+			if strings.Contains(msg, "'"+field+"'") && strings.Contains(msg, "not allowed") {
+				msg += " (" + hint + ")"
+			}
+		}
 		if seen[msg] {
 			continue
 		}
@@ -135,6 +140,12 @@ func ValidateSchema(name, file string, root *yaml.Node) Diags {
 	}
 	sort.SliceStable(diags, func(i, j int) bool { return diags[i].Line < diags[j].Line })
 	return diags
+}
+
+// removedFields explains fields that were replaced, pointing at the
+// migration that upgrades them.
+var removedFields = map[string]string{
+	"grams_per_cup": "replaced by density in 0.3.0; run `get-cooked migrate`",
 }
 
 func prettyPath(tokens []string) string {

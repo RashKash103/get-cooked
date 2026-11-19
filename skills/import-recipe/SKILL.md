@@ -39,7 +39,8 @@ title, category folder matching existing ones; look at `recipes/`).
 3. **Ingredients**: one item per ingredient with an `id` short enough to read
    in steps (`flour`, `sugar`, `butter`). Prefer `ingredient:` keys from
    `ingredients.yaml`. If an ingredient is missing there, add an entry with
-   `name`, `aliases`, `category`, and a realistic `grams_per_cup` (or
+   `name`, `aliases`, `category`, and a realistic density (`density: { value: 125, unit: g/cup }`;
+   other units like `g/ml`, `g/cm3` or `oz/cup` are listed in the schema) (or
    `grams_each`, `unit_grams`, `measure: volume` for liquids, `round` for
    counted items like eggs). Use well-known densities; don't guess wildly.
    Use sections when the source groups ingredients.

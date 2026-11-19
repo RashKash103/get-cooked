@@ -363,9 +363,9 @@ func strictChecks(s *Site) recipe.Diags {
 				if info == nil || info.GramsPerML == 0 {
 					msg := fmt.Sprintf("%q has no density, so it can't convert between volume and weight", ic.Name)
 					if ic.Ref == "" {
-						msg += "; add it to the ingredient database with grams_per_cup"
+						msg += "; add it to the ingredient database with a density (e.g. density: 0.53 g/ml)"
 					} else {
-						msg += fmt.Sprintf("; add grams_per_cup to %q in the ingredient database", ic.Ref)
+						msg += fmt.Sprintf("; add a density (e.g. density: 0.53 g/ml) to %q in the ingredient database", ic.Ref)
 					}
 					out = append(out, recipe.Diag{File: r.Path, Line: ic.L.Line, Warn: true, Msg: msg})
 				}

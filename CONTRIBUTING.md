@@ -47,6 +47,20 @@ The built frontend bundle in `internal/assets/dist` is committed so that
 After changing anything under `web/`, run `make web` and commit the result;
 CI checks that it's up to date.
 
+## Format changes need a migration
+
+Any change that makes existing site files invalid (renamed or removed fields,
+new required structure) must ship with a migration in `internal/migrate` so
+users can run `get-cooked migrate` instead of editing files by hand:
+
+- Add an entry to `migrate.All` with an id, the version it ships in, a
+  description and an `Apply` function that edits text in place (keep
+  comments and formatting) and is safe to run repeatedly.
+- Make the validation error for the old form say "run `get-cooked migrate`"
+  (see `removedFields` in `internal/recipe/schema.go`).
+- Add a test in `internal/migrate` that migrates an old-format site and
+  checks that it then validates and that a second run changes nothing.
+
 ## Example recipes
 
 The recipes in `examples/site` and the starter recipe written by

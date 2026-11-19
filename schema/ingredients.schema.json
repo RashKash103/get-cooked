@@ -4,34 +4,112 @@
   "title": "get-cooked ingredient database",
   "description": "Maps ingredient keys to names, conversions and rounding rules.",
   "type": "object",
-  "additionalProperties": { "$ref": "#/$defs/entry" },
+  "additionalProperties": {
+    "$ref": "#/$defs/entry"
+  },
   "$defs": {
     "entry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "description": "Display name (singular). Defaults to the key with dashes as spaces." },
-        "plural": { "type": "string", "description": "Plural name, used for counted items (\"3 eggs\")." },
-        "aliases": { "type": "array", "items": { "type": "string" }, "description": "Other names used to auto-match recipe ingredients." },
-        "grams_per_cup": { "type": "number", "exclusiveMinimum": 0, "description": "Density, enabling mass ⇄ volume conversion." },
-        "grams_each": { "type": "number", "exclusiveMinimum": 0, "description": "Weight of one item (e.g. one egg)." },
+        "name": {
+          "type": "string",
+          "description": "Display name (singular). Defaults to the key with dashes as spaces."
+        },
+        "plural": {
+          "type": "string",
+          "description": "Plural name, used for counted items (\"3 eggs\")."
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Other names used to auto-match recipe ingredients."
+        },
+        "density": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "unit"
+          ],
+          "description": "Density, enabling mass ⇄ volume conversion, e.g. {value: 125, unit: g/cup} or {value: 1.03, unit: g/ml}.",
+          "properties": {
+            "value": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "unit": {
+              "enum": [
+                "g/ml",
+                "g/cm3",
+                "g/l",
+                "kg/l",
+                "kg/m3",
+                "g/tsp",
+                "g/tbsp",
+                "g/cup",
+                "oz/tbsp",
+                "oz/cup",
+                "oz/floz",
+                "oz/pint",
+                "lb/cup",
+                "lb/pint",
+                "lb/quart",
+                "lb/gal"
+              ],
+              "description": "Mass per volume."
+            }
+          }
+        },
+        "grams_each": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Weight of one item (e.g. one egg)."
+        },
         "unit_grams": {
           "type": "object",
           "description": "Weight of one count unit, e.g. {stick: 113, clove: 5}.",
-          "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
         },
-        "measure": { "enum": ["volume", "mass"], "description": "Preferred dimension when converting (liquids: volume)." },
+        "measure": {
+          "enum": [
+            "volume",
+            "mass"
+          ],
+          "description": "Preferred dimension when converting (liquids: volume)."
+        },
         "round": {
           "type": "object",
           "additionalProperties": false,
           "description": "Rounding for counted amounts, e.g. eggs {step: 1, min: 1}.",
           "properties": {
-            "denoms": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 16 } },
-            "step": { "type": "number", "exclusiveMinimum": 0 },
-            "min": { "type": "number", "minimum": 0 }
+            "denoms": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16
+              }
+            },
+            "step": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
           }
         },
-        "category": { "type": "string", "description": "Shopping category (produce, dairy, baking…)." }
+        "category": {
+          "type": "string",
+          "description": "Shopping category (produce, dairy, baking…)."
+        }
       }
     }
   }

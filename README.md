@@ -165,7 +165,19 @@ recipes with
 | `import <url>` | Draft a recipe from a page's schema.org data |
 | `i18n init/extract/status` | Manage UI and recipe translations |
 | `skills install/list` | Install the Claude Code skills |
+| `migrate` | Upgrade a site's files after a format change (`--dry-run` to preview, `--list`) |
 | `docs`, `schema` | Print the format reference or a JSON Schema |
+
+## Upgrading
+
+When a new version changes a file format, `get-cooked validate` tells you,
+and `get-cooked migrate` upgrades your files in place (keeping comments and
+formatting):
+
+```sh
+get-cooked migrate --dry-run   # see what would change
+get-cooked migrate
+```
 
 ## Publish with GitHub Actions
 

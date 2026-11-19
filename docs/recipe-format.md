@@ -267,7 +267,7 @@ Put display text in `{if}` blocks rather than inside expression strings
 all-purpose-flour:
   name: all-purpose flour
   aliases: [flour, ap flour]     # auto-matching for shorthand lines
-  grams_per_cup: 125             # density: enables cups ⇄ grams
+  density: { value: 125, unit: g/cup }   # enables cups ⇄ grams
   category: baking
 egg:
   name: egg
@@ -275,9 +275,10 @@ egg:
   grams_each: 50
   round: { step: 1, min: 1 }     # whole eggs, at least one
 butter:
-  grams_per_cup: 227
+  density: { value: 227, unit: g/cup }
   unit_grams: { stick: 113 }     # weight of count units
 milk:
-  grams_per_cup: 245
+  density: { value: 1.035, unit: g/ml }  # units: g/ml g/cm3 g/l kg/l kg/m3 g/tsp g/tbsp g/cup
+                                         # oz/tbsp oz/cup oz/floz oz/pint lb/cup lb/pint lb/quart lb/gal
   measure: volume                # liquids stay in ml when converting to metric
 ```

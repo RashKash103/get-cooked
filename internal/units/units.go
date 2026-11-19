@@ -76,6 +76,29 @@ type Table struct {
 	aliases   map[string]string
 }
 
+// DensityUnits maps each supported density unit to grams per millilitre for
+// one of that unit. The ingredient schema's density.unit enum must list
+// exactly these keys (checked by a test).
+var DensityUnits = func() map[string]float64 {
+	const (
+		tsp    = 4.92892159375
+		tbsp   = 14.78676478125
+		cup    = 236.5882365
+		floz   = 29.5735295625
+		pint   = 473.176473
+		quart  = 946.352946
+		gallon = 3785.411784
+		oz     = 28.349523125
+		lb     = 453.59237
+	)
+	return map[string]float64{
+		"g/ml": 1, "g/cm3": 1, "g/l": 0.001, "kg/l": 1, "kg/m3": 0.001,
+		"g/tsp": 1 / tsp, "g/tbsp": 1 / tbsp, "g/cup": 1 / cup,
+		"oz/tbsp": oz / tbsp, "oz/cup": oz / cup, "oz/floz": oz / floz, "oz/pint": oz / pint,
+		"lb/cup": lb / cup, "lb/pint": lb / pint, "lb/quart": lb / quart, "lb/gal": lb / gallon,
+	}
+}()
+
 // Ing carries the per-ingredient data needed for conversion and rounding.
 type Ing struct {
 	Name       string             `json:"name"`
@@ -135,8 +158,8 @@ func Default() *Table {
 		u("pint", Volume, US, 473.176473, "pint", "pints", "pints", "pt"),
 		u("quart", Volume, US, 946.352946, "quart", "quarts", "quarts", "qt"),
 		u("gallon", Volume, US, 3785.411784, "gallon", "gallons", "gallons", "gal"),
-		u("ml", Volume, Metric, 1, "ml", "ml", "milliliter", "milliliters", "millilitre", "millilitres", "mL"),
-		u("l", Volume, Metric, 1000, "l", "l", "liter", "liters", "litre", "litres", "L"),
+		u("ml", Volume, Metric, 1, "ml", "ml", "milliliter", "milliliters", "millilitre", "millilitres", "mL", "cm3", "cm³", "cc"),
+		u("l", Volume, Metric, 1000, "l", "l", "liter", "liters", "litre", "litres", "L", "dm3", "dm³"),
 		u("g", Mass, Metric, 1, "g", "g", "gram", "grams", "gr"),
 		u("kg", Mass, Metric, 1000, "kg", "kg", "kilogram", "kilograms", "kilo", "kilos"),
 		u("oz", Mass, US, 28.349523125, "oz", "oz", "ounce", "ounces"),

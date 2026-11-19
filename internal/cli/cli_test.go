@@ -97,6 +97,34 @@ func TestExport(t *testing.T) {
 	}
 }
 
+func TestMigrateCommand(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := scaffold.Write(dir, "T"); err != nil {
+		t.Fatal(err)
+	}
+	if out := mustRun(t, "migrate", "-s", dir); !strings.Contains(out, "up to date") {
+		t.Errorf("fresh site should be up to date:\n%s", out)
+	}
+	db := filepath.Join(dir, "ingredients.yaml")
+	b, _ := os.ReadFile(db)
+	old := strings.Replace(string(b), "density: { value: 125, unit: g/cup }", "grams_per_cup: 125", 1)
+	if err := os.WriteFile(db, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := run(t, "validate", "-s", dir)
+	if code == 0 || !strings.Contains(out, "get-cooked migrate") {
+		t.Errorf("validate should point at migrate (%d):\n%s", code, out)
+	}
+	if out := mustRun(t, "migrate", "-s", dir, "--dry-run"); !strings.Contains(out, "would migrate") || !strings.Contains(out, "ingredients.yaml") {
+		t.Errorf("dry run:\n%s", out)
+	}
+	mustRun(t, "migrate", "-s", dir)
+	mustRun(t, "validate", "-s", dir)
+	if out := mustRun(t, "migrate", "--list"); !strings.Contains(out, "0.3.0-density") {
+		t.Error(out)
+	}
+}
+
 func TestStrict(t *testing.T) {
 	dir := t.TempDir()
 	if _, err := scaffold.Write(dir, "T"); err != nil {

@@ -85,7 +85,7 @@ func NewRoot(stdout, stderr io.Writer) *cobra.Command {
 	root.SetErr(stderr)
 	root.AddCommand(
 		buildCmd(), serveCmd(), validateCmd(), renderCmd(), initCmd(), newCmd(),
-		importCmd(), schemaCmd(), i18nCmd(), skillsCmd(), docsCmd(), exportCmd(), versionCmd(),
+		importCmd(), schemaCmd(), i18nCmd(), skillsCmd(), docsCmd(), exportCmd(), migrateCmd(), versionCmd(),
 	)
 	return root
 }

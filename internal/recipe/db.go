@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -14,15 +15,21 @@ import (
 
 // DBYAML is an ingredient database entry as written in ingredients.yaml.
 type DBYAML struct {
-	Name        string             `yaml:"name"`
-	Plural      string             `yaml:"plural"`
-	Aliases     []string           `yaml:"aliases"`
-	GramsPerCup float64            `yaml:"grams_per_cup"`
-	GramsEach   float64            `yaml:"grams_each"`
-	UnitGrams   map[string]float64 `yaml:"unit_grams"`
-	Measure     string             `yaml:"measure"`
-	Round       *RoundYAML         `yaml:"round"`
-	Category    string             `yaml:"category"`
+	Name      string             `yaml:"name"`
+	Plural    string             `yaml:"plural"`
+	Aliases   []string           `yaml:"aliases"`
+	Density   *Density           `yaml:"density"`
+	GramsEach float64            `yaml:"grams_each"`
+	UnitGrams map[string]float64 `yaml:"unit_grams"`
+	Measure   string             `yaml:"measure"`
+	Round     *RoundYAML         `yaml:"round"`
+	Category  string             `yaml:"category"`
+}
+
+// Density is a density with an explicit unit, e.g. {value: 1.03, unit: g/ml}.
+type Density struct {
+	Value float64 `yaml:"value"`
+	Unit  string  `yaml:"unit"`
 }
 
 // RoundYAML is the rounding rule for count quantities.
@@ -69,6 +76,19 @@ func LoadDB(paths []string, tb *units.Table) (*DB, Diags) {
 			diags = append(diags, Diag{File: p, Msg: err.Error()})
 			continue
 		}
+		if len(root.Content) > 0 {
+			for _, kv := range orderedPairs(root.Content[0]) {
+				for _, f := range orderedPairs(kv[1]) {
+					if f[0].Value == "grams_per_cup" {
+						diags = append(diags, Diag{File: p, Line: f[0].Line, Col: f[0].Column,
+							Msg: fmt.Sprintf("%s: grams_per_cup was replaced by density in 0.3.0; run `get-cooked migrate` (or write `density: { value: %s, unit: g/cup }`)", kv[0].Value, f[1].Value)})
+					}
+				}
+			}
+		}
+		if diags.HasErrors() {
+			continue
+		}
 		diags = append(diags, ValidateSchema("ingredients", p, &root)...)
 		if diags.HasErrors() {
 			continue
@@ -97,8 +117,16 @@ func (db *DB) Add(key string, y DBYAML, tb *units.Table, loc Loc) Diags {
 		e.Name = strings.ReplaceAll(key, "-", " ")
 	}
 	info := &units.Ing{Name: e.Name, Plural: e.Plural, GramsEach: y.GramsEach, Measure: y.Measure, Cat: y.Category}
-	if y.GramsPerCup > 0 {
-		info.GramsPerML = y.GramsPerCup / tb.Units["cup"].Factor
+	if d := y.Density; d != nil {
+		f, ok := units.DensityUnits[d.Unit]
+		switch {
+		case !ok:
+			diags = append(diags, loc.Diag("ingredient %q: unknown density unit %q", key, d.Unit))
+		case d.Value <= 0:
+			diags = append(diags, loc.Diag("ingredient %q: density must be positive", key))
+		default:
+			info.GramsPerML = d.Value * f
+		}
 	}
 	for name, g := range y.UnitGrams {
 		x, ok := tb.Lookup(name)
