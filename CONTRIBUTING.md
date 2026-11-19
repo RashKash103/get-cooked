@@ -58,6 +58,9 @@ users can run `get-cooked migrate` instead of editing files by hand:
   comments and formatting) and is safe to run repeatedly.
 - Make the validation error for the old form say "run `get-cooked migrate`"
   (see `removedFields` in `internal/recipe/schema.go`).
+- New settings that `get-cooked i18n init` writes into catalogs get a
+  migration too (`migrate.AddTemplateKeys`), adding them with their default
+  values only where a catalog doesn't define them.
 - Add a test in `internal/migrate` that migrates an old-format site and
   checks that it then validates and that a second run changes nothing.
 

@@ -23,6 +23,9 @@ fractions: ""
 # Optional custom characters for specific fractions, e.g. { "1/2": "½" }.
 # These win over the fraction style.
 fraction_glyphs: {}
+# How native fractions (١⁄٢) are shown on the site and in PDFs: inline, or
+# diagonal (small raised numerator, small lowered denominator, like ½).
+fraction_display: inline
 # Default unit system for readers of this language: original, us or metric.
 # Empty uses units.default_system from get-cooked.yaml.
 system: ""

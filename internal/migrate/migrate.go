@@ -20,6 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/RashKash103/get-cooked/internal/config"
+	"github.com/RashKash103/get-cooked/internal/i18n"
 )
 
 // Kind is the kind of site file a migration applies to.
@@ -60,6 +61,17 @@ var All = []Migration{
 			return out, n
 		},
 	},
+}
+
+func init() {
+	All = append(All, Migration{
+		ID:    "0.3.0-i18n-numerals",
+		Since: "0.3.0",
+		Description: "i18n/<lang>.yaml: add digits, fractions, fraction_glyphs and fraction_display " +
+			"(with the defaults `i18n init` writes, so nothing changes) where they're missing",
+		Kinds: []Kind{Catalogs},
+		Apply: AddTemplateKeys(i18n.EnglishYAML, "digits", "fractions", "fraction_glyphs", "fraction_display"),
+	})
 }
 
 var gramsPerCupRe = regexp.MustCompile(`\bgrams_per_cup:[ \t]*([0-9]*\.?[0-9]+)`)
@@ -147,4 +159,125 @@ func Run(cfg *config.Config, dryRun bool) ([]Change, error) {
 		}
 	}
 	return changes, nil
+}
+
+// AddTemplateKeys returns an Apply function that adds top-level keys from a
+// template file (with the template's comment lines and default value) to a
+// file that doesn't define them. Each key goes where the template has it:
+// after the closest preceding template key the file defines, otherwise
+// before the next one (above its comments), otherwise at the end.
+func AddTemplateKeys(template []byte, keys ...string) func([]byte) ([]byte, int) {
+	order, blocks := templateBlocks(template)
+	return func(src []byte) ([]byte, int) {
+		n := 0
+		for _, key := range keys {
+			block, ok := blocks[key]
+			if !ok {
+				continue
+			}
+			present, err := topLevelKeys(src)
+			if err != nil || present == nil {
+				return src, n // not a mapping (or invalid YAML): leave it alone
+			}
+			if _, ok := present[key]; ok {
+				continue
+			}
+			lines := strings.Split(string(src), "\n")
+			at := -1
+			idx := indexOf(order, key)
+			// After the closest preceding key that fits on one line.
+			for i := idx - 1; i >= 0 && at < 0; i-- {
+				if kl, ok := present[order[i]]; ok && kl.single {
+					at = kl.line // insert after this (1-based) line
+				}
+			}
+			// Otherwise before the next key the file defines, above its comments.
+			if at < 0 {
+				for i := idx + 1; i < len(order) && at < 0; i++ {
+					if kl, ok := present[order[i]]; ok {
+						j := kl.line - 1 // 0-based index of the key line
+						for j > 0 && strings.HasPrefix(strings.TrimSpace(lines[j-1]), "#") {
+							j--
+						}
+						at = j
+					}
+				}
+			}
+			if at < 0 {
+				at = len(lines)
+				for at > 0 && strings.TrimSpace(lines[at-1]) == "" {
+					at--
+				}
+			}
+			out := append([]string{}, lines[:at]...)
+			out = append(out, block...)
+			out = append(out, lines[at:]...)
+			src = []byte(strings.Join(out, "\n"))
+			n++
+		}
+		return src, n
+	}
+}
+
+type keyLine struct {
+	line   int  // 1-based line of the key
+	single bool // the whole entry is on that line
+}
+
+func topLevelKeys(src []byte) (map[string]keyLine, error) {
+	var root yaml.Node
+	if err := yaml.Unmarshal(src, &root); err != nil {
+		return nil, err
+	}
+	if len(root.Content) == 0 || root.Content[0].Kind != yaml.MappingNode {
+		return nil, nil
+	}
+	m := root.Content[0]
+	out := map[string]keyLine{}
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		k, v := m.Content[i], m.Content[i+1]
+		single := v.Line == k.Line && (v.Kind == yaml.ScalarNode && v.Style != yaml.LiteralStyle && v.Style != yaml.FoldedStyle ||
+			v.Style&yaml.FlowStyle != 0)
+		out[k.Value] = keyLine{line: k.Line, single: single}
+	}
+	return out, nil
+}
+
+// templateBlocks returns the template's top-level keys in order and, for
+// single-line entries, the entry's line with the comment lines right above it.
+func templateBlocks(template []byte) ([]string, map[string][]string) {
+	lines := strings.Split(string(template), "\n")
+	present, _ := topLevelKeys(template)
+	type kv struct {
+		key  string
+		line int
+	}
+	var list []kv
+	for k, l := range present {
+		list = append(list, kv{k, l.line})
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].line < list[j].line })
+	order := make([]string, len(list))
+	blocks := map[string][]string{}
+	for i, e := range list {
+		order[i] = e.key
+		if !present[e.key].single {
+			continue
+		}
+		start := e.line - 1
+		for start > 0 && strings.HasPrefix(strings.TrimSpace(lines[start-1]), "#") {
+			start--
+		}
+		blocks[e.key] = append([]string{}, lines[start:e.line]...)
+	}
+	return order, blocks
+}
+
+func indexOf(list []string, s string) int {
+	for i, v := range list {
+		if v == s {
+			return i
+		}
+	}
+	return -1
 }
