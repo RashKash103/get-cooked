@@ -139,9 +139,9 @@ func Load(dir string) (*Config, error) {
 		return nil, fmt.Errorf("%s: units.default_system must be original, us or metric", FileName)
 	}
 	switch c.Units.Fractions {
-	case "unicode", "ascii", "decimal":
+	case "unicode", "native", "ascii", "decimal":
 	default:
-		return nil, fmt.Errorf("%s: units.fractions must be unicode, ascii or decimal", FileName)
+		return nil, fmt.Errorf("%s: units.fractions must be unicode, native, ascii or decimal", FileName)
 	}
 	if !hexColor.MatchString(c.Theme.Accent) {
 		return nil, fmt.Errorf("%s: theme.accent must be a #rrggbb color", FileName)

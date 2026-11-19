@@ -56,7 +56,8 @@ func TestBlocksGolden(t *testing.T) {
 	// covered by the Go↔TS parity check.
 	es := s.Langs[1]
 	arCat := *es.Catalog
-	arCat.Lang, arCat.Digits, arCat.Fractions, arCat.Decimal = "ar-test", "٠١٢٣٤٥٦٧٨٩", "ascii", "٫"
+	arCat.Lang, arCat.Digits, arCat.Fractions, arCat.Decimal = "ar-test", "٠١٢٣٤٥٦٧٨٩", "native", "٫"
+	arCat.FracGlyphs = map[string]string{"1/4": "¼"}
 	ar := &Lang{Code: "ar-test", Catalog: &arCat, Units: arCat.Localize(s.Units), Translated: es.Translated}
 	for _, r := range es.Recipes {
 		if r.Slug != "cranberry-baked-oatmeal" && r.Slug != "crispy-chicken-thighs" {

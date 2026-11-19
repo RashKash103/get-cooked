@@ -49,6 +49,7 @@ export interface Table {
   words?: Record<string, string>;
   of?: string;
   digits?: string;
+  glyphs?: Record<string, string>;
 }
 
 export interface Ing {

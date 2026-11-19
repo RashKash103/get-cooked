@@ -130,6 +130,16 @@ func TestFraction(t *testing.T) {
 	if got := tb.FormatFraction(2.75); got != "2 3/4" {
 		t.Errorf("ascii = %q", got)
 	}
+	tb.Fractions = "native"
+	tb.Digits = "٠١٢٣٤٥٦٧٨٩"
+	if got := tb.FormatFraction(2.75); got != "٢ ٣⁄٤" {
+		t.Errorf("native = %q", got)
+	}
+	tb.Glyphs = map[string]string{"3/4": "¾"}
+	if got := tb.FormatFraction(2.75); got != "٢ ¾" {
+		t.Errorf("glyph override = %q", got)
+	}
+	tb.Glyphs, tb.Digits = nil, ""
 	tb.Fractions = "decimal"
 	if got := tb.FormatFraction(2.75); got != "2.75" {
 		t.Errorf("decimal = %q", got)

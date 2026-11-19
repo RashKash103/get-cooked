@@ -71,6 +71,7 @@ type Table struct {
 	Words     map[string]string `json:"words,omitempty"`  // duration words: hr, min, sec
 	Of        string            `json:"of,omitempty"`     // word between a measured amount and a name ("de")
 	Digits    string            `json:"digits,omitempty"` // ten digits replacing 0–9 ("٠١٢٣٤٥٦٧٨٩")
+	Glyphs    map[string]string `json:"glyphs,omitempty"` // custom fraction characters, keyed "1/2"
 	aliases   map[string]string
 }
 
@@ -346,21 +347,27 @@ func (t *Table) FormatFraction(x float64) string {
 		}
 		g := gcd(int(n), d)
 		num, den := int(n)/g, d/g
-		var s string
-		if t.Fractions == "ascii" {
-			s = t.L(fmt.Sprintf("%d/%d", num, den))
-			if whole > 0 {
-				s = t.Num(whole) + " " + s
-			}
+		var f string
+		if g, ok := t.Glyphs[fmt.Sprintf("%d/%d", num, den)]; ok {
+			f = g // custom glyph for this language
 		} else {
-			f, ok := unicodeFractions[[2]int{num, den}]
-			if !ok {
-				return t.Num(x)
+			switch t.Fractions {
+			case "ascii":
+				f = t.L(fmt.Sprintf("%d/%d", num, den))
+			case "native":
+				// The language's own numerals around a fraction slash: ١⁄٢
+				f = t.L(fmt.Sprintf("%d\u2044%d", num, den))
+			default:
+				u, ok := unicodeFractions[[2]int{num, den}]
+				if !ok {
+					return t.Num(x)
+				}
+				f = u
 			}
-			s = f
-			if whole > 0 {
-				s = t.Num(whole) + " " + f
-			}
+		}
+		s := f
+		if whole > 0 {
+			s = t.Num(whole) + " " + f
 		}
 		if neg {
 			s = "-" + s

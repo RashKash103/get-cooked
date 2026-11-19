@@ -64,6 +64,7 @@
         "fractions": {
           "enum": [
             "unicode",
+            "native",
             "ascii",
             "decimal"
           ]

@@ -69,7 +69,13 @@ export function localDigits(s: string, digits?: string): string {
   return s.replace(/[0-9]/g, (c) => d[c.charCodeAt(0) - 48] as string);
 }
 
-export function formatFraction(x: number, style = "unicode", dec = ".", digits = ""): string {
+export function formatFraction(
+  x: number,
+  style = "unicode",
+  dec = ".",
+  digits = "",
+  glyphs: Record<string, string> = {},
+): string {
   const fmt = (v: number) => localDigits(decimal(formatNumber(v), dec), digits);
   if (style === "decimal") return fmt(x);
   const neg = x < 0;
@@ -83,15 +89,17 @@ export function formatFraction(x: number, style = "unicode", dec = ".", digits =
     const g = gcd(n, d);
     const num = n / g;
     const den = d / g;
-    let s: string;
-    if (style === "ascii") {
-      s = localDigits(`${num}/${den}`, digits);
-      if (whole > 0) s = `${fmt(whole)} ${s}`;
-    } else {
-      const f = UNICODE[`${num}/${den}`];
-      if (!f) return fmt(x);
-      s = whole > 0 ? `${fmt(whole)} ${f}` : f;
+    let f: string;
+    const custom = glyphs[`${num}/${den}`];
+    if (custom !== undefined) f = custom;
+    else if (style === "ascii") f = localDigits(`${num}/${den}`, digits);
+    else if (style === "native") f = localDigits(`${num}\u2044${den}`, digits);
+    else {
+      const u = UNICODE[`${num}/${den}`];
+      if (!u) return fmt(x);
+      f = u;
     }
+    const s = whole > 0 ? `${fmt(whole)} ${f}` : f;
     return neg ? `-${s}` : s;
   }
   return fmt(x);
@@ -127,7 +135,7 @@ export class Units {
   constructor(readonly t: Table) {}
 
   frac(x: number): string {
-    return formatFraction(x, this.t.fractions, this.t.dec ?? ".", this.t.digits ?? "");
+    return formatFraction(x, this.t.fractions, this.t.dec ?? ".", this.t.digits ?? "", this.t.glyphs ?? {});
   }
 
   num(x: number): string {

@@ -46,6 +46,7 @@ type Catalog struct {
 	System      string             `yaml:"system"`
 	Digits      string             `yaml:"digits"`
 	Fractions   string             `yaml:"fractions"`
+	FracGlyphs  map[string]string  `yaml:"fraction_glyphs"`
 	UI          map[string]string  `yaml:"ui"`
 	Times       map[string]string  `yaml:"times"`
 	Servings    Label              `yaml:"servings"`
@@ -55,7 +56,10 @@ type Catalog struct {
 	Ingredients map[string]IngName `yaml:"ingredients"`
 }
 
-var tagRe = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
+var (
+	tagRe     = regexp.MustCompile(`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
+	fracKeyRe = regexp.MustCompile(`^[1-7]/[2-8]$`)
+)
 
 // ValidTag reports whether s looks like a BCP 47 language tag ("en", "pt-BR").
 func ValidTag(s string) bool { return tagRe.MatchString(s) }
@@ -112,11 +116,17 @@ func Load(siteDir, lang string) (*Catalog, error) {
 		c.Digits = d
 	}
 	switch o.Fractions {
-	case "", "unicode", "ascii", "decimal":
+	case "", "unicode", "native", "ascii", "decimal":
 		c.Fractions = o.Fractions
 	default:
-		return nil, fmt.Errorf("%s: fractions must be unicode, ascii or decimal", Path(siteDir, lang))
+		return nil, fmt.Errorf("%s: fractions must be unicode, native, ascii or decimal", Path(siteDir, lang))
 	}
+	for k := range o.FracGlyphs {
+		if !fracKeyRe.MatchString(k) {
+			return nil, fmt.Errorf("%s: fraction_glyphs keys look like \"1/2\" (got %q)", Path(siteDir, lang), k)
+		}
+	}
+	c.FracGlyphs = o.FracGlyphs
 	switch o.System {
 	case "", "original", "us", "metric":
 		c.System = o.System
@@ -212,6 +222,7 @@ func (c *Catalog) Localize(t *units.Table) *units.Table {
 	cp.Decimal = c.Decimal
 	cp.Of = c.Of
 	cp.Digits = c.Digits
+	cp.Glyphs = c.FracGlyphs
 	if c.Fractions != "" {
 		cp.Fractions = c.Fractions
 	}

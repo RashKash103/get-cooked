@@ -16,10 +16,13 @@ of: ""
 # Digits for numbers: a numbering system such as arab, arabext, deva, beng,
 # thai or fullwide, or ten characters for 0–9. Empty keeps 0–9.
 digits: ""
-# Fraction style for this language (unicode ½, ascii 1/2, decimal 0.5). Empty
-# uses units.fractions from get-cooked.yaml. With non-Latin digits, ascii
-# keeps fractions in the same script ("١/٢").
+# Fraction style for this language: unicode (½), native (the language's own
+# digits around a fraction slash: ١⁄٢), ascii (1/2) or decimal (0.5). Empty
+# uses units.fractions from get-cooked.yaml.
 fractions: ""
+# Optional custom characters for specific fractions, e.g. { "1/2": "½" }.
+# These win over the fraction style.
+fraction_glyphs: {}
 # Default unit system for readers of this language: original, us or metric.
 # Empty uses units.default_system from get-cooked.yaml.
 system: ""

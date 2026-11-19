@@ -116,10 +116,22 @@
       "enum": [
         "",
         "unicode",
+        "native",
         "ascii",
         "decimal"
       ],
-      "description": "Fraction style for this language; overrides units.fractions."
+      "description": "Fraction style: unicode (½), native (the language's digits around a fraction slash, ١⁄٢), ascii (1/2) or decimal. Overrides units.fractions."
+    },
+    "fraction_glyphs": {
+      "type": "object",
+      "description": "Custom characters for specific fractions, e.g. {\"1/2\": \"½\"}; they win over the fraction style.",
+      "propertyNames": {
+        "pattern": "^[1-7]/[2-8]$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }
