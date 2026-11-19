@@ -105,6 +105,7 @@ ui:
   timers_less: Show less
   timer_go_to_step: Go to step
   list_share: Share list
+  list_link_copied: Shopping list link copied
   list_import: "Add {n} recipe(s) from a shared shopping list?"
   list_imported: Shared list added
   convert: Other units

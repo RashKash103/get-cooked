@@ -97,6 +97,7 @@ ui:
   timers_less: Mostrar menos
   timer_go_to_step: Ir al paso
   list_share: Compartir lista
+  list_link_copied: Enlace a la lista de compras copiado
   list_import: "¿Añadir {n} receta(s) de una lista de compras compartida?"
   list_imported: Lista compartida añadida
   convert: Otras unidades

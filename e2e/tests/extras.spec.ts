@@ -124,12 +124,16 @@ test("a shopping list can be shared as a link", async ({ page, context }) => {
   await page.goto("/recipes/french-toast/");
   await page.locator("#add-to-list").click();
   await page.goto("/list/");
+  // Capture the copied link (the list is compressed asynchronously first).
   await page.evaluate(() => {
     Object.defineProperty(navigator, "share", { value: undefined });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: async (s: string) => ((window as unknown as { copied: string }).copied = s) },
+    });
   });
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.locator("#list-share").click();
-  const link = await page.evaluate(() => navigator.clipboard.readText());
+  await expect(page.locator("#toast")).toHaveText("Shopping list link copied");
+  const link = await page.evaluate(() => (window as unknown as { copied: string }).copied);
   expect(link).toMatch(/\/list\/#l=z/);
   // Someone else opens it.
   const other = await context.browser()?.newPage();
