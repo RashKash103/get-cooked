@@ -36,6 +36,8 @@ Everything in `docs/design.md` is implemented, tested and committed:
   preference in every unit system, "All recipes" control fix.
 - v0.5.0 (2026-11-19): "Aa" display menu (theme + text size), migration that
   adds missing i18n strings.
+- v0.5.1 (2026-11-19): full PWA (PNG/maskable/Apple icons, complete manifest,
+  `icon:` option, offline page), nginx/Docker docs.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
