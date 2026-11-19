@@ -38,7 +38,7 @@ Everything in `docs/design.md` is implemented, tested and committed:
   adds missing i18n strings.
 - v0.5.1 (2026-11-19): full PWA (PNG/maskable/Apple icons, complete manifest,
   `icon:` option, offline page), nginx/Docker docs.
-- Unreleased (0.6.0): time ranges `~{4, 5}` with a picker, migration
+- v0.6.0 (2026-11-19): time ranges `~{4, 5}` with a picker, migration
   `0.6.0-timer-ranges`; Start over; In progress badge + filter; swipe in cook
   mode; collapsed timer stack + tap a timer to go to its step; tap a step
   ingredient to tick it; Share list links (#l= deflate-raw base64url);
