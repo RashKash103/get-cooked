@@ -27,6 +27,11 @@ Everything in `docs/design.md` is implemented, tested and committed:
 
 - v0.1.0 published 2026-11-18 (binaries for linux/darwin/windows × amd64/arm64,
   checksums, `get-cooked-skills.tar.gz`; floating `v0` tag for the Action).
+- v0.1.1: installable with `go install …@latest` (bundle committed).
+- v0.2.0: per-language digits.
+- v0.3.0 (2026-11-19): structured densities (breaking: run `get-cooked migrate`),
+  native/diagonal fractions, fix for the display order of non-Latin numbers,
+  `get-cooked migrate`.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
