@@ -32,6 +32,8 @@ Everything in `docs/design.md` is implemented, tested and committed:
 - v0.3.0 (2026-11-19): structured densities (breaking: run `get-cooked migrate`),
   native/diagonal fractions, fix for the display order of non-Latin numbers,
   `get-cooked migrate`.
+- v0.4.0 (2026-11-19): inline ingredient overrides, `measure` as a display
+  preference in every unit system, "All recipes" control fix.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
