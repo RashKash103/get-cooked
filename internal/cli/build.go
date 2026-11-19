@@ -36,7 +36,7 @@ func buildCmd() *cobra.Command {
 					return err
 				}
 			}
-			if err := site.Build(s, site.BuildOptions{Out: out, BaseURL: baseURL}); err != nil {
+			if err := site.Build(s, site.BuildOptions{Out: out, BaseURL: baseURL, Version: Version}); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Built %d recipes into %s in %s\n", len(s.Recipes), out, time.Since(start).Round(time.Millisecond))

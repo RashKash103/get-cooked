@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -34,6 +35,31 @@ type BuildOptions struct {
 	BaseURL string // overrides config base_url when set
 	// LiveReload injects a script that reloads the page on rebuild (serve).
 	LiveReload bool
+	// Version of get-cooked shown in the footer ("0.6.0"; "dev" or empty
+	// for local builds).
+	Version string
+}
+
+// releaseRe matches a released version; dev builds and `go install`
+// pseudo-versions (0.6.1-0.2026…-abcdef) have no release page.
+var releaseRe = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
+
+// generator is the get-cooked version shown in the footer, with a link to its
+// release notes (or the list of releases when there's no release page).
+type generator struct {
+	Version, URL string
+}
+
+func newGenerator(v string) generator {
+	const repo = "https://github.com/RashKash103/get-cooked"
+	v = strings.TrimPrefix(v, "v")
+	switch {
+	case v == "":
+		return generator{Version: "dev", URL: repo + "/releases"}
+	case releaseRe.MatchString(v):
+		return generator{Version: "v" + v, URL: repo + "/releases/tag/v" + v}
+	}
+	return generator{Version: v, URL: repo + "/releases"}
 }
 
 // Assets are the fingerprinted asset paths (relative to the base).
@@ -62,6 +88,7 @@ type page struct {
 	I18n        template.JS
 	ListData    template.JS
 	Feed        string
+	Generator   generator
 	cat         *i18n.Catalog
 }
 
@@ -237,6 +264,7 @@ func (b *builder) newPage(l *Lang, base, title, desc, canonical, path string) pa
 		Site: b.s.Config, Base: base, Root: b.root, Lang: l.Code, Dir: dir, Title: title, Description: desc,
 		Accent: template.CSS(b.s.Config.Theme.Accent), Assets: b.as, Canonical: canonical,
 		Alternates: b.alternates(l, path), I18n: template.JS(j), cat: cat,
+		Generator: newGenerator(b.opts.Version),
 	}
 }
 

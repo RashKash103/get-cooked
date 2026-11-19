@@ -39,7 +39,7 @@ func serveCmd() *cobra.Command {
 					return
 				}
 				printDiags(cmd.ErrOrStderr(), s.Diags, "text")
-				if err := site.Build(s, site.BuildOptions{Out: out, BaseURL: "/", LiveReload: watch}); err != nil {
+				if err := site.Build(s, site.BuildOptions{Out: out, BaseURL: "/", LiveReload: watch, Version: Version}); err != nil {
 					fmt.Fprintln(cmd.ErrOrStderr(), "error:", err)
 					return
 				}

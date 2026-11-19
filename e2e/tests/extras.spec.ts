@@ -278,3 +278,17 @@ test("the largest text size never scrolls sideways", async ({ page }) => {
     expect(over, u).toBeLessThanOrEqual(0);
   }
 });
+
+test("the footer names the get-cooked version", async ({ page }) => {
+  await page.goto("/");
+  const footer = page.locator(".site-footer");
+  await expect(footer.getByRole("link", { name: "get-cooked" })).toHaveAttribute(
+    "href",
+    "https://github.com/RashKash103/get-cooked",
+  );
+  // The e2e binary is a local build ("dev" or a Go pseudo-version), which
+  // has no release page, so it links to the list of releases.
+  const v = footer.locator(".gen-version");
+  await expect(v).not.toHaveText("");
+  await expect(v).toHaveAttribute("href", "https://github.com/RashKash103/get-cooked/releases");
+});

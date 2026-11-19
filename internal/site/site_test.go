@@ -323,3 +323,17 @@ func TestPWA(t *testing.T) {
 		t.Error("custom icon: the default SVG icon should not be written")
 	}
 }
+
+func TestGenerator(t *testing.T) {
+	for v, want := range map[string]generator{
+		"0.6.0":                               {"v0.6.0", "https://github.com/RashKash103/get-cooked/releases/tag/v0.6.0"},
+		"v0.6.0":                              {"v0.6.0", "https://github.com/RashKash103/get-cooked/releases/tag/v0.6.0"},
+		"dev":                                 {"dev", "https://github.com/RashKash103/get-cooked/releases"},
+		"":                                    {"dev", "https://github.com/RashKash103/get-cooked/releases"},
+		"0.6.1-0.20261119162739-9e2571032bcd": {"0.6.1-0.20261119162739-9e2571032bcd", "https://github.com/RashKash103/get-cooked/releases"},
+	} {
+		if got := newGenerator(v); got != want {
+			t.Errorf("newGenerator(%q) = %+v want %+v", v, got, want)
+		}
+	}
+}

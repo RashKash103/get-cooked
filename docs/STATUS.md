@@ -46,6 +46,8 @@ Everything in `docs/design.md` is implemented, tested and committed:
   localized digits); `subs:` substitutes incl. combinations (compile-time
   expansion of @id into {if}, extra parts get ids like dairy_lemon_juice);
   fixed 150% text overflow from `.step` negative margins.
+- Unreleased: footer shows the get-cooked version (links to its release; dev
+  and pseudo-versions link to the releases list) plus <meta name="generator">.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas

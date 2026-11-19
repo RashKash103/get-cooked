@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="generator" content="get-cooked {{.Generator.Version}}">
 <title>{{.Title}}</title>
 {{with .Description}}<meta name="description" content="{{.}}">{{end}}
 <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
@@ -61,7 +62,7 @@
 {{template "content" .}}
 </main>
 <footer class="site-footer">
-  <p>{{.Site.Title}}{{with .Site.Author}} · {{.}}{{end}} · {{.T "made_with"}} <a href="https://github.com/RashKash103/get-cooked">get-cooked</a></p>
+  <p>{{.Site.Title}}{{with .Site.Author}} · {{.}}{{end}} · {{.T "made_with"}} <a href="https://github.com/RashKash103/get-cooked">get-cooked</a> <a class="gen-version" href="{{.Generator.URL}}" dir="ltr" rel="noopener">{{.Generator.Version}}</a></p>
 </footer>
 <div class="timers" id="timers" aria-live="polite"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
