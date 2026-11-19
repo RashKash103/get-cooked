@@ -121,3 +121,21 @@ jobs:
           output: ${{ runner.temp }}/site
           base-url: https://example.com/recipes/
       - run: test -f "$RUNNER_TEMP/site/recipes/cranberry-baked-oatmeal/index.html"
+
+  release-dry-run:
+    name: Release dry run (GoReleaser snapshot)
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          version: "~> v2"
+          args: release --snapshot --clean --skip=publish
+      - name: Snapshot binary runs
+        run: ./dist/get-cooked_linux_amd64_v1/get-cooked version
