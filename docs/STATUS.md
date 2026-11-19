@@ -34,6 +34,8 @@ Everything in `docs/design.md` is implemented, tested and committed:
   `get-cooked migrate`.
 - v0.4.0 (2026-11-19): inline ingredient overrides, `measure` as a display
   preference in every unit system, "All recipes" control fix.
+- v0.5.0 (2026-11-19): "Aa" display menu (theme + text size), migration that
+  adds missing i18n strings.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
