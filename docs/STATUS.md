@@ -55,6 +55,10 @@ Everything in `docs/design.md` is implemented, tested and committed:
   {source}" line), `page:` and `pdf:` (a PDF in the site, published under
   assets/pdf/ and opened in a pdf.js viewer at pdf/?f=…&p=…; pdf.js lazy-loads
   from assets/lazy/). Example site has books/example-cookbook.pdf.
+- v0.8.0 (2026-11-20): `makes:` (a recipe's yield in a real unit, with
+  ingredient fields; `makes.ingredient` auto-links every use of that DB
+  ingredient), `recipe:` refs with `unit:` (measured; link servings computed
+  via Table.Convert), "Makes …" in the times row. Example: Cinnamon Sugar.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
