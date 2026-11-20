@@ -1,0 +1,17 @@
+{{define "content"}}
+<div class="pdf-page" id="pdf-page" data-dir="{{.Root}}assets/pdf/">
+  <h1 class="pdf-title" id="pdf-title">PDF</h1>
+  <div class="pdf-bar">
+    <button type="button" class="icon-btn" id="pdf-prev" aria-label="{{.T "pdf_prev"}}" title="{{.T "pdf_prev"}}" disabled><svg class="icon flip-rtl" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
+    <label class="pdf-of"><span class="sr-only">{{.T "pdf_go_to"}}</span><input id="pdf-num" type="text" inputmode="numeric" autocomplete="off" size="3" value="1"><span id="pdf-total"></span></label>
+    <button type="button" class="icon-btn" id="pdf-next" aria-label="{{.T "pdf_next"}}" title="{{.T "pdf_next"}}" disabled><svg class="icon flip-rtl" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+    <span class="pdf-zoom">
+      <button type="button" class="icon-btn" id="pdf-zoom-out" aria-label="{{.T "pdf_zoom_out"}}" title="{{.T "pdf_zoom_out"}}"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button>
+      <button type="button" class="icon-btn" id="pdf-zoom-in" aria-label="{{.T "pdf_zoom_in"}}" title="{{.T "pdf_zoom_in"}}"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button>
+    </span>
+    <a class="link-btn pdf-open" id="pdf-open" hidden><svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>{{.T "pdf_open"}}</a>
+  </div>
+  <p class="pdf-status" id="pdf-status" role="status">{{.T "pdf_loading"}}</p>
+  <div class="pdf-stage" id="pdf-stage"><canvas id="pdf-canvas" hidden></canvas></div>
+</div>
+{{end}}

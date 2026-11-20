@@ -22,9 +22,13 @@ references. Re-check it whenever unsure. Never invent syntax.
   into a rough draft. If it fails (no structured data), fetch the page and
   read the recipe yourself.
 - **Text or photo**: transcribe it faithfully first.
+- **PDF in the site** (e.g. a scanned cookbook in `books/`): read the page,
+  transcribe it, and point the source at it with `pdf:` and `page:` so the
+  recipe links to that page in the built-in viewer.
 
 Keep the author's quantities and method. Don't "improve" the recipe. Record
-the origin in `source: { name, url }`.
+the origin in `source:` (`name`, `url`, or `pdf` + `page`). If you changed
+anything, say so with `credit:`, e.g. `credit: "Adapted from {source}"`.
 
 ## 3. Write the recipe
 

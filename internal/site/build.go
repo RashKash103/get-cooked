@@ -112,6 +112,7 @@ type recipeView struct {
 	Steps         template.HTML
 	Warnings      template.HTML
 	Tips          template.HTML
+	Source        template.HTML
 	Data          template.JS
 	NotTranslated bool
 	SourceLang    string
@@ -131,7 +132,7 @@ type indexView struct {
 
 // jsKeys are the UI strings the browser needs.
 var jsKeys = []string{
-	"back", "all_recipes", "text_size", "timer_pick", "timer_start", "swap", "swap_ingredient", "timers_more", "timers_less", "timer_go_to_step", "list_share", "list_link_copied", "list_import", "list_imported", "convert", "by_weight", "by_volume", "close", "scale_to", "scale_amount", "scale_go", "progress_cleared", "in_progress", "notes", "ingredients", "equipment", "steps", "source", "units", "units_us", "units_metric", "units_original", "uses",
+	"back", "all_recipes", "text_size", "timer_pick", "timer_start", "swap", "swap_ingredient", "timers_more", "timers_less", "timer_go_to_step", "list_share", "list_link_copied", "list_import", "list_imported", "convert", "by_weight", "by_volume", "close", "scale_to", "scale_amount", "scale_go", "progress_cleared", "in_progress", "notes", "ingredients", "equipment", "steps", "source", "source_page", "pdf_of", "pdf_failed", "pdf_back", "units", "units_us", "units_metric", "units_original", "uses",
 	"list", "list_add", "list_update", "list_added", "list_remove", "list_make", "list_confirm_clear", "list_items",
 	"scale_prompt", "step_of", "all_done", "save", "saved", "copied", "exit_cook", "cook",
 	"step", "uses", "unsupported", "cook_on", "cook_on_unsupported", "copied", "copy_failed", "link_copied",
@@ -146,7 +147,9 @@ type builder struct {
 	as                      Assets
 	recipeTpl, indexTpl, nf *template.Template
 	listTpl, offlineTpl     *template.Template
+	pdfTpl                  *template.Template
 	imgs                    *imageProcessor
+	pdfs                    map[string]string // source PDF path -> published file name
 	sitemap                 []string
 }
 
@@ -163,7 +166,7 @@ func Build(s *Site, opts BuildOptions) error {
 			baseURL += "/"
 		}
 	}
-	b := &builder{s: s, opts: opts, out: opts.Out, root: baseURL, imgs: newImageProcessor(cfg.Images.Widths)}
+	b := &builder{s: s, opts: opts, out: opts.Out, root: baseURL, imgs: newImageProcessor(cfg.Images.Widths), pdfs: map[string]string{}}
 	if u, err := url.Parse(baseURL); err == nil && u.Host != "" {
 		b.root = u.Path
 		if b.root == "" {
@@ -198,6 +201,9 @@ func Build(s *Site, opts BuildOptions) error {
 		return err
 	}
 	if b.listTpl, err = parse("list.html"); err != nil {
+		return err
+	}
+	if b.pdfTpl, err = parse("pdf.html"); err != nil {
 		return err
 	}
 	if b.as, err = writeAssets(cfg.Path(cfg.Theme.CustomCSS), cfg.Theme.CustomCSS != "", b.out, opts.LiveReload); err != nil {
@@ -312,6 +318,17 @@ func (b *builder) lang(l *Lang) error {
 			NotTranslated: !l.Translated[r.Slug],
 			SourceLang:    src,
 		}
+		if src := r.Source; src != nil {
+			viewer := ""
+			if src.PDF != "" {
+				name, err := b.publishPDF(sourcePDF(b.s.Config.Dir, r.Path, src.PDF))
+				if err != nil {
+					return fmt.Errorf("%s: source.pdf: %w", r.Path, err)
+				}
+				viewer = viewerURL(base, name, src.Page, r.Slug, src.Label())
+			}
+			v.Source = sourceHTML(l.Catalog, src, viewer)
+		}
 		if v.ImageAlt == "" {
 			v.ImageAlt = r.Title
 		}
@@ -423,6 +440,15 @@ func (b *builder) lang(l *Lang) error {
 	if err := writeTemplate(b.listTpl, filepath.Join(out, "list", "index.html"), lp); err != nil {
 		return err
 	}
+	// PDF viewer: one page per language; the PDF and page come from the query.
+	pp := b.newPage(l, base, "PDF · "+cfg.Title, "", "", "pdf/")
+	pp.BodyClass = "page-pdf"
+	if err := os.MkdirAll(filepath.Join(out, "pdf"), 0o755); err != nil {
+		return err
+	}
+	if err := writeTemplate(b.pdfTpl, filepath.Join(out, "pdf", "index.html"), pp); err != nil {
+		return err
+	}
 	np := b.newPage(l, base, l.Catalog.T("not_found")+" · "+cfg.Title, "", "", "")
 	np.BodyClass = "page-404"
 	return writeTemplate(b.nf, filepath.Join(out, "404.html"), np)
@@ -445,7 +471,7 @@ func prefixSrcSet(prefix, srcset string) string {
 
 // pageData is the JSON embedded in each recipe page for the TS runtime.
 func pageData(r *recipe.Recipe) (string, error) {
-	b, err := json.Marshal(map[string]any{"slug": r.Slug, "title": r.Title, "description": r.Description, "source": r.Source, "compiled": r.C})
+	b, err := json.Marshal(map[string]any{"slug": r.Slug, "title": r.Title, "description": r.Description, "source": sourceJSON(r.Source), "compiled": r.C})
 	if err != nil {
 		return "", err
 	}
@@ -492,6 +518,24 @@ func writeAssets(customCSS string, hasCustom bool, out string, live bool) (Asset
 			return Assets{}, fmt.Errorf("theme.custom_css: %w", err)
 		}
 		css = append(append(css, '\n'), extra...)
+	}
+	// Lazily loaded code and data (the PDF viewer) keeps Vite's hashed names
+	// and sits next to app.js, which imports it relatively.
+	if err := fs.WalkDir(fsys, "lazy", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := fs.ReadFile(fsys, p)
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(dir, filepath.FromSlash(p))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return err
+		}
+		return os.WriteFile(dst, data, 0o644)
+	}); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return Assets{}, err
 	}
 	a := Assets{JS: "assets/app." + hash(js) + ".js", CSS: "assets/app." + hash(css) + ".css"}
 	if err := os.WriteFile(filepath.Join(out, a.JS), js, 0o644); err != nil {

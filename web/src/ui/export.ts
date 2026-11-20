@@ -7,7 +7,27 @@ import { num, t } from "./i18n";
 export interface Meta {
   title: string;
   description?: string;
-  source?: { name?: string; url?: string } | null;
+  source?: Source | null;
+}
+
+/** A recipe's source; name is already the display label (name, URL or PDF file name). */
+export interface Source {
+  name?: string;
+  url?: string;
+  page?: number;
+  credit?: string;
+}
+
+/** Mirror of export.Credit: the source line, with the name linked by link when it has a URL. */
+export function creditLine(src: Source | null | undefined, link: (label: string, url: string) => string): string {
+  if (!src?.name) return "";
+  let name = src.url ? link(src.name, src.url) : src.name;
+  const page = src.page && src.page > 0 ? t("source_page", { n: num(src.page) }) : "";
+  let line = src.credit || `${t("source")}: {source}`;
+  if (!line.includes("{source}")) line = `${line.replace(/ +$/, "")} {source}`;
+  if (!line.includes("{page}") && page) name += `, ${page}`;
+  if (!page) line = line.replace(", {page}", "");
+  return line.replace("{page}", page).replace("{source}", name);
 }
 
 export function summary(c: Compiled, m: Model, opts: Record<string, Value>): string {
@@ -80,11 +100,8 @@ export function toMarkdown(meta: Meta, c: Compiled, m: Model, opts: Record<strin
     for (const n of tips) b += `- ${n.text}\n`;
     b += "\n";
   }
-  const src = meta.source;
-  if (src && (src.name || src.url)) {
-    const name = src.name || src.url;
-    b += src.url ? `${t("source")}: [${name}](${src.url})\n` : `${t("source")}: ${name}\n`;
-  }
+  const line = creditLine(meta.source, (label, url) => `[${label}](${url})`);
+  if (line) b += `${line}\n`;
   return `${b.replace(/\n+$/, "")}\n`;
 }
 

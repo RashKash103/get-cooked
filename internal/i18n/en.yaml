@@ -71,6 +71,18 @@ ui:
   units_metric: Metric
   reset: Reset to original
   source: Source
+  source_page: "p. {n}"
+  source_pdf: PDF
+  pdf_prev: Previous page
+  pdf_next: Next page
+  pdf_go_to: Go to page
+  pdf_of: "of {total}"
+  pdf_zoom_in: Zoom in
+  pdf_zoom_out: Zoom out
+  pdf_open: Open the PDF
+  pdf_loading: Loading the PDF…
+  pdf_failed: "Couldn't show this PDF."
+  pdf_back: Back to the recipe
   step: "Step {n}"
   mark_done: "Mark step {n} done"
   uses: "{q} for step {n}"

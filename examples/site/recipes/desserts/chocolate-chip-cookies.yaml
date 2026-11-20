@@ -5,6 +5,7 @@ image: chocolate-chip-cookies.svg
 category: Desserts
 tags: [baking, freezer-friendly]
 date: 2026-11-01
+source: { name: An Example Cookbook, pdf: /books/example-cookbook.pdf, page: 2, credit: "Modified from {source}" }
 
 servings: { default: 24, min: 6, max: 72, step: 6, unit: cookie }
 

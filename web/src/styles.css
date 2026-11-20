@@ -578,6 +578,41 @@
   .tags {
     @apply flex flex-wrap gap-3;
   }
+  [dir="rtl"] .flip-rtl {
+    transform: scaleX(-1);
+  }
+
+  /* PDF viewer (sources): one page at a time, fit to width, zoomable. */
+  .pdf-page {
+    @apply pt-4 pb-10;
+  }
+  .pdf-title {
+    @apply font-serif text-2xl font-semibold tracking-tight;
+  }
+  .pdf-bar {
+    @apply sticky top-14 z-10 -mx-4 mt-3 flex flex-wrap items-center gap-x-1 gap-y-2 bg-stone-50/90 px-4 py-2 backdrop-blur dark:bg-stone-950/90;
+  }
+  .pdf-of {
+    @apply flex items-center gap-1 text-sm text-stone-500 tabular-nums dark:text-stone-400;
+  }
+  .pdf-of input {
+    @apply w-14 rounded-lg border border-stone-300 bg-transparent px-2 py-1 text-center text-stone-900 dark:border-stone-700 dark:text-stone-100;
+  }
+  .pdf-zoom {
+    @apply ms-2 flex;
+  }
+  .pdf-open {
+    @apply ms-auto;
+  }
+  .pdf-status {
+    @apply py-10 text-center text-stone-500 dark:text-stone-400;
+  }
+  .pdf-stage {
+    @apply mt-2 overflow-auto;
+  }
+  .pdf-stage canvas {
+    @apply mx-auto block max-w-none rounded-sm bg-white shadow-md ring-1 ring-stone-900/10;
+  }
 
   /* Cook mode: bigger type, focus on the current step. */
   .cooking .step-text {

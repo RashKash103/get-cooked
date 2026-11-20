@@ -26,7 +26,7 @@ category: Breakfast                     # default: the parent folder name
 tags: [make-ahead, vegetarian]
 cuisine: American
 author: Sam
-source: { name: Grandma, url: https://example.com }
+source: { name: Grandma, url: https://example.com, credit: "Adapted from {source}" }
 date: 2026-10-02                        # newest first on the index
 draft: false                            # drafts build only with --drafts
 
@@ -232,6 +232,36 @@ steps:
 
 The ingredient links to the other recipe, opened with enough servings
 (rounded up to what it can make) and the `with:` options applied.
+
+## Source
+
+Credit where a recipe came from. Every field is optional, but give at least a
+name, a URL or a PDF.
+
+```yaml
+source:
+  name: Salt, Fat, Acid, Heat       # what to call it (default: the URL or PDF file name)
+  url: https://example.com/recipe   # a web page
+  pdf: /books/cookbook.pdf          # a PDF in the site, opened in the built-in viewer
+  page: 112                         # the page the recipe is on
+  credit: "Modified from {source}"  # the line shown instead of "Source: …"
+```
+
+- `pdf:` is a path next to the recipe file, or from the site folder with a
+  leading `/` (handy for a `books/` folder that several recipes share). The
+  build publishes each PDF once, and the recipe links to the site's own PDF
+  viewer, opened at `page:`. It works on phones (where browsers often can't
+  show PDFs inline), offline once opened, and scanned books are fine. `page:`
+  counts from the first page of the file, which may differ from the number
+  printed on it.
+- Without `pdf:`, `page:` is just shown: "Grandma's notebook, p. 12".
+- `credit:` is a sentence around the linked name: `{source}` marks where it
+  goes ("Adapted from {source}, with less sugar."); without it, the name
+  follows the text ("Modified from" → "Modified from Salt, Fat, Acid, Heat").
+  The page follows the name unless you place it with `{page}`. The credit is
+  translated like the rest of the recipe.
+- With both `url:` and `pdf:`, the name links to the web page and the page
+  ("p. 112", or "PDF") to the viewer.
 
 ## Equipment
 

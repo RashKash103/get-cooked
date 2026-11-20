@@ -110,6 +110,9 @@ notes:
   remembers what you've ticked off. Everything stays on the device until you
   share it: **Share list** makes a link that carries the whole list in its
   `#fragment` (never sent to the server).
+- Credit sources with your own wording ("Adapted from …"), linking to a web
+  page or to a page of a PDF you keep in the site (a scanned cookbook, say),
+  shown in a built-in viewer that works on phones and offline.
 - Export the recipe exactly as configured: print or save as PDF (a clean
   cookbook-style layout), download Markdown, or copy as text.
 - Tap any amount to see it in other units (US and metric, by volume and by

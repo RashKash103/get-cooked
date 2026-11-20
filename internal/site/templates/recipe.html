@@ -75,7 +75,7 @@
   </div>
 
   <footer class="recipe-foot">
-    {{with $r.R.Source}}<p>{{$.T "source"}}: {{if .URL}}<a href="{{.URL}}" rel="noopener">{{if .Name}}{{.Name}}{{else}}{{.URL}}{{end}}</a>{{else}}{{.Name}}{{end}}</p>{{end}}
+    {{with $r.Source}}<p class="recipe-source">{{.}}</p>{{end}}
     {{with $r.R.Tags}}<ul class="tags">{{range .}}<li><a href="{{$.Base}}?q={{.}}">#{{.}}</a></li>{{end}}</ul>{{end}}
   </footer>
 </article>

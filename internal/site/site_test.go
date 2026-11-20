@@ -107,7 +107,7 @@ func TestBlocksGolden(t *testing.T) {
 				md := export.Markdown(export.Doc{R: r, M: m, Cat: l.Catalog, Opts: opts})
 				cases = append(cases, tc{
 					Lang: l.Code, Slug: r.Slug, Base: base, Dict: dict, Compiled: r.C, State: st,
-					Meta: map[string]any{"title": r.Title, "description": r.Description, "source": r.Source},
+					Meta: map[string]any{"title": r.Title, "description": r.Description, "source": sourceJSON(r.Source)},
 					HTML: map[string]string{
 						"times":       fr(renderTimes(m)),
 						"equipment":   fr(renderEquipment(m)),

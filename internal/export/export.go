@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/RashKash103/get-cooked/internal/expr"
@@ -185,16 +186,8 @@ func Markdown(d Doc) string {
 		}
 		b.WriteString("\n")
 	}
-	if src := d.R.Source; src != nil && (src.Name != "" || src.URL != "") {
-		name := src.Name
-		if name == "" {
-			name = src.URL
-		}
-		if src.URL != "" {
-			fmt.Fprintf(&b, "%s: [%s](%s)\n", d.Cat.T("source"), name, src.URL)
-		} else {
-			fmt.Fprintf(&b, "%s: %s\n", d.Cat.T("source"), name)
-		}
+	if line := Credit(d.Cat, d.R.Source, func(label, url string) string { return "[" + label + "](" + url + ")" }); line != "" {
+		b.WriteString(line + "\n")
 	}
 	return strings.TrimRight(b.String(), "\n") + "\n"
 }
@@ -355,14 +348,40 @@ func Typst(d Doc, paper string) string {
 			fmt.Fprintf(&b, "- %s\n", mk("• "+t))
 		}
 	}
-	if src := d.R.Source; src != nil && (src.Name != "" || src.URL != "") {
-		name := src.Name
-		if name == "" {
-			name = src.URL
-		}
-		fmt.Fprintf(&b, "\n#v(1em)\n#text(size: 8.5pt, fill: luma(110))[%s]\n", typ(d.Cat.T("source")+": "+name+" "+src.URL))
+	if line := Credit(d.Cat, d.R.Source, func(label, url string) string { return label + " " + url }); line != "" {
+		fmt.Fprintf(&b, "\n#v(1em)\n#text(size: 8.5pt, fill: luma(110))[%s]\n", typ(line))
 	}
 	return b.String()
+}
+
+// Credit is a recipe's source line in plain text: the credit (default
+// "Source: {source}") with the source's name, linked by link when it has a
+// URL, and its page. Mirrored by creditLine in web/src/ui/export.ts.
+func Credit(cat *i18n.Catalog, src *recipe.Source, link func(label, url string) string) string {
+	if src == nil || src.Label() == "" {
+		return ""
+	}
+	name := src.Label()
+	if src.URL != "" {
+		name = link(name, src.URL)
+	}
+	page := ""
+	if src.Page > 0 {
+		page = cat.T("source_page", "n", cat.Num(strconv.Itoa(src.Page)))
+	}
+	line := src.Credit
+	if line == "" {
+		line = cat.T("source") + ": {source}"
+	} else if !strings.Contains(line, "{source}") {
+		line = strings.TrimRight(line, " ") + " {source}"
+	}
+	if !strings.Contains(line, "{page}") && page != "" {
+		name += ", " + page
+	}
+	if page == "" {
+		line = strings.Replace(line, ", {page}", "", 1)
+	}
+	return strings.Replace(strings.Replace(line, "{page}", page, 1), "{source}", name, 1)
 }
 
 // typstDigits renders the digit list as a Typst array ("()" for none).

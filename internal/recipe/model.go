@@ -2,7 +2,9 @@ package recipe
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -122,10 +124,30 @@ func (v *ImageVariant) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
-// Source credits where a recipe came from.
+// Source credits where a recipe came from: a name, a web page, a PDF in the
+// site (opened at Page in the built-in viewer) and an optional Credit line
+// such as "Adapted from {source}".
 type Source struct {
-	Name string `yaml:"name" json:"name,omitempty"`
-	URL  string `yaml:"url" json:"url,omitempty"`
+	Name   string `yaml:"name" json:"name,omitempty"`
+	URL    string `yaml:"url" json:"url,omitempty"`
+	PDF    string `yaml:"pdf" json:"-"`
+	Page   int    `yaml:"page" json:"page,omitempty"`
+	Credit string `yaml:"credit" json:"credit,omitempty"`
+}
+
+// Label is what a source is called: its name, else its URL, else the PDF's
+// file name.
+func (s *Source) Label() string {
+	switch {
+	case s.Name != "":
+		return s.Name
+	case s.URL != "":
+		return s.URL
+	case s.PDF != "":
+		b := s.PDF[strings.LastIndexAny(s.PDF, `/\`)+1:]
+		return strings.TrimSuffix(b, filepath.Ext(b))
+	}
+	return ""
 }
 
 // Servings configures the servings control.

@@ -232,6 +232,14 @@ func (s *Site) loadLang(l *Lang, files []string, root string, source bool, opts 
 					ds = append(ds, recipe.Diag{File: f, Msg: "image " + img + " not found next to the recipe"})
 				}
 			}
+			if src := r.Source; src != nil && src.PDF != "" {
+				switch p := sourcePDF(cfg.Dir, f, src.PDF); {
+				case strings.Contains(src.PDF, "://"):
+					ds = append(ds, recipe.Diag{File: f, Msg: "source.pdf must be a PDF in the site, not a link (use source.url for web pages)"})
+				case !fileExists(p):
+					ds = append(ds, recipe.Diag{File: f, Msg: "source.pdf " + src.PDF + " not found (paths are relative to the recipe file, or to the site folder with a leading /)"})
+				}
+			}
 		}
 		if !source && tr != nil {
 			tp := tr.Path
@@ -373,4 +381,18 @@ func strictChecks(s *Site) recipe.Diags {
 		}
 	}
 	return out
+}
+
+// sourcePDF resolves a source PDF path: relative to the recipe file, or to
+// the site folder when it starts with "/".
+func sourcePDF(siteDir, recipeFile, p string) string {
+	if strings.HasPrefix(p, "/") {
+		return filepath.Join(siteDir, filepath.FromSlash(p[1:]))
+	}
+	return filepath.Join(filepath.Dir(recipeFile), filepath.FromSlash(p))
+}
+
+func fileExists(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && !st.IsDir()
 }

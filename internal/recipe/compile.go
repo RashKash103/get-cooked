@@ -133,6 +133,11 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 		Tags: trAll(cc, f.Tags), Author: f.Author, Source: f.Source, Date: f.Date, Draft: f.Draft,
 		IngCategories: map[string]string{},
 	}
+	if f.Source != nil {
+		src := *f.Source
+		src.Credit = cc.tr(strings.TrimSpace(src.Credit))
+		r.Source = &src
+	}
 	if r.Slug == "" {
 		base := filepath.Base(path)
 		r.Slug = Slugify(strings.TrimSuffix(strings.TrimSuffix(base, filepath.Ext(base)), ".recipe"), "-")

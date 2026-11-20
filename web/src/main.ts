@@ -3,6 +3,7 @@ import { initBack } from "./ui/back";
 import { initIndex } from "./ui/index";
 import { initLang } from "./ui/lang";
 import { initListPage, updateCount } from "./ui/list";
+import { initPdf } from "./ui/pdf";
 import { initRecipe } from "./ui/recipe";
 import { initTheme } from "./ui/theme";
 import { initTimers } from "./ui/timers";
@@ -14,6 +15,7 @@ initTimers();
 initIndex();
 initRecipe();
 initListPage();
+initPdf();
 updateCount();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {

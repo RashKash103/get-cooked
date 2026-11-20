@@ -306,3 +306,27 @@ test("printing keeps headings with their steps and drops controls", async ({ pag
   expect(await title.evaluate((el) => getComputedStyle(el).breakInside)).toBe("avoid");
   expect(await title.evaluate((el) => getComputedStyle(el, "::after").height)).not.toBe("auto");
 });
+
+test("a source credit links to its page in the built-in PDF viewer", async ({ page }) => {
+  await page.goto("/recipes/cranberry-baked-oatmeal/");
+  await expect(page.locator(".recipe-source")).toHaveText("Adapted from The Example Kitchen, with less sugar.");
+  await page.goto("/recipes/chocolate-chip-cookies/");
+  const credit = page.locator(".recipe-source");
+  await expect(credit).toHaveText("Modified from An Example Cookbook, p. 2");
+  await credit.getByRole("link").click();
+  await expect(page).toHaveURL(/\/pdf\/\?f=example-cookbook\.[0-9a-f]+\.pdf&p=2/);
+  await expect(page.locator("#pdf-canvas")).toBeVisible();
+  await expect(page.locator("#pdf-num")).toHaveValue("2");
+  await expect(page.locator("#pdf-total")).toHaveText(/of 3/);
+  await page.locator("#pdf-next").click();
+  await expect(page.locator("#pdf-num")).toHaveValue("3");
+  await expect(page.locator("#pdf-next")).toBeDisabled();
+  await expect(page).toHaveURL(/p=3/);
+  await page.locator("#back").click();
+  await expect(page).toHaveURL(/\/recipes\/chocolate-chip-cookies\/$/);
+});
+
+test("the PDF viewer refuses files outside the site's PDFs", async ({ page }) => {
+  await page.goto("/pdf/?f=..%2F..%2Fsecret.pdf");
+  await expect(page.locator("#pdf-status")).toHaveText("Couldn't show this PDF.");
+});

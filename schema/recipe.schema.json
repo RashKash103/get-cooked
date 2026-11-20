@@ -60,6 +60,20 @@
         },
         "url": {
           "type": "string"
+        },
+        "pdf": {
+          "type": "string",
+          "pattern": "\\.[pP][dD][fF]$",
+          "description": "A PDF in the site: a path next to the recipe file, or from the site folder with a leading /. Opens in the built-in viewer."
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The page the recipe is on. With pdf: the PDF page to open (counting from the first page of the file)."
+        },
+        "credit": {
+          "type": "string",
+          "description": "A line shown instead of \"Source: …\", e.g. \"Adapted from {source}\". {source} is replaced by the linked name and {page} by the page; without {source} the link follows the text."
         }
       }
     },

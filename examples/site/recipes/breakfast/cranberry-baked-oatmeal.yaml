@@ -6,6 +6,7 @@ image_alt: Golden baked oatmeal studded with cranberries in a square pan
 category: Breakfast
 tags: [make-ahead, vegetarian, kid-friendly]
 date: 2026-10-02
+source: { name: The Example Kitchen, url: "https://example.com/baked-oatmeal", credit: "Adapted from {source}, with less sugar." }
 
 servings: { default: 4, min: 1, max: 12 }
 
