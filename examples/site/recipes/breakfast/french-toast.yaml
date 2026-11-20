@@ -46,12 +46,15 @@ ingredients:
   - { id: cinnamon, ingredient: cinnamon, amount: 0.5, unit: tsp }
   - { id: salt, ingredient: kosher-salt, amount: 0.125, unit: tsp }
   - { id: butter, ingredient: butter, amount: 2, unit: tbsp, note: for the pan }
+  # The cinnamon-sugar recipe says it makes this ingredient, so it links there.
+  - { id: topping, ingredient: cinnamon-sugar, amount: 1, unit: tbsp, note: for sprinkling }
 
 steps:
   - Slice @bread{-} into {slices} slices about ¾ inch thick.
   - Whisk @eggs, @milk, @sugar, @vanilla, @cinnamon and @salt in a shallow dish.
   - Soak each slice ~{0.5} per side.
   - Melt a little @butter{-} in a skillet over medium heat and cook the slices until deep golden, ~{3} per side.
+  - Sprinkle with @topping and serve.
 
 notes:
   - kind: warning

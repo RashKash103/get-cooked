@@ -110,6 +110,9 @@ notes:
   remembers what you've ticked off. Everything stays on the device until you
   share it: **Share list** makes a link that carries the whole list in its
   `#fragment` (never sent to the server).
+- Recipes that make an ingredient (a spice blend, a sauce) say so with
+  `makes:`; every recipe using that ingredient links to it, measured in its
+  own units ("2 tsp garam masala") and opened with enough batches.
 - Credit sources with your own wording ("Adapted from …"), linking to a web
   page or to a page of a PDF you keep in the site (a scanned cookbook, say),
   shown in a built-in viewer that works on phones and offline.

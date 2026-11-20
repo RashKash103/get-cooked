@@ -71,6 +71,7 @@ ui:
   units_metric: Metric
   reset: Reset to original
   source: Source
+  makes: Makes
   source_page: "p. {n}"
   source_pdf: PDF
   pdf_prev: Previous page

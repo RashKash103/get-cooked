@@ -71,6 +71,10 @@ title, category folder matching existing ones; look at `recipes/`).
    that ingredient (`subs: [kefir]`, `{ ingredient: x, ratio: 0.75 }`, or a
    combination like `[{ ingredient: milk, ratio: 0.875 }, 2 tbsp lemon juice]`)
    instead of a separate option; see the recipe format's "Substitutes".
+   If the recipe makes something other recipes use (a spice blend, sauce,
+   stock), add `makes:` with its yield in a real unit and, when it's in the
+   ingredient database, `ingredient:`. Recipes using that ingredient then
+   link to it; see "Recipes that make an ingredient".
 7. **Notes**: storage, make-ahead or serving tips from the source, kept short.
 8. Put any text that readers see inside templates (`{if}…{end}`), not inside
    expression strings, so it can be translated.

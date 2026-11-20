@@ -74,11 +74,12 @@ export function itemsFrom(c: Compiled, m: Model, href: (l: LinkM) => string): Li
         i: info,
       };
       const v = it.q ? Math.max(it.q.v, it.q.h ?? 0) : 0;
-      if (it.link) {
+      if (it.link && (!it.q || it.q.id === "recipe")) {
         Object.assign(item, { k: `r:${it.link.slug}`, u: "recipe", t: it.q ? qtyString(it.q) : "", r: href(it.link) });
       } else if (it.q && v > 0) {
         // Ranges buy the high end.
-        Object.assign(item, { u: it.q.id, v });
+        // Measured by what another recipe makes: an ordinary amount that keeps its link.
+        Object.assign(item, { u: it.q.id, v }, it.link ? { r: href(it.link) } : {});
       } else if (it.q) {
         item.t = qtyString(it.q); // "pinch"
       }
@@ -139,6 +140,7 @@ export function mergeLines(recipes: ListRecipe[], table: Table, system: string):
         link = it.r;
         continue;
       }
+      if (it.r) link ??= it.r;
       if (!u || it.v <= 0) {
         if (it.t) extras.push(it.t);
         continue;

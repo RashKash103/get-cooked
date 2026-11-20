@@ -608,6 +608,46 @@ func (t *Table) formatCount(amount float64, src *Unit, system string, ing *Ing) 
 	return Qty{Value: v, Text: t.text(r, v), Unit: label(src, v), ID: src.ID}
 }
 
+// Convert converts an amount between two units, going through weight when
+// the dimensions differ (a density for volume, grams per piece for counts).
+// It reports false when the units can't be converted for this ingredient.
+func (t *Table) Convert(v float64, from, to string, ing *Ing) (float64, bool) {
+	if from == to {
+		return v, true
+	}
+	a, okA := t.Units[from]
+	b, okB := t.Units[to]
+	if !okA || !okB {
+		return 0, false
+	}
+	if a.Dim == b.Dim && a.Dim != Count {
+		return v * a.Factor / b.Factor, true
+	}
+	ga, okA := gramsPer(a, ing)
+	gb, okB := gramsPer(b, ing)
+	if !okA || !okB {
+		return 0, false
+	}
+	return v * ga / gb, true
+}
+
+// gramsPer is how many grams one of unit u weighs for an ingredient.
+func gramsPer(u *Unit, ing *Ing) (float64, bool) {
+	switch {
+	case u.Dim == Mass:
+		return u.Factor, true
+	case ing == nil:
+		return 0, false
+	case u.Dim == Volume && ing.GramsPerML > 0:
+		return u.Factor * ing.GramsPerML, true
+	case u.Dim == Count && ing.UnitGrams[u.ID] > 0:
+		return ing.UnitGrams[u.ID], true
+	case u.Dim == Count && u.ID == "each" && ing.GramsEach > 0:
+		return ing.GramsEach, true
+	}
+	return 0, false
+}
+
 // Temp formats a temperature given in Fahrenheit (fromC=false) or Celsius.
 func Temp(v float64, fromC bool, system string) string {
 	toC := system == Metric || system == Original && fromC

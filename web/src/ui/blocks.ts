@@ -46,12 +46,14 @@ export function recipeURL(base: string, slug: string, servings: number, options:
 const linkHref = (base: string, l: LinkM) => recipeURL(base, l.slug, l.servings, l.options);
 
 export function renderTimes(m: Model): string {
-  return m.times
+  let s = m.times
     .map(
       (t) =>
         `<div class="${t.id === "total" ? "time time-total" : "time"}"><dt>${esc(t.label)}</dt><dd>${esc(t.text)}</dd></div>`,
     )
     .join("");
+  if (m.makes) s += `<div class="time time-makes"><dt>${esc(t("makes"))}</dt><dd>${esc(qtyString(m.makes))}</dd></div>`;
+  return s;
 }
 
 export function renderEquipment(m: Model): string {

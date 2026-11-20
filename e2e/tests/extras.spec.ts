@@ -330,3 +330,29 @@ test("the PDF viewer refuses files outside the site's PDFs", async ({ page }) =>
   await page.goto("/pdf/?f=..%2F..%2Fsecret.pdf");
   await expect(page.locator("#pdf-status")).toHaveText("Couldn't show this PDF.");
 });
+
+test("an ingredient another recipe makes links to it, measured and converted", async ({ page }) => {
+  await page.goto("/recipes/french-toast/");
+  const topping = page.locator('#ingredients .ing[data-id="topping"]');
+  await expect(topping).toContainText("1 tbsp cinnamon sugar");
+  await expect(topping.getByRole("link", { name: "cinnamon sugar" })).toHaveAttribute(
+    "href",
+    "/recipes/cinnamon-sugar/?s=1",
+  );
+  // Metric shows it by weight, from the ingredient's density.
+  await page.goto("/recipes/french-toast/?u=metric");
+  await expect(topping).toContainText(/\d+ g cinnamon sugar/);
+
+  // The recipe that makes it says how much, scaled with its servings.
+  await page.goto("/recipes/cinnamon-sugar/");
+  await expect(page.locator(".time-makes")).toHaveText("Makes½ cup");
+  await page.locator('[data-servings="1"]').click();
+  await expect(page.locator(".time-makes")).toHaveText("Makes1 cup");
+
+  // On the shopping list it's an ordinary amount that keeps its link.
+  await page.goto("/recipes/french-toast/");
+  await page.locator("#add-to-list").click();
+  await page.goto("/list/");
+  await expect(page.locator("#list-items")).toContainText("1 tbsp");
+  await expect(page.locator("#list-items").getByRole("link", { name: "cinnamon sugar" })).toBeVisible();
+});

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../../../schema/recipe.schema.json
+title: Cinnamon Sugar
+description: A jar of cinnamon sugar for toast, oatmeal and French toast. Other recipes that use cinnamon sugar link here.
+category: Basics
+tags: [pantry]
+date: 2026-11-20
+
+servings: { default: 1, min: 1, max: 4, unit: batch, plural: batches }
+# What this recipe makes: the cinnamon-sugar ingredient, so any recipe that
+# uses cinnamon sugar links here, with its amount converted to batches.
+makes: { ingredient: cinnamon-sugar, amount: "1/2", unit: cup }
+
+ingredients:
+  - { id: sugar, ingredient: granulated-sugar, amount: 0.5, unit: cup }
+  - { id: cinnamon, ingredient: cinnamon, amount: 1.5, unit: tbsp }
+
+steps:
+  - Stir @sugar and @cinnamon together until evenly colored, then store in a jar.
+
+notes:
+  - kind: warning
+    text: "Example only: this recipe exists to demonstrate get-cooked and hasn't been tested. Please don't cook from it."

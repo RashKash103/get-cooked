@@ -32,6 +32,7 @@ draft: false                            # drafts build only with --drafts
 
 servings: { default: 4, min: 1, max: 12, step: 1, unit: serving, plural: servings }
 # or simply: servings: 4
+makes: { amount: "1/2", unit: cup }     # what it makes, for recipes that use it (optional)
 
 options: [...]      # reader choices (toggles, choices, numbers)
 vars: {...}         # computed values
@@ -232,6 +233,41 @@ steps:
 
 The ingredient links to the other recipe, opened with enough servings
 (rounded up to what it can make) and the `with:` options applied.
+
+### Recipes that make an ingredient
+
+A spice blend, sauce or stock can say what it makes, in a real unit, at its
+default servings:
+
+```yaml
+# garam-masala.yaml
+servings: { default: 1, unit: batch, plural: batches }
+makes:
+  ingredient: garam-masala         # optional: the ingredient database entry it makes
+  amount: "1/2"                    # at the default servings; "1 1/2" works too
+  unit: cup
+  density: { value: 100, unit: g/cup }   # any ingredient fields: density, measure, …
+```
+
+Other recipes can then use it by measure, with conversions and scaling like
+any ingredient, and a link to the recipe opened with enough batches:
+
+```yaml
+  - { recipe: garam-masala, amount: 2, unit: tsp }   # explicit reference
+  - { ingredient: garam-masala, amount: 2, unit: tsp } # or just the ingredient…
+  - 2 tsp garam masala                                 # …in any form
+```
+
+- With `ingredient:`, every recipe that uses that ingredient links to this
+  recipe automatically, and `makes:` starts from its database entry (its
+  density, category, …); fields in `makes:` override them. The shopping
+  list merges it with the same ingredient from other recipes.
+- Without `ingredient:`, use `recipe:` with a `unit:`. The name defaults to
+  the recipe's title (or `makes.name`).
+- A `recipe:` without `unit:` still counts in the recipe's own servings unit.
+- The recipe's page shows "Makes ½ cup", scaled with its servings.
+- If the unit can't be converted (teaspoons to grams with no density, say),
+  validation says so: add a `density:` to `makes:` or the database entry.
 
 ## Source
 

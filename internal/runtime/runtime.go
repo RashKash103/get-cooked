@@ -35,6 +35,8 @@ type Model struct {
 	Notes       []NoteM        `json:"notes"`
 	// Image is the matching image variant (nil: use the recipe's default image).
 	Image *ImageM `json:"image"`
+	// Makes is how much the recipe makes at these servings (nil: not given).
+	Makes *units.Qty `json:"makes"`
 }
 
 // ImageM is the image variant chosen for the state.
@@ -256,6 +258,10 @@ func Render(c *recipe.Compiled, st State) (*Model, error) {
 		unit = c.Servings.One
 	}
 	m.Yield = c.Units.FormatFraction(servings) + " " + unit
+	if mk := c.Makes; mk != nil {
+		q := c.Units.Format(mk.Amount*env["scale"].Num, mk.Unit, system, c.Ings[mk.Key], false)
+		m.Makes = &q
+	}
 
 	for _, o := range c.Options {
 		ok, err := r.cond(o.When, o.L)
@@ -499,6 +505,19 @@ func (r *rctx) link(ic *recipe.IngC, v float64) (*LinkM, error) {
 	if step <= 0 {
 		step = 1
 	}
+	if ref.Unit != "" {
+		// Measured: how many servings make this much.
+		unit := ic.Unit
+		if unit == "" {
+			unit = "each"
+		}
+		n, ok := r.c.Units.Convert(v, unit, ref.Unit, r.c.Ings[ref.Key])
+		if !ok || ref.Per <= 0 {
+			v = 0
+		} else {
+			v = n / ref.Per
+		}
+	}
 	s := math.Ceil(v/step-1e-9) * step
 	s = expr.RoundTo(math.Min(math.Max(s, ref.Min), ref.Max), 6)
 	l := &LinkM{Slug: ref.Slug, Servings: s, Options: map[string]any{}}
@@ -518,7 +537,7 @@ func (r *rctx) link(ic *recipe.IngC, v float64) (*LinkM, error) {
 
 // qtyRange formats an amount, or a range when hi > 0.
 func (r *rctx) qtyRange(ic *recipe.IngC, v, hi float64) units.Qty {
-	if hi <= 0 || ic.Recipe != nil {
+	if hi <= 0 || ic.Recipe != nil && ic.Recipe.Unit == "" {
 		return r.qty(ic, v)
 	}
 	unit := ic.Unit
@@ -533,7 +552,7 @@ func (r *rctx) qtyRange(ic *recipe.IngC, v, hi float64) units.Qty {
 }
 
 func (r *rctx) qty(ic *recipe.IngC, v float64) units.Qty {
-	if ref := ic.Recipe; ref != nil {
+	if ref := ic.Recipe; ref != nil && ref.Unit == "" {
 		q := recipeRule.Round(v)
 		if q == 0 {
 			q = 0.25

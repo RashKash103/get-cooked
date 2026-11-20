@@ -109,7 +109,7 @@ func TestBlocksGolden(t *testing.T) {
 					Lang: l.Code, Slug: r.Slug, Base: base, Dict: dict, Compiled: r.C, State: st,
 					Meta: map[string]any{"title": r.Title, "description": r.Description, "source": sourceJSON(r.Source)},
 					HTML: map[string]string{
-						"times":       fr(renderTimes(m)),
+						"times":       fr(renderTimes(m, l.Catalog)),
 						"equipment":   fr(renderEquipment(m)),
 						"ingredients": fr(renderIngredients(m, base, l.Catalog)),
 						"steps":       fr(renderSteps(m, base, l.Catalog)),

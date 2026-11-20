@@ -107,6 +107,10 @@ cinnamon:
   aliases: [cinnamon]
   density: { value: 125, unit: g/cup }
   category: pantry
+cinnamon-sugar:
+  name: cinnamon sugar
+  density: { value: 200, unit: g/cup }
+  category: pantry
 smoked-paprika:
   name: smoked paprika
   aliases: [paprika]

@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 test("lists recipes and filters by search and category", async ({ page }) => {
   await page.goto("/");
   const cards = page.locator(".card:visible");
-  await expect(cards).toHaveCount(7);
+  await expect(cards).toHaveCount(8);
   await page.fill("#search", "cranberr");
   await expect(cards).toHaveCount(1);
   await expect(cards.first()).toContainText("Cranberry Baked Oatmeal");

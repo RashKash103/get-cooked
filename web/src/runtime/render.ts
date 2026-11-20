@@ -109,7 +109,7 @@ class Renderer {
 
   qty(ic: IngC, v: number): Qty {
     const ref = ic.recipe;
-    if (ref) {
+    if (ref && !ref.unit) {
       let q = roundRule(recipeRule, v);
       if (q === 0) q = 0.25;
       return { v: q, t: this.units.frac(q), u: q <= 1 ? ref.one : ref.other, id: "recipe" };
@@ -119,7 +119,7 @@ class Renderer {
   }
 
   qtyRange(ic: IngC, v: number, hi: number): Qty {
-    if (hi <= 0 || ic.recipe) return this.qty(ic, v);
+    if (hi <= 0 || (ic.recipe && !ic.recipe.unit)) return this.qty(ic, v);
     const info = ic.ref ? this.c.ings?.[ic.ref] : undefined;
     return this.units.formatRange(v, hi, ic.unit || "each", this.system, info, Boolean(ic.fixed));
   }
@@ -128,6 +128,11 @@ class Renderer {
     const ref = ic.recipe;
     if (!ref) return null;
     const step = ref.step > 0 ? ref.step : 1;
+    if (ref.unit) {
+      // Measured: how many servings make this much.
+      const n = this.units.convert(v, ic.unit || "each", ref.unit, ref.key ? this.c.ings?.[ref.key] : undefined);
+      v = n === null || !ref.per || ref.per <= 0 ? 0 : n / ref.per;
+    }
     let s = Math.ceil(v / step - 1e-9) * step;
     s = roundTo(Math.min(Math.max(s, ref.min), ref.max), 6);
     const options: Record<string, Value> = {};
@@ -291,7 +296,12 @@ export function render(c: Compiled, st: State): Model {
     steps: [],
     notes: [],
     image: null,
+    makes: null,
   };
+  if (c.makes) {
+    const mk = c.makes;
+    m.makes = r.units.format(mk.a * (env.scale as number), mk.unit, system, c.ings?.[mk.key], false);
+  }
   for (const o of c.options ?? []) if (r.cond(o.when)) m.options.push(o.id);
   for (const t of c.times ?? []) {
     const v = r.num(t.e, `times.${t.id}`);

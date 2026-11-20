@@ -94,6 +94,10 @@ export interface RecipeRef {
   max: number;
   step: number;
   with?: { id: string; type: string; e: IR }[];
+  /** Measured by what the target makes: its unit, amount per serving and Ings key. */
+  unit?: string;
+  per?: number;
+  key?: string;
 }
 
 export interface IngC {
@@ -133,6 +137,7 @@ export interface Compiled {
   steps: { title?: string; when?: IR; items: { when?: IR; text: Template; note?: Template; image?: string }[] }[];
   notes?: { when?: IR; kind: string; text: Template }[];
   ings?: Record<string, Ing>;
+  makes?: { a: number; unit: string; key: string; base?: string; name?: string; plural?: string };
   units: Table;
   images?: { when: IR; src: string; srcset?: string; alt?: string }[];
 }
@@ -186,4 +191,5 @@ export interface Model {
   steps: { title: string; items: { n: number; segs: Seg[]; note: string; image: string }[] }[];
   notes: { kind: string; text: string }[];
   image: { src: string; srcset: string; alt: string } | null;
+  makes: Qty | null;
 }

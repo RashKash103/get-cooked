@@ -67,7 +67,7 @@ func linkHref(base string, l *runtime.LinkM) string {
 	return RecipeURL(base, l.Slug, l.Servings, l.Options)
 }
 
-func renderTimes(m *runtime.Model) string {
+func renderTimes(m *runtime.Model, cat *i18n.Catalog) string {
 	var sb strings.Builder
 	for _, t := range m.Times {
 		cls := "time"
@@ -75,6 +75,9 @@ func renderTimes(m *runtime.Model) string {
 			cls = "time time-total"
 		}
 		fmt.Fprintf(&sb, `<div class="%s"><dt>%s</dt><dd>%s</dd></div>`, cls, esc(t.Label), esc(t.Text))
+	}
+	if m.Makes != nil {
+		fmt.Fprintf(&sb, `<div class="time time-makes"><dt>%s</dt><dd>%s</dd></div>`, esc(cat.T("makes")), esc(m.Makes.String()))
 	}
 	return sb.String()
 }

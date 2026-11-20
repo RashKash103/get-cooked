@@ -25,8 +25,23 @@ type Compiled struct {
 	Notes       []NoteC               `json:"notes,omitempty"`
 	Images      []ImageC              `json:"images,omitempty"`
 	Ings        map[string]*units.Ing `json:"ings,omitempty"`
+	Makes       *MakesC               `json:"makes,omitempty"`
 	Units       *units.Table          `json:"units"`
 }
+
+// MakesC is what a recipe makes at its default servings. Its conversion info
+// is Ings[Key].
+type MakesC struct {
+	Amount float64 `json:"a"`
+	Unit   string  `json:"unit"`
+	Key    string  `json:"key"`
+	Base   string  `json:"base,omitempty"` // ingredient database key, when based on one
+	Name   string  `json:"name,omitempty"`
+	Plural string  `json:"plural,omitempty"`
+}
+
+// MakesKey is the Ings key of what recipe slug makes.
+func MakesKey(slug string) string { return "@" + slug }
 
 // ServingsC configures the servings control.
 type ServingsC struct {
@@ -120,9 +135,14 @@ type SplitC struct {
 }
 
 // RecipeRef links an ingredient to another recipe (a prerequisite). The amount
-// is measured in the target recipe's servings unit.
+// is in the target recipe's servings unit, or, when the ingredient has a unit
+// (measured by what the target makes), in that unit: then Unit is the unit of
+// the target's makes and Per how much of it one serving makes.
 type RecipeRef struct {
 	Slug  string  `json:"slug"`
+	Unit  string  `json:"unit,omitempty"`
+	Per   float64 `json:"per,omitempty"`
+	Key   string  `json:"key,omitempty"` // Ings key of the target's makes (for conversions)
 	One   string  `json:"one"`
 	Other string  `json:"other"`
 	Min   float64 `json:"min"`

@@ -181,6 +181,18 @@ export class Units {
     return (this.t.ladders[`${sys}.${dim}`] ?? []).find((r) => r.unit === id) ?? this.t.fallback;
   }
 
+  /** Mirror of Table.Convert: converts between units, through weight when the dimensions differ. */
+  convert(v: number, from: string, to: string, ing: Ing | undefined): number | null {
+    if (from === to) return v;
+    const a = this.t.units[from];
+    const b = this.t.units[to];
+    if (!a || !b) return null;
+    if (a.dim === b.dim && a.dim !== "count") return (v * a.f) / b.f;
+    const ga = gramsPer(a, ing);
+    const gb = gramsPer(b, ing);
+    return ga === null || gb === null ? null : (v * ga) / gb;
+  }
+
   format(amount: number, unitID: string, system: string, ing: Ing | undefined, fixed: boolean): Qty {
     const src = this.t.units[unitID];
     if (!src) {
@@ -316,4 +328,13 @@ export function duration(min: number, words?: Record<string, string>): string {
   if (h === 0) return `${m} ${w("min")}`;
   if (m === 0) return `${h} ${w("hr")}`;
   return `${h} ${w("hr")} ${m} ${w("min")}`;
+}
+
+function gramsPer(u: Unit, ing: Ing | undefined): number | null {
+  if (u.dim === "mass") return u.f;
+  if (!ing) return null;
+  if (u.dim === "volume" && (ing.gpml ?? 0) > 0) return u.f * (ing.gpml as number);
+  if (u.dim === "count" && (ing.ug?.[u.id] ?? 0) > 0) return ing.ug?.[u.id] as number;
+  if (u.dim === "count" && u.id === "each" && (ing.each ?? 0) > 0) return ing.each as number;
+  return null;
 }

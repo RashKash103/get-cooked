@@ -101,6 +101,18 @@ type File struct {
 	Steps        []StepEntry       `yaml:"steps"`
 	Notes        []Note            `yaml:"notes"`
 	IngredientDB map[string]DBYAML `yaml:"ingredient_db"`
+	Makes        *Makes            `yaml:"makes"`
+}
+
+// Makes says what a recipe produces at its default servings, in a real unit,
+// so other recipes can use it by measure ("2 tsp garam masala"). It takes the
+// same conversion fields as an ingredient database entry (density, measure,
+// …), optionally starting from an entry named by Ingredient.
+type Makes struct {
+	DBYAML     `yaml:",inline"`
+	Amount     Src    `yaml:"amount"`
+	Unit       string `yaml:"unit"`
+	Ingredient string `yaml:"ingredient"`
 }
 
 // ImageVariant replaces the hero image on the recipe page when its

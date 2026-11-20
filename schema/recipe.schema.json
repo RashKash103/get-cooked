@@ -129,6 +129,61 @@
         }
       ]
     },
+    "makes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amount",
+        "unit"
+      ],
+      "description": "What the recipe makes at its default servings, e.g. {amount: 0.5, unit: cup}. Other recipes can then use it by measure (\"2 tsp\") with conversions; with `ingredient:`, every recipe using that ingredient links here. Takes the same conversion fields as an ingredient database entry.",
+      "properties": {
+        "amount": {
+          "description": "How much the recipe makes at its default servings: a number or a fraction such as \"1/2\" or \"1 1/2\".",
+          "oneOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "description": "A real unit (cup, g, tbsp, …), so other recipes can use it by measure."
+        },
+        "ingredient": {
+          "type": "string",
+          "description": "An ingredient database key this recipe makes. Recipes using that ingredient link here, and its density and other fields are the starting point."
+        },
+        "name": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/name"
+        },
+        "plural": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/plural"
+        },
+        "density": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/density"
+        },
+        "grams_each": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/grams_each"
+        },
+        "unit_grams": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/unit_grams"
+        },
+        "measure": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/measure"
+        },
+        "round": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/round"
+        },
+        "category": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/category"
+        }
+      }
+    },
     "scaling": {
       "$ref": "#/$defs/expr",
       "description": "Expression overriding the scale factor (default servings / servings.default)."

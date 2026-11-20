@@ -361,7 +361,7 @@ func strictChecks(s *Site) recipe.Diags {
 		for _, sec := range r.C.Ingredients {
 			for _, ic := range sec.Items {
 				u, ok := s.Units.Units[ic.Unit]
-				if !ok || ic.Recipe != nil || ic.Fixed || (u.Dim != "volume" && u.Dim != "mass") {
+				if !ok || ic.Recipe != nil && ic.Recipe.Unit == "" || ic.Fixed || (u.Dim != "volume" && u.Dim != "mass") {
 					continue
 				}
 				var info *units.Ing

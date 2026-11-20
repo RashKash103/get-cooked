@@ -498,3 +498,63 @@ steps: [Whisk in @dairy., "Use @dairy{1/2} now, the rest later; then the @dairy{
 		}
 	}
 }
+
+func TestMakes(t *testing.T) {
+	base := compileExample(t, "breakfast/buttermilk-pancakes.yaml")
+	c := &recipe.Compiler{Units: base.C.Units, DB: exampleDB(t), System: "original"}
+	compile := func(path, src string) *recipe.Recipe {
+		t.Helper()
+		r, ds := c.Compile(path, []byte(src))
+		if ds.HasErrors() {
+			t.Fatal(ds)
+		}
+		return r
+	}
+	spice := compile("garam-masala.yaml", `title: Garam Masala
+servings: { default: 1, min: 1, max: 4, unit: batch, plural: batches }
+makes: { amount: "1/2", unit: cup, name: garam masala, density: { value: 100, unit: g/cup } }
+ingredients: [1 tbsp cumin seeds]
+steps: [Grind.]
+`)
+	// Explicit: measured by what garam-masala makes.
+	curry := compile("curry.yaml", `title: Curry
+servings: { default: 4, max: 100 }
+ingredients:
+  - { id: gm, recipe: garam-masala, amount: 2, unit: tsp }
+steps: [Add @gm.]
+`)
+	if ds := recipe.Link([]*recipe.Recipe{spice, curry}); ds.HasErrors() {
+		t.Fatal(ds)
+	}
+	m := render(t, curry, State{})
+	it := m.Ingredients[0].Items[0]
+	if it.Q.String() != "2 tsp" || it.Name != "garam masala" || it.Link == nil || it.Link.Servings != 1 {
+		t.Fatalf("measured ref: %+v %+v link %+v", it, it.Q, it.Link)
+	}
+	// 64 servings: 32 tsp ≈ ⅔ cup, more than one ½-cup batch.
+	if m := render(t, curry, State{Servings: 64}); m.Ingredients[0].Items[0].Link.Servings != 2 {
+		t.Errorf("64 servings: want 2 batches, got %+v", m.Ingredients[0].Items[0].Link)
+	}
+	// The density from makes converts it to grams.
+	if q := render(t, curry, State{System: "metric"}).Ingredients[0].Items[0].Q; q.ID != "g" {
+		t.Errorf("metric: %+v", q)
+	}
+	if mk := render(t, spice, State{Servings: 2}).Makes; mk == nil || mk.String() != "1 cup" {
+		t.Errorf("makes at 2 batches: %+v", mk)
+	}
+
+	// A measured ref to a recipe without makes is an error; so is an
+	// unconvertible unit.
+	plain := compile("plain.yaml", "title: Plain\nservings: 2\ningredients: [1 egg]\nsteps: [Go.]\n")
+	bad := compile("bad.yaml", `title: Bad
+servings: 1
+ingredients:
+  - { id: a, recipe: plain, amount: 1, unit: tsp }
+  - { id: b, recipe: garam-masala, amount: 1, unit: clove }
+steps: [Add @a and @b.]
+`)
+	ds := recipe.Link([]*recipe.Recipe{spice, plain, bad})
+	if len(ds) != 2 || !strings.Contains(ds[0].Msg, "doesn't say what it makes") || !strings.Contains(ds[1].Msg, "can't be converted") {
+		t.Errorf("diags: %v", ds)
+	}
+}

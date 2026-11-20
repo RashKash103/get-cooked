@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/RashKash103/get-cooked/main/schema/ingredients.schema.json
+# yaml-language-server: $schema=../../schema/ingredients.schema.json
 #
 # Shared ingredient database. Recipes refer to these keys with `ingredient:`
 # (or are matched automatically by name/alias). Densities enable converting
@@ -106,6 +106,10 @@ cinnamon:
   name: ground cinnamon
   aliases: [cinnamon]
   density: { value: 125, unit: g/cup }
+  category: pantry
+cinnamon-sugar:
+  name: cinnamon sugar
+  density: { value: 200, unit: g/cup }
   category: pantry
 smoked-paprika:
   name: smoked paprika

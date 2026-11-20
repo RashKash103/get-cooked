@@ -132,7 +132,7 @@ type indexView struct {
 
 // jsKeys are the UI strings the browser needs.
 var jsKeys = []string{
-	"back", "all_recipes", "text_size", "timer_pick", "timer_start", "swap", "swap_ingredient", "timers_more", "timers_less", "timer_go_to_step", "list_share", "list_link_copied", "list_import", "list_imported", "convert", "by_weight", "by_volume", "close", "scale_to", "scale_amount", "scale_go", "progress_cleared", "in_progress", "notes", "ingredients", "equipment", "steps", "source", "source_page", "pdf_of", "pdf_failed", "pdf_back", "units", "units_us", "units_metric", "units_original", "uses",
+	"back", "all_recipes", "text_size", "timer_pick", "timer_start", "swap", "swap_ingredient", "timers_more", "timers_less", "timer_go_to_step", "list_share", "list_link_copied", "list_import", "list_imported", "convert", "by_weight", "by_volume", "close", "scale_to", "scale_amount", "scale_go", "progress_cleared", "in_progress", "notes", "ingredients", "equipment", "steps", "source", "makes", "source_page", "pdf_of", "pdf_failed", "pdf_back", "units", "units_us", "units_metric", "units_original", "uses",
 	"list", "list_add", "list_update", "list_added", "list_remove", "list_make", "list_confirm_clear", "list_items",
 	"scale_prompt", "step_of", "all_done", "save", "saved", "copied", "exit_cook", "cook",
 	"step", "uses", "unsupported", "cook_on", "cook_on_unsupported", "copied", "copy_failed", "link_copied",
@@ -309,7 +309,7 @@ func (b *builder) lang(l *Lang) error {
 		}
 		v := &recipeView{
 			R: r, M: m, ImageAlt: r.ImageAlt,
-			Times:         template.HTML(fr(renderTimes(m))),
+			Times:         template.HTML(fr(renderTimes(m, l.Catalog))),
 			Equipment:     template.HTML(fr(renderEquipment(m))),
 			Ingredients:   template.HTML(fr(renderIngredients(m, base, l.Catalog))),
 			Steps:         template.HTML(fr(renderSteps(m, base, l.Catalog))),

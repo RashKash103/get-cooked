@@ -196,6 +196,7 @@ func (c *Compiler) Compile(path string, src []byte) (*Recipe, Diags) {
 	for k := range cc.usedDB {
 		comp.Ings[k] = cc.db.Entries[k].Info
 	}
+	cc.makes(&f, comp, r)
 	for k, info := range cc.overrides {
 		comp.Ings[k] = info
 	}
@@ -566,8 +567,8 @@ func (cc *cctx) draftIngredient(it *IngItem) *ingDraft {
 				d.id = identFrom(it.Recipe)
 			}
 		}
-		if it.Recipe != "" && (it.Ingredient != "" || it.Unit != "") {
-			cc.errAt(d.loc, "a recipe reference takes its unit from the linked recipe's servings; remove `ingredient:`/`unit:`")
+		if it.Recipe != "" && it.Ingredient != "" {
+			cc.errAt(d.loc, "a recipe reference is its own ingredient; remove `ingredient:` (describe it with `makes:` in the linked recipe)")
 		}
 		if it.Unit != "" {
 			x, ok := cc.Units.Lookup(it.Unit)
@@ -973,8 +974,8 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 				ic.Amount = cc.amountC(it.Amount.Src, it.Scale)
 				if ic.Amount != nil && it.Amount.Hi != nil {
 					ic.Amount.Hi = cc.amountC(*it.Amount.Hi, it.Scale)
-					if it.Recipe != "" {
-						cc.errAt(d.loc, "a recipe reference can't use a range amount")
+					if it.Recipe != "" && it.Unit == "" {
+						cc.errAt(d.loc, "a recipe reference counted in its servings can't use a range amount (give it a unit to measure it instead)")
 					}
 				}
 			}
@@ -1285,4 +1286,60 @@ func scaleAmount(a *AmountC, r float64) *AmountC {
 		out.Hi = scaleAmount(a.Hi, r)
 	}
 	return out
+}
+
+// makes compiles what the recipe makes at its default servings.
+func (cc *cctx) makes(f *File, comp *Compiled, r *Recipe) {
+	m := f.Makes
+	if m == nil {
+		return
+	}
+	loc := cc.loc(m.Amount.Line, m.Amount.Col)
+	var amount float64
+	switch {
+	case m.Amount.Num != nil:
+		amount = *m.Amount.Num
+	case m.Amount.Set:
+		// Fractions such as "1/2" or "1 1/2" are constant expressions.
+		e, err := expr.Parse(strings.Join(strings.Fields(m.Amount.Text), "+"))
+		if err == nil {
+			var v expr.Value
+			if v, err = e.Eval(expr.MapEnv(nil)); err == nil && v.Kind == expr.KNum {
+				amount = v.Num
+			}
+		}
+	}
+	if amount <= 0 {
+		cc.errAt(loc, "makes.amount must be a positive number such as 2, 0.5 or \"1 1/2\" (what the recipe makes at its default servings)")
+		return
+	}
+	u, ok := cc.Units.Lookup(m.Unit)
+	if !ok {
+		msg := fmt.Sprintf("makes.unit: unknown unit %q", m.Unit)
+		if m.Unit == "" {
+			msg = "makes needs a unit, e.g. makes: { amount: 0.5, unit: cup }"
+		} else if s := suggest(m.Unit, cc.Units.Names()); s != "" {
+			msg += fmt.Sprintf(" (did you mean %q?)", s)
+		}
+		cc.errAt(loc, "%s", msg)
+		return
+	}
+	mc := &MakesC{Amount: amount, Unit: u.ID, Key: MakesKey(r.Slug), Name: cc.tr(m.Name), Plural: cc.tr(m.Plural)}
+	base := &units.Ing{Name: r.Title}
+	if m.Ingredient != "" {
+		e, ok := cc.db.Entries[m.Ingredient]
+		if !ok {
+			cc.errAt(loc, "makes.ingredient: %q is not in the ingredient database", m.Ingredient)
+			return
+		}
+		cp := *e.Info
+		base, mc.Base = &cp, e.Key
+	}
+	if mc.Name != "" {
+		base.Name, base.Plural = mc.Name, mc.Plural
+	}
+	info, ds := ApplyIngredientFields(base, m.DBYAML, cc.Units, loc, "makes")
+	cc.diags = append(cc.diags, ds...)
+	comp.Makes = mc
+	comp.Ings[mc.Key] = info
 }
