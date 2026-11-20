@@ -61,6 +61,8 @@ export interface Ing {
   measure?: string;
   round?: Rule;
   cat?: string;
+  /** Replaces the US volume ladder for this ingredient (tbsp ⇄ sticks); smallest first. */
+  ladder?: Rung[];
 }
 
 export interface Qty {

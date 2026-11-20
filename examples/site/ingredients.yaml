@@ -142,6 +142,9 @@ butter:
   aliases: [butter, salted butter]
   density: { value: 227, unit: g/cup }
   unit_grams: { stick: 113 }
+  # US amounts: tablespoons up to a stick, then (half) sticks: 8 tbsp shows
+  # as "1 stick", 10 tbsp as "1 stick + 2 tbsp", ⅛ stick as "1 tbsp".
+  ladder: [tsp, tbsp, { unit: stick, denoms: [2], min: 0.5 }]
   category: dairy
 egg:
   name: egg

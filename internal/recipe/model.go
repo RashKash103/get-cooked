@@ -301,6 +301,7 @@ type IngItem struct {
 	UnitGrams map[string]float64 `yaml:"unit_grams"`
 	Round     *RoundYAML         `yaml:"round"`
 	Category  string             `yaml:"category"`
+	Ladder    []LadderStep       `yaml:"ladder"`
 	Recipe    string             `yaml:"recipe"`
 	Split     yaml.Node          `yaml:"split"`
 	With      yaml.Node          `yaml:"with"`

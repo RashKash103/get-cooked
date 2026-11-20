@@ -916,7 +916,7 @@ func (cc *cctx) ingredients(comp *Compiled, sections []*sectionDraft, r *Recipe)
 				}
 				info, ds := ApplyIngredientFields(base, DBYAML{
 					Measure: it.Measure, Density: it.Density, GramsEach: it.GramsEach,
-					UnitGrams: it.UnitGrams, Round: it.Round, Category: it.Category,
+					UnitGrams: it.UnitGrams, Round: it.Round, Category: it.Category, Ladder: it.Ladder,
 				}, cc.Units, d.loc, d.id)
 				cc.diags = append(cc.diags, ds...)
 				key := fmt.Sprintf("@%s:%d", d.id, len(cc.overrides))
@@ -1269,7 +1269,7 @@ func contains(list []string, s string) bool {
 }
 
 func (it *IngItem) hasOverrides() bool {
-	return it.Measure != "" || it.Density != nil || it.GramsEach > 0 || len(it.UnitGrams) > 0 || it.Round != nil || it.Category != ""
+	return it.Measure != "" || it.Density != nil || it.GramsEach > 0 || len(it.UnitGrams) > 0 || it.Round != nil || it.Category != "" || it.Ladder != nil
 }
 
 // scaleAmount returns a copy of a multiplied by r (a substitute's ratio).

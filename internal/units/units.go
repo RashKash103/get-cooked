@@ -109,6 +109,10 @@ type Ing struct {
 	Measure    string             `json:"measure,omitempty"` // volume | mass preference
 	Round      *Rule              `json:"round,omitempty"`
 	Cat        string             `json:"cat,omitempty"` // shopping category
+	// Ladder replaces the US volume ladder for this ingredient, mixing volume
+	// units with count units that have UnitGrams (tbsp ⇄ sticks of butter).
+	// Rungs ascend by size.
+	Ladder []Rung `json:"ladder,omitempty"`
 }
 
 // Qty is a formatted quantity.
@@ -437,6 +441,11 @@ func (t *Table) Format(amount float64, unitID, system string, ing *Ing, fixed bo
 	if !ok {
 		return Qty{Value: amount, Text: t.FormatFraction(t.Fallback.Round(amount)), Unit: unitID, ID: unitID}
 	}
+	if !fixed {
+		if q, ok := t.ingLadder(amount, src, system, ing); ok {
+			return q
+		}
+	}
 	if src.Dim == Count {
 		return t.formatCount(amount, src, system, ing)
 	}
@@ -529,16 +538,21 @@ func (t *Table) ladder(base float64, sys, dim string) Qty {
 		v := t.Fallback.Round(base / x.Factor)
 		return Qty{Value: v, Text: t.FormatFraction(v), Unit: label(x, v), ID: id}
 	}
+	return t.climb(base, rungs, func(id string) float64 { return t.Units[id].Factor })
+}
+
+// climb is ladder over any rungs; size gives one of a rung's unit in base units.
+func (t *Table) climb(base float64, rungs []Rung, size func(string) float64) Qty {
 	for i := len(rungs) - 1; i >= 0; i-- {
 		r := rungs[i]
 		x := t.Units[r.Unit]
-		val := base / x.Factor
+		val := base / size(r.Unit)
 		v := r.Round(val)
 		if v <= 0 || v < r.Min || relErr(v, val) > t.Tolerance {
 			continue
 		}
 		if r.Max > 0 && v > r.Max && i+1 < len(rungs) {
-			if q, ok := t.compound(base, r, rungs[i+1]); ok {
+			if q, ok := t.compound(base, r, rungs[i+1], size); ok {
 				return q
 			}
 		}
@@ -547,7 +561,7 @@ func (t *Table) ladder(base float64, sys, dim string) Qty {
 	// Nothing fits within tolerance: use the smallest rung.
 	r := rungs[0]
 	x := t.Units[r.Unit]
-	val := base / x.Factor
+	val := base / size(r.Unit)
 	v := r.Round(val)
 	if v == 0 && val > 0 {
 		if r.Tiny != "" {
@@ -558,18 +572,107 @@ func (t *Table) ladder(base float64, sys, dim string) Qty {
 	return Qty{Value: v, Text: t.text(r.Rule, v), Unit: label(x, v), ID: x.ID}
 }
 
-func (t *Table) compound(base float64, small, big Rung) (Qty, bool) {
+func (t *Table) compound(base float64, small, big Rung, size func(string) float64) (Qty, bool) {
 	x, bx := t.Units[small.Unit], t.Units[big.Unit]
-	whole := floorTo(big.Rule, base/bx.Factor)
+	sx, sb := size(small.Unit), size(big.Unit)
+	whole := floorTo(big.Rule, base/sb)
 	if whole <= 0 || whole < big.Min {
 		return Qty{}, false
 	}
-	rest := small.Round((base - whole*bx.Factor) / x.Factor)
+	rest := small.Round((base - whole*sb) / sx)
 	if rest <= 0 {
 		return Qty{Value: whole, Text: t.text(big.Rule, whole), Unit: label(bx, whole), ID: bx.ID}, true
 	}
 	text := t.text(big.Rule, whole) + " " + label(bx, whole) + " + " + t.text(small.Rule, rest)
-	return Qty{Value: expr.RoundTo(whole+rest*x.Factor/bx.Factor, 6), Text: text, Unit: label(x, rest), ID: bx.ID}, true
+	return Qty{Value: expr.RoundTo(whole+rest*sx/sb, 6), Text: text, Unit: label(x, rest), ID: bx.ID}, true
+}
+
+// mlPer is the volume of one of unit id for an ingredient ladder: volume
+// units directly, count units through their weight and the density.
+func mlPer(t *Table, id string, ing *Ing) (float64, bool) {
+	u, ok := t.Units[id]
+	switch {
+	case !ok:
+		return 0, false
+	case u.Dim == Volume:
+		return u.Factor, true
+	case u.Dim == Count && ing.UnitGrams[id] > 0 && ing.GramsPerML > 0:
+		return ing.UnitGrams[id] / ing.GramsPerML, true
+	}
+	return 0, false
+}
+
+// ingLadder formats an amount with the ingredient's own ladder, in US
+// units: volumes written in US units (or shown in US), and count units on
+// the ladder. Metric, weights and a measure: mass preference are left alone.
+func (t *Table) ingLadder(amount float64, src *Unit, system string, ing *Ing) (Qty, bool) {
+	if ing == nil || len(ing.Ladder) == 0 || system == Metric || ing.Measure == Mass {
+		return Qty{}, false
+	}
+	onLadder := false
+	for _, r := range ing.Ladder {
+		onLadder = onLadder || r.Unit == src.ID
+	}
+	switch {
+	case src.Dim == Volume && (system == US || src.System == US || onLadder):
+	case src.Dim == Count && onLadder:
+	default:
+		return Qty{}, false
+	}
+	f, ok := mlPer(t, src.ID, ing)
+	if !ok {
+		return Qty{}, false
+	}
+	return t.climb(amount*f, ing.Ladder, func(id string) float64 { v, _ := mlPer(t, id, ing); return v }), true
+}
+
+// IngredientLadder resolves an ingredient's ladder: each step names a unit
+// and may override its rounding (denominators or tiers, min, max, tiny);
+// otherwise volume units use the site's US rules and count units the count
+// rule. Count units need the ingredient's unit_grams and density. The rungs
+// are returned smallest first.
+func (t *Table) IngredientLadder(steps []Rung, ing *Ing) ([]Rung, error) {
+	out := make([]Rung, 0, len(steps))
+	for _, s := range steps {
+		u, ok := t.Lookup(s.Unit)
+		if !ok {
+			return nil, fmt.Errorf("ladder: unknown unit %q", s.Unit)
+		}
+		r := Rung{Unit: u.ID}
+		switch u.Dim {
+		case Volume:
+			r.Rule = t.ruleFor(US, Volume, u.ID)
+		case Count:
+			if ing.UnitGrams[u.ID] <= 0 || ing.GramsPerML <= 0 {
+				return nil, fmt.Errorf("ladder: %s needs unit_grams for %s and a density, to compare it with volumes", u.Other, u.ID)
+			}
+			r.Rule = t.Count
+		default:
+			return nil, fmt.Errorf("ladder: %s is a weight; a ladder mixes volume units and counted units (sticks)", u.Other)
+		}
+		if len(s.Denoms) > 0 {
+			r.Denoms, r.Tiers = s.Denoms, nil
+		}
+		if len(s.Tiers) > 0 {
+			r.Tiers, r.Denoms = s.Tiers, nil
+		}
+		if s.Min != 0 {
+			r.Min = s.Min
+		}
+		if s.Max != 0 {
+			r.Max = s.Max
+		}
+		if s.Tiny != "" {
+			r.Tiny = s.Tiny
+		}
+		out = append(out, r)
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		a, _ := mlPer(t, out[i].Unit, ing)
+		b, _ := mlPer(t, out[j].Unit, ing)
+		return a < b
+	})
+	return out, nil
 }
 
 // floorTo rounds x down to the largest value representable by the rule.

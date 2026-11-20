@@ -76,6 +76,72 @@
             "exclusiveMinimum": 0
           }
         },
+        "ladder": {
+          "type": "array",
+          "minItems": 0,
+          "description": "How to show this ingredient in US units, replacing the tsp/tbsp/cup ladder: volume units and counted units with unit_grams (e.g. [tsp, tbsp, {unit: stick, denoms: [2], min: 0.5}] shows 8 tbsp as 1 stick and ⅛ stick as 1 tbsp). Each step is a unit name, or a unit with its own rounding. Needs a density when it mixes counted units with volumes. An empty list turns an inherited ladder off.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unit"
+                ],
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "denoms": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "description": "Round to fractions with these denominators."
+                  },
+                  "tiers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "below": {
+                          "type": "number"
+                        },
+                        "step": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "step"
+                      ]
+                    },
+                    "description": "Round to decimal steps by size."
+                  },
+                  "min": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Smallest amount to show in this unit."
+                  },
+                  "max": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Above this, show the next unit up plus a remainder (\"1 stick + 2 tbsp\")."
+                  },
+                  "tiny": {
+                    "type": "string",
+                    "description": "Label when a positive amount rounds to zero (\"pinch\")."
+                  }
+                }
+              }
+            ]
+          }
+        },
         "measure": {
           "enum": [
             "volume",

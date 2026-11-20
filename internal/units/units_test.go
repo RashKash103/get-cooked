@@ -1,6 +1,7 @@
 package units
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -214,5 +215,59 @@ func TestFormatRangeMixedUnits(t *testing.T) {
 	}
 	if v, ok := tb.Convert(2, "stick", "g", butter); !ok || v != 226 {
 		t.Errorf("2 sticks = %v g", v)
+	}
+}
+
+func TestIngredientLadder(t *testing.T) {
+	tb := Default()
+	b := &Ing{Name: "butter", GramsPerML: 227 / 236.5882365, UnitGrams: map[string]float64{"stick": 113}}
+	l, err := tb.IngredientLadder([]Rung{{Unit: "stick", Rule: Rule{Denoms: []int{2}, Min: 0.5}}, {Unit: "tablespoons"}, {Unit: "tsp"}}, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l[0].Unit != "tsp" || l[1].Unit != "tbsp" || l[2].Unit != "stick" || l[1].Max != 8 {
+		t.Fatalf("rungs should be sorted smallest first with site rules filled in: %+v", l)
+	}
+	b.Ladder = l
+	cases := []struct {
+		v         float64
+		unit, sys string
+		want      string
+	}{
+		{0.125, "stick", Original, "1 tbsp"},
+		{0.6, "stick", US, "5 tbsp"},
+		{1.5, "stick", Original, "1 ½ sticks"},
+		{4.5, "tbsp", Original, "4 ½ tbsp"},
+		{6, "tbsp", US, "6 tbsp"},
+		{8, "tbsp", Original, "1 stick"},
+		{10, "tbsp", US, "1 stick + 2 tbsp"},
+		{0.5, "cup", US, "1 stick"},
+		{0.5, "tbsp", US, "1 ½ tsp"},
+		{8, "tbsp", Metric, "114 g"}, // metric: grams, as before
+		{2, "stick", Metric, "226 g"},
+		{100, "g", Original, "100 g"}, // weights aren't on the ladder
+		{50, "ml", Original, "50 ml"}, // metric volumes stay metric in original
+	}
+	for _, c := range cases {
+		if got := tb.Format(c.v, c.unit, c.sys, b, false).String(); got != c.want {
+			t.Errorf("%v %s (%s) = %q, want %q", c.v, c.unit, c.sys, got, c.want)
+		}
+	}
+	if got := tb.Format(10, "tbsp", US, b, true).String(); got != "10 tbsp" {
+		t.Errorf("fixed unit: %q", got)
+	}
+
+	for _, bad := range []struct {
+		steps []Rung
+		ing   *Ing
+		msg   string
+	}{
+		{[]Rung{{Unit: "g"}}, b, "is a weight"},
+		{[]Rung{{Unit: "zz"}}, b, "unknown unit"},
+		{[]Rung{{Unit: "tbsp"}, {Unit: "stick"}}, &Ing{GramsPerML: 1}, "needs unit_grams"},
+	} {
+		if _, err := tb.IngredientLadder(bad.steps, bad.ing); err == nil || !strings.Contains(err.Error(), bad.msg) {
+			t.Errorf("%+v: want %q, got %v", bad.steps, bad.msg, err)
+		}
 	}
 }

@@ -392,8 +392,36 @@ egg:
 butter:
   density: { value: 227, unit: g/cup }
   unit_grams: { stick: 113 }     # weight of count units
+  ladder: [tsp, tbsp, { unit: stick, denoms: [2], min: 0.5 }]  # US display, see below
 milk:
   density: { value: 1.035, unit: g/ml }  # units: g/ml g/cm3 g/l kg/l kg/m3 g/tsp g/tbsp g/cup
                                          # oz/tbsp oz/cup oz/floz oz/pint lb/cup lb/pint lb/quart lb/gal
   measure: volume                # always show by volume (liquids); `mass` always by weight
 ```
+
+### Ladders: tablespoons and sticks
+
+In US units, volumes climb tsp → tbsp → cup, and counted units (sticks)
+stay as written. An ingredient's `ladder:` replaces that with its own
+steps, mixing volume units and counted units that have `unit_grams` (plus a
+`density` to compare them). get-cooked shows the largest step that rounds
+cleanly:
+
+| amount   | with the butter ladder above |
+|----------|------------------------------|
+| ⅛ stick  | 1 tbsp                       |
+| 0.6 stick| 5 tbsp                       |
+| 8 tbsp   | 1 stick                      |
+| 10 tbsp  | 1 stick + 2 tbsp             |
+| ½ cup    | 1 stick                      |
+
+- Each step is a unit name (it keeps the site's rounding for that unit) or
+  `{ unit, denoms, tiers, min, max, tiny }` to change it. `max` on a step
+  splits larger amounts into the next step plus a remainder.
+- Metric still shows weight, `measure: mass` still shows weight, and weights
+  or metric volumes written in a recipe aren't touched.
+- Override it per recipe like any field: `ladder:` on an ingredient line or
+  in `ingredient_db:` (e.g. `ladder: [tsp, tbsp, cup]` for butter in cups;
+  `ladder: []` turns it off), or keep exactly the written unit with
+  `fixed_unit: true`.
+

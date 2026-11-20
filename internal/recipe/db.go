@@ -24,6 +24,25 @@ type DBYAML struct {
 	Measure   string             `yaml:"measure"`
 	Round     *RoundYAML         `yaml:"round"`
 	Category  string             `yaml:"category"`
+	Ladder    []LadderStep       `yaml:"ladder"`
+}
+
+// LadderStep is one unit of an ingredient's own display ladder: a unit name,
+// or {unit, denoms, tiers, min, max, tiny} to change its rounding.
+type LadderStep units.Rung
+
+// UnmarshalYAML accepts "tbsp" or a mapping.
+func (s *LadderStep) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.ScalarNode {
+		s.Unit = n.Value
+		return nil
+	}
+	var r units.Rung
+	if err := n.Decode(&r); err != nil {
+		return err
+	}
+	*s = LadderStep(r)
+	return nil
 }
 
 // Density is a density with an explicit unit, e.g. {value: 1.03, unit: g/ml}.
@@ -181,6 +200,18 @@ func ApplyIngredientFields(base *units.Ing, y DBYAML, tb *units.Table, loc Loc, 
 			rule.Denoms = []int{1}
 		}
 		info.Round = &rule
+	}
+	if y.Ladder != nil { // an empty list turns an inherited ladder off
+		steps := make([]units.Rung, len(y.Ladder))
+		for i, s := range y.Ladder {
+			steps[i] = units.Rung(s)
+		}
+		rungs, err := tb.IngredientLadder(steps, info)
+		if err != nil {
+			diags = append(diags, loc.Diag("ingredient %q: %v", what, err))
+		} else {
+			info.Ladder = rungs
+		}
 	}
 	return info, diags
 }

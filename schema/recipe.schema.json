@@ -173,6 +173,9 @@
         "unit_grams": {
           "$ref": "ingredients.schema.json#/$defs/entry/properties/unit_grams"
         },
+        "ladder": {
+          "$ref": "ingredients.schema.json#/$defs/entry/properties/ladder"
+        },
         "measure": {
           "$ref": "ingredients.schema.json#/$defs/entry/properties/measure"
         },
@@ -542,6 +545,9 @@
             },
             "unit_grams": {
               "$ref": "ingredients.schema.json#/$defs/entry/properties/unit_grams"
+            },
+            "ladder": {
+              "$ref": "ingredients.schema.json#/$defs/entry/properties/ladder"
             },
             "measure": {
               "$ref": "ingredients.schema.json#/$defs/entry/properties/measure",

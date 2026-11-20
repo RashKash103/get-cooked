@@ -198,6 +198,10 @@ export class Units {
     if (!src) {
       return { v: amount, t: this.frac(roundRule(this.t.fallback, amount)), u: unitID, id: unitID };
     }
+    if (!fixed) {
+      const q = this.ingLadder(amount, src, system, ing);
+      if (q) return q;
+    }
     if (src.dim === "count") return this.formatCount(amount, src, system, ing);
     let dim = src.dim;
     let sys = src.sys ?? "";
@@ -249,21 +253,46 @@ export class Units {
       const v = roundRule(this.t.fallback, base / x.f);
       return { v, t: this.frac(v), u: label(x, v), id };
     }
+    return this.climb(base, rungs, (id) => this.unit(id).f);
+  }
+
+  /** Mirror of Table.ingLadder: the ingredient's own US ladder (tbsp ⇄ sticks). */
+  private ingLadder(amount: number, src: Unit, system: string, ing: Ing | undefined): Qty | null {
+    if (!ing?.ladder?.length || system === "metric" || ing.measure === "mass") return null;
+    const onLadder = ing.ladder.some((r) => r.unit === src.id);
+    const ok =
+      (src.dim === "volume" && (system === "us" || src.sys === "us" || onLadder)) || (src.dim === "count" && onLadder);
+    if (!ok) return null;
+    const f = this.mlPer(src.id, ing);
+    if (f === null) return null;
+    return this.climb(amount * f, ing.ladder, (id) => this.mlPer(id, ing) ?? 0);
+  }
+
+  private mlPer(id: string, ing: Ing): number | null {
+    const u = this.t.units[id];
+    if (!u) return null;
+    if (u.dim === "volume") return u.f;
+    const g = ing.ug?.[id] ?? 0;
+    if (u.dim === "count" && g > 0 && (ing.gpml ?? 0) > 0) return g / (ing.gpml as number);
+    return null;
+  }
+
+  private climb(base: number, rungs: Rung[], size: (id: string) => number): Qty {
     for (let i = rungs.length - 1; i >= 0; i--) {
       const r = rungs[i] as Rung;
       const x = this.unit(r.unit);
-      const val = base / x.f;
+      const val = base / size(r.unit);
       const v = roundRule(r, val);
       if (v <= 0 || v < (r.min ?? 0) || relErr(v, val) > this.t.tol) continue;
       if (r.max && v > r.max && i + 1 < rungs.length) {
-        const q = this.compound(base, r, rungs[i + 1] as Rung);
+        const q = this.compound(base, r, rungs[i + 1] as Rung, size);
         if (q) return q;
       }
       return { v, t: this.text(r, v), u: label(x, v), id: x.id };
     }
     const r = rungs[0] as Rung;
     const x = this.unit(r.unit);
-    const val = base / x.f;
+    const val = base / size(r.unit);
     let v = roundRule(r, val);
     if (v === 0 && val > 0) {
       if (r.tiny) return { v: 0, t: "", u: r.tiny, id: x.id };
@@ -272,15 +301,17 @@ export class Units {
     return { v, t: this.text(r, v), u: label(x, v), id: x.id };
   }
 
-  private compound(base: number, small: Rung, big: Rung): Qty | null {
+  private compound(base: number, small: Rung, big: Rung, size: (id: string) => number): Qty | null {
     const x = this.unit(small.unit);
     const bx = this.unit(big.unit);
-    const whole = floorTo(big, base / bx.f);
+    const sx = size(small.unit);
+    const sb = size(big.unit);
+    const whole = floorTo(big, base / sb);
     if (whole <= 0 || whole < (big.min ?? 0)) return null;
-    const rest = roundRule(small, (base - whole * bx.f) / x.f);
+    const rest = roundRule(small, (base - whole * sb) / sx);
     if (rest <= 0) return { v: whole, t: this.text(big, whole), u: label(bx, whole), id: bx.id };
     const text = `${this.text(big, whole)} ${label(bx, whole)} + ${this.text(small, rest)}`;
-    return { v: roundTo(whole + (rest * x.f) / bx.f, 6), t: text, u: label(x, rest), id: bx.id };
+    return { v: roundTo(whole + (rest * sx) / sb, 6), t: text, u: label(x, rest), id: bx.id };
   }
 
   private formatCount(amount: number, src: Unit, system: string, ing: Ing | undefined): Qty {
