@@ -35,6 +35,9 @@ sw.addEventListener("fetch", (e: FetchEvent) => {
   const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin || !url.pathname.startsWith(BASE)) return;
   if (url.pathname.endsWith("/__livereload")) return;
+  // Source PDFs go straight to the network: the viewer asks for byte ranges,
+  // and caching would pull (and store) the whole file, which can be huge.
+  if (url.pathname.startsWith(`${BASE}assets/pdf/`)) return;
   // Fingerprinted assets: cache first. Pages and everything else: network first.
   if (url.pathname.startsWith(`${BASE}assets/`)) {
     e.respondWith(

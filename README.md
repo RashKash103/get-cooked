@@ -115,7 +115,8 @@ notes:
   own units ("2 tsp garam masala") and opened with enough batches.
 - Credit sources with your own wording ("Adapted from …"), linking to a web
   page or to a page of a PDF you keep in the site (a scanned cookbook, say),
-  shown in a built-in viewer that works on phones and offline.
+  shown in a built-in viewer that works on phones and loads only the pages
+  you look at.
 - Export the recipe exactly as configured: print or save as PDF (a clean
   cookbook-style layout), download Markdown, or copy as text.
 - Tap any amount to see it in other units (US and metric, by volume and by

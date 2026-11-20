@@ -324,6 +324,14 @@ test("a source credit links to its page in the built-in PDF viewer", async ({ pa
   await expect(page).toHaveURL(/p=3/);
   await page.locator("#back").click();
   await expect(page).toHaveURL(/\/recipes\/chocolate-chip-cookies\/$/);
+  // PDFs go straight to the network (by byte range), never into the offline cache.
+  const cachedPDFs = await page.evaluate(async () => {
+    const out: string[] = [];
+    for (const k of await caches.keys())
+      for (const r of await (await caches.open(k)).keys()) if (r.url.includes("/assets/pdf/")) out.push(r.url);
+    return out;
+  });
+  expect(cachedPDFs).toEqual([]);
 });
 
 test("the PDF viewer refuses files outside the site's PDFs", async ({ page }) => {

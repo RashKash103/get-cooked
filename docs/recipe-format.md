@@ -287,9 +287,13 @@ source:
   leading `/` (handy for a `books/` folder that several recipes share). The
   build publishes each PDF once, and the recipe links to the site's own PDF
   viewer, opened at `page:`. It works on phones (where browsers often can't
-  show PDFs inline), offline once opened, and scanned books are fine. `page:`
-  counts from the first page of the file, which may differ from the number
-  printed on it.
+  show PDFs inline), and scanned books are fine. The viewer downloads only
+  the parts of the file the page needs, so large books open quickly; PDFs
+  aren't kept for offline use. `page:` counts from the first page of the
+  file, which may differ from the number printed on it.
+- Big scans: GitHub rejects files over 100 MB (use Git LFS or split the book
+  into chapters), and linearized PDFs ("fast web view", e.g.
+  `qpdf --linearize in.pdf out.pdf`) show their first page sooner.
 - Without `pdf:`, `page:` is just shown: "Grandma's notebook, p. 12".
 - `credit:` is a sentence around the linked name: `{source}` marks where it
   goes ("Adapted from {source}, with less sugar."); without it, the name

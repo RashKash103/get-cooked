@@ -12,5 +12,9 @@ export function openPDF(url: string) {
     url,
     wasmUrl: `${res}wasm/`,
     standardFontDataUrl: `${res}standard_fonts/`,
+    // Fetch only the byte ranges the shown page needs (64 KB chunks), never
+    // the whole file: cookbook scans can be hundreds of megabytes.
+    disableAutoFetch: true,
+    disableStream: true,
   }).promise;
 }
