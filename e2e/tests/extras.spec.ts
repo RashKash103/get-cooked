@@ -364,3 +364,23 @@ test("an ingredient another recipe makes links to it, measured and converted", a
   await expect(page.locator("#list-items")).toContainText("1 tbsp");
   await expect(page.locator("#list-items").getByRole("link", { name: "cinnamon sugar" })).toBeVisible();
 });
+
+test("servings opened from a link don't replace the recipe's own setting", async ({ page }) => {
+  await page.goto("/recipes/cinnamon-sugar/");
+  await page.locator('[data-servings="1"]').click();
+  await page.locator('[data-servings="1"]').click();
+  await expect(page.locator("#yield")).toHaveText("3 batches");
+  // French toast links here with the batches it needs (1).
+  await page.goto("/recipes/french-toast/");
+  await page.locator('#ingredients .ing[data-id="topping"] a').click();
+  await expect(page.locator("#yield")).toHaveText("1 batch");
+  // Opened directly, the recipe still has the reader's 3 batches.
+  await page.goto("/recipes/cinnamon-sugar/");
+  await expect(page.locator("#yield")).toHaveText("3 batches");
+  // Changing servings on a linked visit is remembered as usual.
+  await page.goto("/recipes/cinnamon-sugar/?s=1");
+  await page.locator('[data-servings="1"]').click();
+  await expect(page.locator("#yield")).toHaveText("2 batches");
+  await page.goto("/recipes/cinnamon-sugar/");
+  await expect(page.locator("#yield")).toHaveText("2 batches");
+});

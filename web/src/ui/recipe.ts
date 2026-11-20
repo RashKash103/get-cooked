@@ -80,6 +80,12 @@ export function initRecipe(): void {
     else opts[o.id] = raw;
   }
 
+  // Servings and options that came in a link (another recipe's ingredient,
+  // a shared link) apply to this visit only: they don't replace what the
+  // reader set for this recipe until they change something here.
+  let persist = !fromURL;
+  let linked: string | null = null;
+
   let model: Model | null = null;
   let last: State = structuredClone(state);
   const checked = new Set(load<string[]>(keyChecked, []));
@@ -148,7 +154,12 @@ export function initRecipe(): void {
     paintMeta();
     const badge = $("changes");
     if (badge) badge.hidden = isDefault() && state.system === c.system;
-    save(keyState, isDefault() ? undefined : { servings: state.servings, options: state.options });
+    const snap = JSON.stringify([state.servings, state.options]);
+    if (!persist) {
+      if (linked === null) linked = snap;
+      else if (snap !== linked) persist = true;
+    }
+    if (persist) save(keyState, isDefault() ? undefined : { servings: state.servings, options: state.options });
     syncURL();
   }
 
