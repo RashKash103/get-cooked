@@ -51,6 +51,10 @@ Everything in `docs/design.md` is implemented, tested and committed:
 - v0.6.2 (2026-11-19): print/PDF page breaks — headings stay with their steps,
   steps and ingredients never split, equipment moves to a header line (site print
   uses a float, not a grid; Typst uses sticky titles and unbreakable items).
+- v0.7.0 (2026-11-20): `source:` gains `credit:` (translatable "Adapted from
+  {source}" line), `page:` and `pdf:` (a PDF in the site, published under
+  assets/pdf/ and opened in a pdf.js viewer at pdf/?f=…&p=…; pdf.js lazy-loads
+  from assets/lazy/). Example site has books/example-cookbook.pdf.
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
