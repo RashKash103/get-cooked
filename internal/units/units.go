@@ -487,7 +487,13 @@ func (t *Table) FormatRange(lo, hi float64, unitID, system string, ing *Ing, fix
 	if ql.ID == qh.ID && ql.Text != "" && qh.Text != "" && !strings.Contains(qh.Text, "+") && !strings.Contains(ql.Text, "+") {
 		return Qty{Value: ql.Value, Hi: qh.Value, Text: ql.Text + "–" + qh.Text, Unit: qh.Unit, ID: qh.ID}
 	}
-	return Qty{Value: ql.Value, Hi: qh.Value, Text: ql.String() + " – " + qh.String(), ID: qh.ID}
+	// Written in two units ("510 g – 1 kg"): Value and Hi are both in qh's
+	// unit (0.51 and 1 kg), so code reading the numbers sees one unit.
+	lo = ql.Value
+	if v, ok := t.Convert(ql.Value, ql.ID, qh.ID, ing); ok {
+		lo = v
+	}
+	return Qty{Value: lo, Hi: qh.Value, Text: ql.String() + " – " + qh.String(), ID: qh.ID}
 }
 
 func (t *Table) inLadder(sys, dim, id string) bool {

@@ -197,3 +197,22 @@ func TestTempLengthDuration(t *testing.T) {
 		}
 	}
 }
+
+// A range written in two units keeps both numbers in the high end's unit, so
+// conversions and the shopping list read 0.51–1 kg, not 510–1 kg.
+func TestFormatRangeMixedUnits(t *testing.T) {
+	tb := Default()
+	q := tb.FormatRange(510, 1000, "g", Metric, nil, false)
+	if q.String() != "510 g – 1 kg" || q.ID != "kg" || q.Value != 0.51 || q.Hi != 1 {
+		t.Fatalf("got %q id=%s v=%v h=%v", q.String(), q.ID, q.Value, q.Hi)
+	}
+	if v, ok := tb.Convert(1, "cup", "g", flour); !ok || v < 124.9 || v > 125.1 {
+		t.Errorf("Convert 1 cup flour = %v %v", v, ok)
+	}
+	if _, ok := tb.Convert(1, "cup", "g", nil); ok {
+		t.Error("cup to g without a density should fail")
+	}
+	if v, ok := tb.Convert(2, "stick", "g", butter); !ok || v != 226 {
+		t.Errorf("2 sticks = %v g", v)
+	}
+}

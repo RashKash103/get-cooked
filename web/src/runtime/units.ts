@@ -235,7 +235,10 @@ export class Units {
     if (ql.id === qh.id && ql.t !== "" && qh.t !== "" && !qh.t.includes("+") && !ql.t.includes("+")) {
       return { v: ql.v, h: qh.v, t: `${ql.t}–${qh.t}`, u: qh.u, id: qh.id };
     }
-    return { v: ql.v, h: qh.v, t: `${qtyString(ql)} – ${qtyString(qh)}`, u: "", id: qh.id };
+    // Written in two units ("510 g – 1 kg"): v and h are both in qh's unit
+    // (0.51 and 1 kg), so code reading the numbers sees one unit.
+    const v = this.convert(ql.v, ql.id, qh.id, ing) ?? ql.v;
+    return { v, h: qh.v, t: `${qtyString(ql)} – ${qtyString(qh)}`, u: "", id: qh.id };
   }
 
   private ladder(base: number, sys: string, dim: string): Qty {
