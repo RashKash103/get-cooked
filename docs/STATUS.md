@@ -59,6 +59,13 @@ Everything in `docs/design.md` is implemented, tested and committed:
   ingredient fields; `makes.ingredient` auto-links every use of that DB
   ingredient), `recipe:` refs with `unit:` (measured; link servings computed
   via Table.Convert), "Makes …" in the times row. Example: Cinnamon Sugar.
+- v0.8.1 (2026-11-20): PDF viewer loads byte ranges only (disableAutoFetch/
+  disableStream; the service worker skips assets/pdf/); two-unit ranges keep
+  both numbers in the high end's unit; servings from a link apply to that
+  visit only.
+- v0.9.0 (2026-11-20): ingredient `ladder:` (per-ingredient US display steps
+  mixing volume and counted units, e.g. tbsp ⇄ sticks of butter); Go/TS
+  ladder code shared via climb(base, rungs, size).
 - To release: tag `vX.Y.Z` and push the tag; the Release workflow does the rest.
 
 ## Ideas
